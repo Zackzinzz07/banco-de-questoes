@@ -8,13 +8,19 @@ RE_ALTERNATIVA = re.compile(r"\(([A-E])\)")
 
 
 def _mapear_secoes(texto):
-    """Posições onde cada matéria começa no texto (pelos títulos de seção)."""
-    maiusculo = texto.upper()
+    """Posições onde cada matéria começa (títulos de seção em linha própria, MAIÚSCULA)."""
     marcas = []
-    for nome, dados in edital.MATERIAS.items():
-        for padrao in dados["titulos_pdf"]:
-            for m in re.finditer(re.escape(padrao), maiusculo):
-                marcas.append((m.start(), nome))
+    pos = 0
+    for linha in texto.splitlines(keepends=True):
+        limpa = " ".join(linha.split())
+        eh_titulo = (limpa and limpa == limpa.upper() and len(limpa) <= 60
+                     and any(c.isalpha() for c in limpa))
+        if eh_titulo:
+            for nome, dados in edital.MATERIAS.items():
+                if any(padrao in limpa for padrao in dados["titulos_pdf"]):
+                    marcas.append((pos, nome))
+                    break
+        pos += len(linha)
     return sorted(marcas)
 
 
@@ -66,7 +72,7 @@ def extrair_gabarito_de_tabelas(tabelas):
             for num, resp in zip(linha_num, linha_resp):
                 num = str(num or "").strip()
                 resp = str(resp or "").strip().upper()
-                if num.isdigit() and resp in "ABCDE" and resp:
+                if num.isdigit() and len(resp) == 1 and resp in "ABCDE":
                     gabarito[int(num)] = resp
     return gabarito
 
