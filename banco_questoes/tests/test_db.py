@@ -57,3 +57,56 @@ def test_fonte_invalida_raises_error(tmp_path):
     con = db.conectar(tmp_path / "t.db")
     with pytest.raises(ValueError, match="fonte inválida"):
         db.salvar_questao(con, questao_exemplo(fonte="outra"))
+
+
+def test_sorteio_sem_repeticao(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    for i in range(5):
+        db.salvar_questao(con, questao_exemplo(id_qc=f"Q{i}", enunciado=f"Enunciado {i}?"))
+    sorteadas = db.sortear_questoes(con, "Língua Portuguesa", 3)
+    assert len(sorteadas) == 3
+    assert isinstance(sorteadas[0]["alternativas"], dict)
+    db.marcar_usadas(con, [q["id"] for q in sorteadas])
+    restantes = db.sortear_questoes(con, "Língua Portuguesa", 2)
+    ids_novos = {q["id"] for q in restantes}
+    assert ids_novos.isdisjoint({q["id"] for q in sorteadas})
+
+
+def test_sorteio_completa_com_repetidas(tmp_path, capsys):
+    con = db.conectar(tmp_path / "t.db")
+    for i in range(3):
+        db.salvar_questao(con, questao_exemplo(id_qc=f"Q{i}", enunciado=f"Enunciado {i}?"))
+    todas = db.sortear_questoes(con, "Língua Portuguesa", 3)
+    db.marcar_usadas(con, [q["id"] for q in todas])
+    de_novo = db.sortear_questoes(con, "Língua Portuguesa", 2)
+    assert len(de_novo) == 2
+    assert "repetidas" in capsys.readouterr().out
+
+
+def test_zerar_usadas(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    db.salvar_questao(con, questao_exemplo())
+    q = db.sortear_questoes(con, "Língua Portuguesa", 1)
+    db.marcar_usadas(con, [q[0]["id"]])
+    db.zerar_usadas(con)
+    assert con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()["c"] == 0
+
+
+def test_progresso(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    assert db.obter_progresso(con, "Direito Administrativo") == 0
+    db.salvar_progresso(con, "Direito Administrativo", 7)
+    db.salvar_progresso(con, "Direito Administrativo", 8)
+    assert db.obter_progresso(con, "Direito Administrativo") == 8
+
+
+def test_sem_gabarito_e_atualizar(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    db.salvar_questao(con, questao_exemplo(id_qc="Q1", gabarito=None, enunciado="Um?"))
+    db.salvar_questao(con, questao_exemplo(id_qc="Q2", gabarito="B", enunciado="Dois?"))
+    db.salvar_questao(con, questao_exemplo(id_qc=None, gabarito=None, enunciado="Três?"))
+    pendentes = db.sem_gabarito(con)
+    assert [p["id_qc"] for p in pendentes] == ["Q1"]
+    db.atualizar_gabarito(con, "Q1", "C", "Comentário do professor.")
+    linha = con.execute("SELECT gabarito, comentario FROM questoes WHERE id_qc='Q1'").fetchone()
+    assert (linha["gabarito"], linha["comentario"]) == ("C", "Comentário do professor.")

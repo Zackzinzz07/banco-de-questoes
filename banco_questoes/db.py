@@ -78,3 +78,60 @@ def salvar_questao(con, q):
         return True
     except sqlite3.IntegrityError:
         return False
+
+
+def sortear_questoes(con, materia, quantidade):
+    """Sorteia questões não usadas; se faltar, avisa e completa com repetidas."""
+    linhas = con.execute(
+        "SELECT * FROM questoes WHERE materia=? AND usada_em_simulado=0"
+        " ORDER BY RANDOM() LIMIT ?", (materia, quantidade)).fetchall()
+    questoes = [dict(l) for l in linhas]
+    faltam = quantidade - len(questoes)
+    if faltam > 0:
+        repetidas = con.execute(
+            "SELECT * FROM questoes WHERE materia=? AND usada_em_simulado=1"
+            " ORDER BY RANDOM() LIMIT ?", (materia, faltam)).fetchall()
+        if repetidas:
+            print(f"Aviso: só {len(questoes)} questões inéditas de {materia};"
+                  f" completando com {len(repetidas)} repetidas.")
+        questoes += [dict(l) for l in repetidas]
+    for q in questoes:
+        q["alternativas"] = json.loads(q["alternativas"])
+    return questoes
+
+
+def marcar_usadas(con, ids):
+    con.executemany("UPDATE questoes SET usada_em_simulado=1 WHERE id=?",
+                    [(i,) for i in ids])
+    con.commit()
+
+
+def zerar_usadas(con):
+    con.execute("UPDATE questoes SET usada_em_simulado=0")
+    con.commit()
+
+
+def obter_progresso(con, materia):
+    linha = con.execute("SELECT ultima_pagina FROM progresso_scraper WHERE materia=?",
+                        (materia,)).fetchone()
+    return linha["ultima_pagina"] if linha else 0
+
+
+def salvar_progresso(con, materia, pagina):
+    con.execute(
+        "INSERT INTO progresso_scraper (materia, ultima_pagina) VALUES (?,?)"
+        " ON CONFLICT(materia) DO UPDATE SET ultima_pagina=excluded.ultima_pagina",
+        (materia, pagina))
+    con.commit()
+
+
+def sem_gabarito(con):
+    linhas = con.execute(
+        "SELECT * FROM questoes WHERE gabarito IS NULL AND id_qc IS NOT NULL").fetchall()
+    return [dict(l) for l in linhas]
+
+
+def atualizar_gabarito(con, id_qc, gabarito, comentario=None):
+    con.execute("UPDATE questoes SET gabarito=?, comentario=? WHERE id_qc=?",
+                (gabarito, comentario, id_qc))
+    con.commit()
