@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS questoes (
     orgao TEXT,
     ano INTEGER,
     prova TEXT,
-    fonte TEXT NOT NULL,
+    fonte TEXT NOT NULL CHECK (fonte IN ('qconcursos', 'quadrix_pdf')),
     usada_em_simulado INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS progresso_scraper (
@@ -49,6 +49,10 @@ def hash_enunciado(texto):
 
 def salvar_questao(con, q):
     """Insere a questão; retorna True se inseriu, False se já existia (dedupe)."""
+    fonte = q.get("fonte")
+    if fonte not in ("qconcursos", "quadrix_pdf"):
+        raise ValueError(f"fonte inválida: '{fonte}'. Use 'qconcursos' ou 'quadrix_pdf'.")
+
     try:
         con.execute(
             "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, alternativas,"
@@ -67,7 +71,7 @@ def salvar_questao(con, q):
                 q.get("orgao"),
                 q.get("ano"),
                 q.get("prova"),
-                q["fonte"],
+                fonte,
             ),
         )
         con.commit()

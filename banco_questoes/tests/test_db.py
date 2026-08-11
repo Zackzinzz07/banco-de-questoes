@@ -1,3 +1,4 @@
+import pytest
 import db
 
 
@@ -50,3 +51,9 @@ def test_duas_questoes_sem_id_qc_nao_conflitam(tmp_path):
 
 def test_normalizar_enunciado():
     assert db.normalizar_enunciado("  Olá   MUNDO \n ") == "olá mundo"
+
+
+def test_fonte_invalida_raises_error(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    with pytest.raises(ValueError, match="fonte inválida"):
+        db.salvar_questao(con, questao_exemplo(fonte="outra"))
