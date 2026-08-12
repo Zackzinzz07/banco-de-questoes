@@ -1,11 +1,11 @@
-"""Scraper do QConcursos usando um perfil Chrome dedicado do scraper (Selenium + BS4).
+"""Scraper do QConcursos usando um perfil Chrome dedicado do scraper (Playwright + BS4).
 
 Se o site mudar de layout, ajuste apenas o dicionário SELETORES abaixo.
 
 O perfil padrão do sistema operacional NÃO é usado: Chrome recentes recusam
-depuração remota (o mecanismo que o Selenium usa para controlar o navegador)
-quando --user-data-dir aponta para o diretório de perfil padrão do SO
-("DevTools remote debugging requires a non-default data directory"). Por
+depuração remota (o mecanismo que ferramentas de automação usam para
+controlar o navegador) quando apontado para o diretório de perfil padrão do
+SO ("DevTools remote debugging requires a non-default data directory"). Por
 isso usamos um perfil dedicado só para o scraper (PERFIL_CHROME abaixo,
 dentro do próprio projeto), populado via login interativo em
 salvar_html_exemplo.py e nunca commitado (ver .gitignore).
@@ -14,8 +14,7 @@ import re
 from pathlib import Path
 
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from playwright.sync_api import sync_playwright
 
 # ── SELETORES CENTRALIZADOS (ajustar aqui se o QC mudar o layout) ──────────
 # Calibrados contra fixture real (tests/fixtures/pagina_qc.html): ver notas
@@ -95,12 +94,17 @@ def extrair_blocos(html):
 
 
 def abrir_chrome():
-    """Abre o Chrome usando o perfil dedicado do scraper (PERFIL_CHROME).
+    """Abre o Chrome (via Playwright) usando o perfil dedicado do scraper.
 
     Login precisa ser feito uma vez interativamente (ver
     salvar_html_exemplo.py); depois disso o perfil mantém a sessão salva em
     disco e as próximas aberturas já entram logadas.
+
+    Retorna o BrowserContext (persistente); a página inicial é
+    `contexto.pages[0]` (ou `contexto.new_page()` se ainda não houver
+    nenhuma). É responsabilidade de quem chama fechar o contexto
+    (`contexto.close()`) ao terminar.
     """
-    opcoes = Options()
-    opcoes.add_argument(f"--user-data-dir={PERFIL_CHROME}")
-    return webdriver.Chrome(options=opcoes)
+    p = sync_playwright().start()
+    return p.chromium.launch_persistent_context(
+        str(PERFIL_CHROME), channel="chrome", headless=False)
