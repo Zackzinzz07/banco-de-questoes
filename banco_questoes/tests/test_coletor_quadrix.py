@@ -1,3 +1,6 @@
+import pytest
+import requests
+
 import db
 import coletor_quadrix as cq
 
@@ -123,3 +126,45 @@ def test_baixar_usa_cache(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cq.requests, "get", explode)
     assert cq.baixar("http://exemplo/prova.pdf", destino) == destino
+
+
+def test_main_sem_internet_sai_com_erro(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cq, "PROVAS", [
+        {"nome": "prova1", "orgao": "X", "ano": 2024, "prova": "Y",
+         "url_prova": "http://exemplo/prova1.pdf", "url_gabarito": "http://exemplo/gab1.pdf"},
+    ])
+    conectar_original = db.conectar
+    monkeypatch.setattr(cq.db, "conectar", lambda: conectar_original(tmp_path / "t.db"))
+
+    def explode(*a, **kw):
+        raise requests.exceptions.ConnectionError("sem rede")
+
+    monkeypatch.setattr(cq, "baixar", explode)
+    with pytest.raises(SystemExit) as exc_info:
+        cq.main()
+    assert exc_info.value.code == 1
+    assert "Sem internet" in capsys.readouterr().out
+
+
+def test_main_pula_prova_com_erro_http_e_continua(tmp_path, monkeypatch):
+    monkeypatch.setattr(cq, "PROVAS", [
+        {"nome": "prova1", "orgao": "X", "ano": 2024, "prova": "Y",
+         "url_prova": "http://exemplo/prova1.pdf", "url_gabarito": "http://exemplo/gab1.pdf"},
+        {"nome": "prova2", "orgao": "X", "ano": 2024, "prova": "Y",
+         "url_prova": "http://exemplo/prova2.pdf", "url_gabarito": "http://exemplo/gab2.pdf"},
+    ])
+    conectar_original = db.conectar
+    monkeypatch.setattr(cq.db, "conectar", lambda: conectar_original(tmp_path / "t.db"))
+
+    def baixar_fake(url, destino):
+        if "prova1" in url:
+            raise requests.exceptions.HTTPError("404")
+        return destino
+
+    monkeypatch.setattr(cq, "baixar", baixar_fake)
+    chamadas = []
+    monkeypatch.setattr(cq, "processar_prova",
+                        lambda *a, **kw: chamadas.append(1) or
+                        {"salvas": 0, "duplicadas": 0, "puladas": [], "sem_materia": 0})
+    cq.main()
+    assert len(chamadas) == 1

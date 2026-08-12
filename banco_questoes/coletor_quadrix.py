@@ -162,6 +162,9 @@ def main():
         try:
             caminho_prova = baixar(prova["url_prova"], PASTA_PDFS / f"{prova['nome']}_prova.pdf")
             caminho_gab = baixar(prova["url_gabarito"], PASTA_PDFS / f"{prova['nome']}_gabarito.pdf")
+        except requests.exceptions.ConnectionError:
+            print("Sem internet ou site fora do ar. Tente de novo mais tarde.")
+            sys.exit(1)
         except requests.exceptions.RequestException as erro:
             print(f"  Não consegui baixar ({erro.__class__.__name__})."
                   " Confira sua internet ou a URL e tente de novo.")
@@ -180,8 +183,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except requests.exceptions.ConnectionError:
-        print("Sem internet ou site fora do ar. Tente de novo mais tarde.")
-        sys.exit(1)
+    main()
