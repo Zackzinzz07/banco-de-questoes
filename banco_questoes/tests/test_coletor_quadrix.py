@@ -1,3 +1,4 @@
+import db
 import coletor_quadrix as cq
 
 TEXTO_PROVA = """
@@ -87,3 +88,38 @@ Sobre benefícios sociais.
     assert questoes[1]["numero"] == 2
     assert questoes[0]["materia"] == "Língua Portuguesa"
     assert questoes[1]["materia"] == "Língua Portuguesa"  # Não mudou para SUAS
+
+
+def test_processar_prova_texto(tmp_path, monkeypatch):
+    con = db.conectar(tmp_path / "t.db")
+    monkeypatch.setattr(cq, "_texto_do_pdf", lambda caminho: cq_texto_fake(caminho))
+    monkeypatch.setattr(cq, "_tabelas_do_pdf",
+                        lambda caminho: [[["1", "3"], ["A", "B"]]])
+    resultado = cq.processar_prova("prova.pdf", "gab.pdf", con,
+                                   {"banca": "Instituto Quadrix", "orgao": "CRT-4",
+                                    "ano": 2024, "prova": "Assistente Administrativo"})
+    assert resultado["salvas"] == 2
+    assert resultado["puladas"] == [2]
+    linha = con.execute("SELECT * FROM questoes WHERE materia='Língua Portuguesa'").fetchone()
+    assert linha["gabarito"] == "A"
+    assert linha["fonte"] == "quadrix_pdf"
+    assert linha["id_qc"] is None
+    # rodar de novo: tudo duplicado
+    resultado2 = cq.processar_prova("prova.pdf", "gab.pdf", con, {"ano": 2024})
+    assert resultado2["salvas"] == 0
+    assert resultado2["duplicadas"] == 2
+
+
+def cq_texto_fake(caminho):
+    return TEXTO_PROVA
+
+
+def test_baixar_usa_cache(tmp_path, monkeypatch):
+    destino = tmp_path / "prova.pdf"
+    destino.write_bytes(b"%PDF-cache")
+
+    def explode(*a, **kw):
+        raise AssertionError("não deveria baixar de novo")
+
+    monkeypatch.setattr(cq.requests, "get", explode)
+    assert cq.baixar("http://exemplo/prova.pdf", destino) == destino
