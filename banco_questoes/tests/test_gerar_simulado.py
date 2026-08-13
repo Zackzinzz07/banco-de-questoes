@@ -46,3 +46,51 @@ def test_pdf_inclui_texto_associado(tmp_path, monkeypatch):
     with pdfplumber.open(saida) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
     assert "TEXTOBASEEXCLUSIVO" in texto
+
+
+def test_pdf_em_duas_colunas(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    for i in range(8):
+        q = questao_fake(i)
+        q["id_qc"] = f"QC{i}"
+        q["enunciado"] = (f"Enunciado longo número {i} " + "palavra " * 40).strip()
+        db.salvar_questao(con, q)
+    saida = tmp_path / "prova.pdf"
+    gerar_simulado.gerar("Língua Portuguesa", 8, saida, con=con)
+    import pdfplumber
+    with pdfplumber.open(saida) as pdf:
+        pagina = pdf.pages[0]
+        largura = pagina.width
+        inicios = {round(c["x0"]) for c in pagina.chars}
+    # tem texto começando na metade direita da página => duas colunas
+    assert any(x > largura / 2 for x in inicios), "nenhum conteúdo na coluna direita"
+    assert min(inicios) < 60, "margem esquerda deveria ser estreita (~34pt)"
+
+
+def test_questao_numerada_inline_e_avisos(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    db.salvar_questao(con, questao_fake(1))
+    saida = tmp_path / "p.pdf"
+    gerar_simulado.gerar("Língua Portuguesa", 1, saida, con=con)
+    import pdfplumber
+    with pdfplumber.open(saida) as pdf:
+        texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
+    assert "QUESTÃO 1." in texto            # rótulo com ponto, estilo prova
+    assert "NÃO OFICIAL" in texto           # aviso do cabeçalho
+    assert "LEIA AS INSTRUÇÕES" in texto
+    assert "GABARITO COMENTADO" in texto
+
+
+def test_texto_base_anunciado(tmp_path, monkeypatch):
+    con = db.conectar(tmp_path / "t.db")
+    q = questao_fake(2)
+    q["texto_associado"] = "TEXTOBASEEXCLUSIVO para conferência."
+    db.salvar_questao(con, q)
+    monkeypatch.setattr(gerar_simulado, "_imagem", lambda url: None)
+    saida = tmp_path / "p.pdf"
+    gerar_simulado.gerar("Língua Portuguesa", 1, saida, con=con)
+    import pdfplumber
+    with pdfplumber.open(saida) as pdf:
+        texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
+    assert "Texto para a questão 1." in texto
+    assert "TEXTOBASEEXCLUSIVO" in texto
