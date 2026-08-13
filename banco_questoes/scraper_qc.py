@@ -10,10 +10,17 @@ isso usamos um perfil dedicado só para o scraper (PERFIL_CHROME abaixo,
 dentro do próprio projeto), populado via login interativo em
 salvar_html_exemplo.py e nunca commitado (ver .gitignore).
 """
+import random
 import re
+import sys
+import time
 from pathlib import Path
 
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
+
+import db
+import edital
 
 # ── SELETORES CENTRALIZADOS (ajustar aqui se o QC mudar o layout) ──────────
 # Calibrados contra fixture real (tests/fixtures/pagina_qc.html): ver notas
@@ -95,6 +102,9 @@ def extrair_blocos(html):
 HEADLESS = False  # o Cloudflare do QC bloqueia navegador invisível ("Um momento…");
                   # a coleta roda com janela visível — pode minimizar que ela trabalha sozinha
 
+PAUSA_MIN, PAUSA_MAX = 3, 6
+MAX_PAGINAS_POR_MATERIA = 40  # limite por sessão diária, por educação
+
 
 def abrir_navegador(p, headless=HEADLESS):
     """Chrome com o perfil dedicado do scraper (login fica salvo nele).
@@ -104,3 +114,72 @@ def abrir_navegador(p, headless=HEADLESS):
         str(PERFIL_CHROME), channel="chrome", headless=headless)
     pagina = contexto.pages[0] if contexto.pages else contexto.new_page()
     return contexto, pagina
+
+
+def url_pagina(url_base, pagina):
+    separador = "&" if "?" in url_base else "?"
+    return f"{url_base}{separador}page={pagina}"
+
+
+def salvar_pagina(html, con, materia):
+    """Salva as questões de uma página no banco; retorna quantas eram novas."""
+    novas = 0
+    for q in extrair_blocos(html):
+        salvou = db.salvar_questao(con, {
+            "id_qc": q["id_qc"],
+            "enunciado": q["enunciado"],
+            "alternativas": q["alternativas"],
+            "gabarito": None,
+            "materia": materia,
+            "assunto": q["assunto"],
+            "banca": q["banca"],
+            "orgao": q["orgao"],
+            "ano": q["ano"],
+            "prova": q["prova"],
+            "fonte": "qconcursos",
+        })
+        novas += 1 if salvou else 0
+    return novas
+
+
+def _pausa():
+    time.sleep(random.uniform(PAUSA_MIN, PAUSA_MAX))
+
+
+def coletar_enunciados():
+    con = db.conectar()
+    with sync_playwright() as p:
+        contexto, aba = abrir_navegador(p)
+        try:
+            for materia in edital.nomes_materias():
+                url_base = edital.MATERIAS[materia]["url_qc"]
+                if not url_base:
+                    print(f"[{materia}] sem url_qc no edital.py — pulando.")
+                    continue
+                pagina = db.obter_progresso(con, materia) + 1
+                fim = pagina + MAX_PAGINAS_POR_MATERIA
+                while pagina < fim:
+                    aba.goto(url_pagina(url_base, pagina))
+                    _pausa()
+                    html = aba.content()
+                    novas = salvar_pagina(html, con, materia)
+                    total_blocos = len(extrair_blocos(html))
+                    print(f"[{materia}] página {pagina}: {novas} novas ({total_blocos} na página)")
+                    db.salvar_progresso(con, materia, pagina)
+                    if total_blocos == 0:  # acabaram as páginas (ou caiu o login)
+                        break
+                    pagina += 1
+        finally:
+            contexto.close()
+            con.close()
+
+
+if __name__ == "__main__":
+    try:
+        coletar_enunciados()
+    except KeyboardInterrupt:
+        print("\nInterrompido — o progresso por página já ficou salvo. Rode de novo para retomar.")
+    except Exception as erro:  # rede, site fora etc.
+        print(f"Erro inesperado ({erro.__class__.__name__}: {erro}).")
+        print("Confira internet/login no QC e rode de novo — a coleta retoma de onde parou.")
+        sys.exit(1)

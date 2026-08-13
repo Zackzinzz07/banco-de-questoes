@@ -1,5 +1,8 @@
 """Matérias e assuntos do Edital nº 1/2026 SEDES/DF (cargo 202, itens 20.2.2/20.2.3)."""
 
+_BASE_QC = ("https://www.qconcursos.com/questoes-de-concursos/questoes"
+            "?exclude_nullified=true&exclude_outdated=true")
+
 MATERIAS = {
     "Língua Portuguesa": {
         "assuntos": [
@@ -15,7 +18,7 @@ MATERIAS = {
             "Substituição e reescrita de trechos",
         ],
         "titulos_pdf": ["LÍNGUA PORTUGUESA", "PORTUGUÊS"],
-        "url_qc": "",
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=1",
     },
     "Conhecimentos do DF e Legislação": {
         "assuntos": [
@@ -29,7 +32,7 @@ MATERIAS = {
         ],
         "titulos_pdf": ["CONHECIMENTOS SOBRE O DISTRITO FEDERAL", "REALIDADE DO DF",
                         "CONHECIMENTOS GERAIS DO DF", "LEGISLAÇÃO APLICADA"],
-        "url_qc": "",
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=61",
     },
     "SUAS": {
         "assuntos": [
@@ -38,7 +41,7 @@ MATERIAS = {
             "NOB/SUAS 2012",
         ],
         "titulos_pdf": ["SUAS", "ASSISTÊNCIA SOCIAL", "POLÍTICA NACIONAL DE ASSISTÊNCIA SOCIAL"],
-        "url_qc": "",
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=188",
     },
     "Programas e Benefícios do DF": {
         "assuntos": [
@@ -60,7 +63,7 @@ MATERIAS = {
             "Servidores públicos",
         ],
         "titulos_pdf": ["DIREITO CONSTITUCIONAL", "NOÇÕES DE DIREITO CONSTITUCIONAL"],
-        "url_qc": "",
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=3",
     },
     "Direito Administrativo": {
         "assuntos": [
@@ -70,7 +73,7 @@ MATERIAS = {
             "LC nº 840/2011: provimento, vacância e processo disciplinar",
         ],
         "titulos_pdf": ["DIREITO ADMINISTRATIVO", "NOÇÕES DE DIREITO ADMINISTRATIVO"],
-        "url_qc": "",
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=2",
     },
     "Atendimento, Rotinas Administrativas e Arquivologia": {
         "assuntos": [
@@ -82,7 +85,7 @@ MATERIAS = {
         ],
         "titulos_pdf": ["ARQUIVOLOGIA", "ROTINAS ADMINISTRATIVAS", "ATENDIMENTO AO PÚBLICO",
                         "NOÇÕES DE ARQUIVOLOGIA"],
-        "url_qc": "",
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=20&discipline_ids%5B%5D=187&discipline_ids%5B%5D=174",
     },
     "Recursos Materiais, Patrimônio e Compras": {
         "assuntos": [
@@ -92,7 +95,7 @@ MATERIAS = {
             "Lei nº 14.133/2021 (licitações e contratos)",
         ],
         "titulos_pdf": ["RECURSOS MATERIAIS", "ADMINISTRAÇÃO DE MATERIAL", "LICITAÇ"],
-        "url_qc": "",
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=213",
     },
 }
 
