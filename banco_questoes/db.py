@@ -165,3 +165,16 @@ def completar_texto_associado(con, id_qc, texto, imagens):
          id_qc))
     con.commit()
     return cur.rowcount > 0
+
+
+def estatisticas(con):
+    """Por matéria: total, inéditas, usadas e sem gabarito."""
+    linhas = con.execute(
+        "SELECT materia, COUNT(*) total,"
+        " SUM(CASE WHEN usada_em_simulado=0 THEN 1 ELSE 0 END) ineditas,"
+        " SUM(usada_em_simulado) usadas,"
+        " SUM(CASE WHEN gabarito IS NULL THEN 1 ELSE 0 END) sem_gabarito"
+        " FROM questoes GROUP BY materia ORDER BY materia").fetchall()
+    return {l["materia"]: {"total": l["total"], "ineditas": l["ineditas"],
+                           "usadas": l["usadas"], "sem_gabarito": l["sem_gabarito"]}
+            for l in linhas}

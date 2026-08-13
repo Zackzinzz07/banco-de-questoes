@@ -112,3 +112,28 @@ def materia_por_titulo(titulo):
             if padrao in t:
                 return nome
     return None
+
+
+# Pesos para o Simulado Geral (edite à vontade; proporção aproximada da prova).
+PESOS = {
+    "Língua Portuguesa": 10,
+    "Conhecimentos do DF e Legislação": 10,
+    "SUAS": 10,
+    "Programas e Benefícios do DF": 5,
+    "Direito Constitucional": 5,
+    "Direito Administrativo": 5,
+    "Atendimento, Rotinas Administrativas e Arquivologia": 10,
+    "Recursos Materiais, Patrimônio e Compras": 5,
+}
+
+
+def distribuir_por_peso(quantidade):
+    """Divide a quantidade entre as matérias proporcionalmente aos PESOS."""
+    total_pesos = sum(PESOS.values())
+    exatas = {m: quantidade * p / total_pesos for m, p in PESOS.items()}
+    dist = {m: int(v) for m, v in exatas.items()}
+    sobra = quantidade - sum(dist.values())
+    ordem = sorted(exatas, key=lambda m: exatas[m] - dist[m], reverse=True)
+    for m in ordem[:sobra]:
+        dist[m] += 1
+    return dist

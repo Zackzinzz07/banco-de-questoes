@@ -144,3 +144,17 @@ def test_sem_gabarito_e_atualizar(tmp_path):
     db.atualizar_gabarito(con, "Q1", "C", "Comentário do professor.")
     linha = con.execute("SELECT gabarito, comentario FROM questoes WHERE id_qc='Q1'").fetchone()
     assert (linha["gabarito"], linha["comentario"]) == ("C", "Comentário do professor.")
+
+
+def test_estatisticas(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    db.salvar_questao(con, questao_exemplo(id_qc="QA", enunciado="Um?"))
+    db.salvar_questao(con, questao_exemplo(id_qc="QB", enunciado="Dois?", gabarito=None))
+    db.salvar_questao(con, questao_exemplo(id_qc="QC1", enunciado="Três?",
+                                           materia="SUAS"))
+    usada = db.sortear_questoes(con, "SUAS", 1)
+    db.marcar_usadas(con, [usada[0]["id"]])
+    est = db.estatisticas(con)
+    assert est["Língua Portuguesa"] == {"total": 2, "ineditas": 2, "usadas": 0,
+                                        "sem_gabarito": 1}
+    assert est["SUAS"] == {"total": 1, "ineditas": 0, "usadas": 1, "sem_gabarito": 0}
