@@ -41,3 +41,71 @@ def test_salvar_pagina_grava_no_banco(html, tmp_path):
     assert linha["materia"] == "Língua Portuguesa"
     # de novo: tudo duplicado
     assert scraper_qc.salvar_pagina(html, con, "Língua Portuguesa") == 0
+
+
+def test_atingiu_limite_pelo_atributo_do_botao():
+    # Achado de calibração ao vivo: a cota diária esgotada é sinalizada
+    # primeiro no próprio botão "Responder" (data-limit-reached="true").
+    html_limite = (
+        '<button type="button" class="js-answer-btn btn btn-primary" '
+        'data-question-id="4228008" data-discipline="Português" '
+        'data-permissions="confirmed_account,account" '
+        'data-limit-feedback="resolveQuestionLimit" data-limit-reached="true" '
+        'aria-disabled="false">Responder</button>'
+    )
+    assert scraper_qc.atingiu_limite(html_limite)
+
+
+def test_atingiu_limite_pelo_modal():
+    html_modal = (
+        '<div id="js-questions-limit-modal">'
+        'Você atingiu o seu limite diário de questões gratuitas.</div>'
+    )
+    assert scraper_qc.atingiu_limite(html_modal)
+
+
+def test_nao_atingiu_limite():
+    html_normal = (
+        '<button type="button" class="js-answer-btn btn btn-primary" '
+        'data-question-id="4228008" data-discipline="Português" '
+        'data-permissions="confirmed_account,account" '
+        'data-limit-feedback="resolveQuestionLimit" data-limit-reached="false" '
+        'aria-disabled="false">Responder</button>'
+    )
+    assert not scraper_qc.atingiu_limite(html_normal)
+    assert not scraper_qc.atingiu_limite("<div>página normal</div>")
+
+
+def test_extrair_resposta_do_bloco_quando_errou():
+    # Achado crítico de calibração: js-question-right-answer só vem
+    # preenchido quando a alternativa marcada estava ERRADA — nesse caso a
+    # letra ali dentro é o gabarito oficial, mesmo que a marcada tenha sido
+    # outra ("A" aqui, mas o gabarito real é "B").
+    bloco_html = (
+        '<div class="js-response-wrong q-inline-answer q-wrong feedback-redesign" role="alert">'
+        '<div class="q-answer-feedback"><p class="q-answer-feedback-item">'
+        'Incorreta. Gabarito oficial da banca: '
+        '<span class="hide-question-answer-template">'
+        '<b><span class="js-question-right-answer" role="text" aria-label="B">B</span></b>'
+        '</span></p></div></div>'
+    )
+    gabarito, comentario = scraper_qc.extrair_resposta_do_bloco(bloco_html, "A")
+    assert gabarito == "B"
+    assert comentario is None
+
+
+def test_extrair_resposta_do_bloco_quando_acertou():
+    # Quando a marcada é a certa, js-question-right-answer fica vazio; o
+    # gabarito é a própria letra marcada, sinalizado pelo feedback de acerto.
+    bloco_html = (
+        '<div class="js-response-correct q-inline-answer q-correct feedback-redesign" role="alert">'
+        '<div class="q-answer-feedback"><p class="q-answer-feedback-item">'
+        'Parabéns! Você acertou!</p></div></div>'
+    )
+    gabarito, comentario = scraper_qc.extrair_resposta_do_bloco(bloco_html, "b")
+    assert gabarito == "B"
+    assert comentario is None
+
+
+def test_extrair_resposta_do_bloco_sem_nada():
+    assert scraper_qc.extrair_resposta_do_bloco("<div></div>", "A") == (None, None)
