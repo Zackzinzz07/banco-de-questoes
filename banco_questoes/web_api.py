@@ -97,6 +97,11 @@ def coletar():
     return {"ok": True}
 
 
+pasta_web = PASTA / "web"
+if pasta_web.exists():
+    app.mount("/", StaticFiles(directory=str(pasta_web), html=True), name="web")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
