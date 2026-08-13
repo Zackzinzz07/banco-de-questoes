@@ -1,0 +1,9 @@
+services:
+  banco-questoes:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./banco_questoes:/app
+    environment:
+      - COLETA_DISPONIVEL=0
