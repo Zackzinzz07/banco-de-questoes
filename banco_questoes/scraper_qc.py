@@ -14,7 +14,6 @@ import re
 from pathlib import Path
 
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 # ── SELETORES CENTRALIZADOS (ajustar aqui se o QC mudar o layout) ──────────
 # Calibrados contra fixture real (tests/fixtures/pagina_qc.html): ver notas
@@ -93,18 +92,15 @@ def extrair_blocos(html):
     return [q for q in questoes if q["id_qc"] and q["enunciado"] and q["alternativas"]]
 
 
-def abrir_chrome():
-    """Abre o Chrome (via Playwright) usando o perfil dedicado do scraper.
+HEADLESS = False  # o Cloudflare do QC bloqueia navegador invisível ("Um momento…");
+                  # a coleta roda com janela visível — pode minimizar que ela trabalha sozinha
 
-    Login precisa ser feito uma vez interativamente (ver
-    salvar_html_exemplo.py); depois disso o perfil mantém a sessão salva em
-    disco e as próximas aberturas já entram logadas.
 
-    Retorna o BrowserContext (persistente); a página inicial é
-    `contexto.pages[0]` (ou `contexto.new_page()` se ainda não houver
-    nenhuma). É responsabilidade de quem chama fechar o contexto
-    (`contexto.close()`) ao terminar.
-    """
-    p = sync_playwright().start()
-    return p.chromium.launch_persistent_context(
-        str(PERFIL_CHROME), channel="chrome", headless=False)
+def abrir_navegador(p, headless=HEADLESS):
+    """Chrome com o perfil dedicado do scraper (login fica salvo nele).
+
+    Recebe a instância do sync_playwright (use `with sync_playwright() as p:`)."""
+    contexto = p.chromium.launch_persistent_context(
+        str(PERFIL_CHROME), channel="chrome", headless=headless)
+    pagina = contexto.pages[0] if contexto.pages else contexto.new_page()
+    return contexto, pagina
