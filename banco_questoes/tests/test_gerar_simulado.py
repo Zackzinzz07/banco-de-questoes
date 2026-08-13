@@ -94,3 +94,24 @@ def test_texto_base_anunciado(tmp_path, monkeypatch):
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
     assert "Texto para a questão 1." in texto
     assert "TEXTOBASEEXCLUSIVO" in texto
+
+
+def test_gerar_completo(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    materias = ["Língua Portuguesa", "SUAS", "Direito Administrativo"]
+    n = 0
+    for m in materias:
+        for i in range(4):
+            q = questao_fake(n); q["materia"] = m; q["id_qc"] = f"QG{n}"
+            db.salvar_questao(con, q); n += 1
+    saida = tmp_path / "geral.pdf"
+    caminho = gerar_simulado.gerar_completo(12, saida, con=con)
+    assert caminho == saida and saida.read_bytes()[:5] == b"%PDF-"
+    usadas = con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()["c"]
+    assert usadas > 0
+
+
+def test_gerar_completo_banco_vazio(tmp_path, capsys):
+    con = db.conectar(tmp_path / "t.db")
+    assert gerar_simulado.gerar_completo(10, tmp_path / "x.pdf", con=con) is None
+    assert "Nenhuma questão" in capsys.readouterr().out

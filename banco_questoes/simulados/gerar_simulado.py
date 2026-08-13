@@ -14,7 +14,7 @@ from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (BaseDocTemplate, Frame, FrameBreak, Image,
                                 NextPageTemplate, PageBreak, PageTemplate,
-                                Paragraph, Spacer)
+                                Paragraph, SimpleDocTemplate, Spacer)
 
 import db
 
@@ -224,6 +224,73 @@ def gerar(materia, quantidade, arquivo_saida=None, con=None):
 
     db.marcar_usadas(con, [q["id"] for q in questoes])
     print(f"Simulado gerado: {arquivo_saida} ({len(questoes)} questões)")
+    if con_proprio:
+        con.close()
+    return arquivo_saida
+
+
+def gerar_completo(quantidade, arquivo_saida=None, con=None):
+    """Simulado Geral: distribui a quantidade pelas matérias (edital.PESOS)."""
+    import edital
+    con_proprio = con is None
+    if con_proprio:
+        con = db.conectar()
+    dist = edital.distribuir_por_peso(quantidade)
+    blocos = []
+    for materia, n in dist.items():
+        if n <= 0:
+            continue
+        qs = db.sortear_questoes(con, materia, n)
+        if qs:
+            blocos.append((materia, qs))
+    if not blocos:
+        print("Nenhuma questão no banco ainda. Rode os coletores primeiro.")
+        if con_proprio:
+            con.close()
+        return None
+
+    total = sum(len(qs) for _, qs in blocos)
+    if arquivo_saida is None:
+        arquivo_saida = (Path(__file__).resolve().parent
+                         / f"simulado_geral_{date.today():%Y%m%d}.pdf")
+    arquivo_saida = Path(arquivo_saida)
+
+    doc = SimpleDocTemplate(str(arquivo_saida), pagesize=A4,
+                            leftMargin=2 * cm, rightMargin=2 * cm,
+                            topMargin=2 * cm, bottomMargin=2 * cm,
+                            title="Simulado Geral — SEDES/DF")
+    story = [Paragraph("SIMULADO GERAL", e_secao),
+             Paragraph(f"{total} questões de todas as matérias", e_questao),
+             Spacer(1, 0.8 * cm)]
+    numero = 0
+    for materia, qs in blocos:
+        story.append(Paragraph(escape(materia).upper(), e_secao))
+        for q in qs:
+            numero += 1
+            story.append(Paragraph(f"<b>QUESTÃO {numero}.</b> {escape(q['enunciado'])}", e_questao))
+            origem = _origem(q)
+            if origem:
+                story.append(Paragraph(escape(origem), e_origem))
+            for letra in sorted(q["alternativas"]):
+                story.append(Paragraph(f"({letra}) {escape(q['alternativas'][letra])}", e_alt))
+        story.append(Spacer(1, 0.5 * cm))
+
+    story.append(PageBreak())
+    story.append(Paragraph("GABARITO COMENTADO", e_secao))
+    numero = 0
+    for materia, qs in blocos:
+        for q in qs:
+            numero += 1
+            letra = q["gabarito"] or "— (gabarito ainda não coletado)"
+            linha = f"<b>{numero}. {escape(letra)}</b>"
+            if q.get("comentario"):
+                linha += f" — {escape(q['comentario'])}"
+            story.append(Paragraph(linha, e_gab))
+
+    doc.build(story)
+    for _, qs in blocos:
+        db.marcar_usadas(con, [q["id"] for q in qs])
+    print(f"Simulado Geral gerado: {arquivo_saida} ({total} questões)")
     if con_proprio:
         con.close()
     return arquivo_saida
