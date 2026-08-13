@@ -37,6 +37,9 @@ SELETORES = {
     "letra_alternativa": ".q-option-item",
     "info": ".q-question-info",           # linha com Ano/Banca/Órgão/Prova(s)
     "breadcrumb": ".q-question-breadcrumb",  # matéria e assunto (links <a>)
+    # Texto-base/imagem da questão. Vem no HTML mesmo com o bloco recolhido
+    # (Bootstrap collapse esconde só por CSS) — não precisa clicar.
+    "texto_associado": "div[id$='-text'].collapse",
     # Fase de gabaritos — calibrados contra o markup REAL capturado ao vivo na
     # própria página de LISTAGEM (busca por matéria). Achado importante: cada
     # bloco de questão já carrega sua própria UI de resposta (rádios +
@@ -109,6 +112,9 @@ def extrair_blocos(html):
         links_trilha = bloco.select(f"{SELETORES['breadcrumb']} a")
         materia_qc = _texto(links_trilha[0]) if links_trilha else None
         assunto = _texto(links_trilha[1]).rstrip(" ,") if len(links_trilha) > 1 else None
+        area = bloco.select_one(SELETORES["texto_associado"])
+        texto_assoc = _texto(area) if area else ""
+        imagens = [i.get("src") for i in area.select("img") if i.get("src")] if area else []
         questoes.append({
             "id_qc": id_match.group(0) if id_match else None,
             "enunciado": _texto(bloco.select_one(SELETORES["enunciado"])),
@@ -119,6 +125,8 @@ def extrair_blocos(html):
             "banca": campos.get("Banca") or None,
             "orgao": campos.get("Órgão") or None,
             "prova": campos.get("Prova") or None,
+            "texto_associado": texto_assoc,
+            "imagens": imagens,
         })
     return [q for q in questoes if q["id_qc"] and q["enunciado"] and q["alternativas"]]
 
@@ -161,8 +169,13 @@ def salvar_pagina(html, con, materia):
             "ano": q["ano"],
             "prova": q["prova"],
             "fonte": "qconcursos",
+            "texto_associado": q["texto_associado"],
+            "imagens": q["imagens"],
         })
-        novas += 1 if salvou else 0
+        if salvou:
+            novas += 1
+        else:
+            db.completar_texto_associado(con, q["id_qc"], q["texto_associado"], q["imagens"])
     return novas
 
 

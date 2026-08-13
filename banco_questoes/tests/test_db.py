@@ -100,6 +100,40 @@ def test_progresso(tmp_path):
     assert db.obter_progresso(con, "Direito Administrativo") == 8
 
 
+def test_salva_e_le_texto_associado(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    q = questao_exemplo(texto_associado="Poema base da questão.",
+                        imagens=["https://x/a.png"])
+    db.salvar_questao(con, q)
+    lida = db.sortear_questoes(con, "Língua Portuguesa", 1)[0]
+    assert lida["texto_associado"] == "Poema base da questão."
+    assert lida["imagens"] == ["https://x/a.png"]
+
+
+def test_completar_texto_associado_preenche_so_quando_vazio(tmp_path):
+    con = db.conectar(tmp_path / "t.db")
+    db.salvar_questao(con, questao_exemplo(id_qc="QT1"))
+    assert db.completar_texto_associado(con, "QT1", "Texto novo.", ["u1"]) is True
+    assert db.completar_texto_associado(con, "QT1", "Outro texto.", []) is False
+    linha = con.execute("SELECT texto_associado FROM questoes WHERE id_qc='QT1'").fetchone()
+    assert linha["texto_associado"] == "Texto novo."
+
+
+def test_migracao_em_banco_antigo(tmp_path):
+    import sqlite3
+    caminho = tmp_path / "antigo.db"
+    antigo = sqlite3.connect(caminho)
+    antigo.execute("CREATE TABLE questoes (id INTEGER PRIMARY KEY, id_qc TEXT UNIQUE,"
+                   " enunciado TEXT, hash_enunciado TEXT UNIQUE, alternativas TEXT,"
+                   " gabarito TEXT, comentario TEXT, materia TEXT, assunto TEXT,"
+                   " banca TEXT, orgao TEXT, ano INTEGER, prova TEXT, fonte TEXT,"
+                   " usada_em_simulado INTEGER DEFAULT 0)")
+    antigo.commit(); antigo.close()
+    con = db.conectar(caminho)  # não pode explodir
+    colunas = {l["name"] for l in con.execute("PRAGMA table_info(questoes)")}
+    assert {"texto_associado", "imagens"} <= colunas
+
+
 def test_sem_gabarito_e_atualizar(tmp_path):
     con = db.conectar(tmp_path / "t.db")
     db.salvar_questao(con, questao_exemplo(id_qc="Q1", gabarito=None, enunciado="Um?"))

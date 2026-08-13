@@ -5,6 +5,7 @@ import pytest
 import scraper_qc
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pagina_qc.html"
+FIXTURE_RESPONDIDA = Path(__file__).parent / "fixtures" / "questao_respondida.html"
 
 
 @pytest.fixture
@@ -109,3 +110,15 @@ def test_extrair_resposta_do_bloco_quando_acertou():
 
 def test_extrair_resposta_do_bloco_sem_nada():
     assert scraper_qc.extrair_resposta_do_bloco("<div></div>", "A") == (None, None)
+
+
+def test_extrai_texto_associado_e_imagens():
+    if not FIXTURE_RESPONDIDA.exists():
+        pytest.skip("fixture questao_respondida.html ausente")
+    blocos = scraper_qc.extrair_blocos(FIXTURE_RESPONDIDA.read_text(encoding="utf-8"))
+    assert blocos, "fixture deveria ter questões"
+    com_texto = [b for b in blocos if b["texto_associado"]]
+    com_imagem = [b for b in blocos if b["imagens"]]
+    assert com_texto, "a fixture tem questões com texto-base"
+    assert com_imagem, "a fixture tem questões com imagem"
+    assert all(u.startswith("http") for b in com_imagem for u in b["imagens"])

@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS questoes (
     ano INTEGER,
     prova TEXT,
     fonte TEXT NOT NULL CHECK (fonte IN ('qconcursos', 'quadrix_pdf')),
-    usada_em_simulado INTEGER NOT NULL DEFAULT 0
+    usada_em_simulado INTEGER NOT NULL DEFAULT 0,
+    texto_associado TEXT,
+    imagens TEXT
 );
 CREATE TABLE IF NOT EXISTS progresso_scraper (
     materia TEXT PRIMARY KEY,
@@ -36,7 +38,17 @@ def conectar(caminho=None):
     con = sqlite3.connect(caminho or ARQUIVO_BANCO)
     con.row_factory = sqlite3.Row
     con.executescript(SQL_CRIAR)
+    _migrar(con)
     return con
+
+
+def _migrar(con):
+    """Acrescenta colunas novas em bancos criados antes desta versão."""
+    colunas = {l["name"] for l in con.execute("PRAGMA table_info(questoes)")}
+    for nome in ("texto_associado", "imagens"):
+        if nome not in colunas:
+            con.execute(f"ALTER TABLE questoes ADD COLUMN {nome} TEXT")
+    con.commit()
 
 
 def normalizar_enunciado(texto):
@@ -56,8 +68,9 @@ def salvar_questao(con, q):
     try:
         con.execute(
             "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, alternativas,"
-            " gabarito, comentario, materia, assunto, banca, orgao, ano, prova, fonte)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " gabarito, comentario, materia, assunto, banca, orgao, ano, prova, fonte,"
+            " texto_associado, imagens)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 q.get("id_qc"),
                 q["enunciado"],
@@ -72,6 +85,8 @@ def salvar_questao(con, q):
                 q.get("ano"),
                 q.get("prova"),
                 fonte,
+                q.get("texto_associado"),
+                json.dumps(q["imagens"], ensure_ascii=False) if q.get("imagens") else None,
             ),
         )
         con.commit()
@@ -97,6 +112,7 @@ def sortear_questoes(con, materia, quantidade):
         questoes += [dict(l) for l in repetidas]
     for q in questoes:
         q["alternativas"] = json.loads(q["alternativas"])
+        q["imagens"] = json.loads(q["imagens"]) if q["imagens"] else []
     return questoes
 
 
@@ -135,3 +151,17 @@ def atualizar_gabarito(con, id_qc, gabarito, comentario=None):
     con.execute("UPDATE questoes SET gabarito=?, comentario=? WHERE id_qc=?",
                 (gabarito, comentario, id_qc))
     con.commit()
+
+
+def completar_texto_associado(con, id_qc, texto, imagens):
+    """Preenche texto/imagens de uma questão já salva que ainda não os tinha."""
+    if not id_qc or (not texto and not imagens):
+        return False
+    cur = con.execute(
+        "UPDATE questoes SET texto_associado=?, imagens=? WHERE id_qc=?"
+        " AND (texto_associado IS NULL OR texto_associado='')"
+        " AND (imagens IS NULL OR imagens='')",
+        (texto or None, json.dumps(imagens, ensure_ascii=False) if imagens else None,
+         id_qc))
+    con.commit()
+    return cur.rowcount > 0

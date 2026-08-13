@@ -1,17 +1,23 @@
 """Motor de simulados em PDF: capa, questões numeradas e gabarito comentado."""
+import hashlib
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlparse
 from xml.sax.saxutils import escape
 
+import requests
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.platypus import (PageBreak, Paragraph, SimpleDocTemplate, Spacer,
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import (Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer,
                                 Table, TableStyle)
 
 import db
+
+PASTA_IMAGENS = Path(__file__).resolve().parent.parent / "imagens_cache"
 
 AZUL = colors.HexColor("#1B3A6B")
 CINZA = colors.HexColor("#5A6A85")
@@ -37,6 +43,26 @@ e_origem = _estilo("Origem", fontSize=8, textColor=CINZA)
 e_enunciado = _estilo("Enunciado", alignment=TA_JUSTIFY, spaceAfter=4)
 e_alt = _estilo("Alt", leftIndent=0.6 * cm)
 e_gab = _estilo("Gab", fontSize=9.5, leading=13, spaceAfter=4)
+e_texto_base = _estilo("TextoBase", fontSize=9, leading=12, alignment=TA_JUSTIFY,
+                       leftIndent=0.4 * cm, textColor=CINZA, spaceAfter=6)
+
+
+def _imagem(url, largura_max=W - 4 * cm):
+    """Baixa (com cache) e devolve a imagem já escalada, ou None se falhar."""
+    try:
+        sufixo = Path(urlparse(url).path).suffix[:5] or ".png"
+        destino = PASTA_IMAGENS / (hashlib.sha1(url.encode()).hexdigest() + sufixo)
+        if not destino.exists():
+            PASTA_IMAGENS.mkdir(parents=True, exist_ok=True)
+            resposta = requests.get(url, timeout=30)
+            resposta.raise_for_status()
+            destino.write_bytes(resposta.content)
+        largura, altura = ImageReader(str(destino)).getSize()
+        escala = min(1.0, largura_max / largura, (12 * cm) / altura)
+        return Image(str(destino), largura * escala, altura * escala)
+    except Exception as erro:
+        print(f"  (imagem não incluída: {erro.__class__.__name__})")
+        return None
 
 
 def _capa(materia, quantidade):
@@ -89,6 +115,13 @@ def gerar(materia, quantidade, arquivo_saida=None, con=None):
         origem = _origem(q)
         if origem:
             story.append(Paragraph(escape(origem), e_origem))
+        if q.get("texto_associado"):
+            story.append(Paragraph(escape(q["texto_associado"]), e_texto_base))
+        for url in (q.get("imagens") or []):
+            figura = _imagem(url)
+            if figura:
+                story.append(figura)
+                story.append(Spacer(1, 0.2 * cm))
         story.append(Paragraph(escape(q["enunciado"]), e_enunciado))
         for letra in sorted(q["alternativas"]):
             story.append(Paragraph(f"({letra}) {escape(q['alternativas'][letra])}", e_alt))

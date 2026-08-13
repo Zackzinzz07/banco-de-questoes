@@ -6,4 +6,5 @@ banco_questoes/provas_pdf/
 banco_questoes/relatorio_extracao.txt
 banco_questoes/simulados/*.pdf
 banco_questoes/perfil_chrome_scraper/
+banco_questoes/imagens_cache/
 estudos/estudos/db.sqlite3
