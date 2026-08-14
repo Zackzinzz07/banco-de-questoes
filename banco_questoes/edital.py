@@ -114,16 +114,18 @@ def materia_por_titulo(titulo):
     return None
 
 
-# Pesos para o Simulado Geral (edite à vontade; proporção aproximada da prova).
+# Pesos para o Simulado Geral (distribuição real do edital SEDES 2026).
+# Bloco Genérico (20 questões): Peso 1
+# Bloco Específico (40 questões): Peso 2
 PESOS = {
-    "Língua Portuguesa": 10,
-    "Conhecimentos do DF e Legislação": 10,
-    "SUAS": 10,
-    "Programas e Benefícios do DF": 5,
-    "Direito Constitucional": 5,
-    "Direito Administrativo": 5,
-    "Atendimento, Rotinas Administrativas e Arquivologia": 10,
-    "Recursos Materiais, Patrimônio e Compras": 5,
+    "Língua Portuguesa": 10,  # 10 do bloco genérico
+    "Conhecimentos do DF e Legislação": 10,  # 10 do bloco genérico (inclui Maria da Penha, LC 840/2011, etc)
+    "SUAS": 10,  # 10 do bloco específico
+    "Programas e Benefícios do DF": 10,  # 10 do bloco específico
+    "Direito Administrativo": 5,  # 5 do bloco específico
+    "Direito Constitucional": 5,  # 5 do bloco específico
+    "Atendimento, Rotinas Administrativas e Arquivologia": 5,  # 5 do bloco específico
+    "Recursos Materiais, Patrimônio e Compras": 5,  # 5 do bloco específico
 }
 
 

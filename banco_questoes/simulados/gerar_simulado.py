@@ -230,62 +230,97 @@ def gerar(materia, quantidade, arquivo_saida=None, con=None):
 
 
 def gerar_completo(quantidade, arquivo_saida=None, con=None):
-    """Simulado Geral: distribui a quantidade pelas matérias (edital.PESOS)."""
+    """Simulado Geral: distribui a quantidade pelas matérias (edital.PESOS) com formato profissional."""
     import edital
     con_proprio = con is None
     if con_proprio:
         con = db.conectar()
+
     dist = edital.distribuir_por_peso(quantidade)
     blocos = []
-    for materia, n in dist.items():
+
+    # Primeira passagem: tenta sortear a quantidade desejada para cada matéria
+    for materia, n in sorted(dist.items()):
         if n <= 0:
             continue
         qs = db.sortear_questoes(con, materia, n)
         if qs:
-            blocos.append((materia, qs))
+            blocos.append([materia, list(qs)])
+
     if not blocos:
         print("Nenhuma questão no banco ainda. Rode os coletores primeiro.")
         if con_proprio:
             con.close()
         return None
 
+    # Segunda passagem: redistribui o déficit até atingir a quantidade
     total = sum(len(qs) for _, qs in blocos)
+    faltam = quantidade - total
+
+    if faltam > 0:
+        for materia, n in sorted(dist.items(), key=lambda x: -x[1]):
+            if faltam == 0:
+                break
+            # Encontra o bloco desta matéria
+            for i, (mat, questoes) in enumerate(blocos):
+                if mat == materia:
+                    qs_extra = db.sortear_questoes(con, materia, faltam)
+                    if qs_extra:
+                        blocos[i][1].extend(qs_extra)
+                        faltam -= len(qs_extra)
+                    break
+
+    # Converter blocos para tuples
+    blocos = [(mat, qs) for mat, qs in blocos]
+    total = sum(len(qs) for _, qs in blocos)
+
     if arquivo_saida is None:
         arquivo_saida = (Path(__file__).resolve().parent
                          / f"simulado_geral_{date.today():%Y%m%d}.pdf")
     arquivo_saida = Path(arquivo_saida)
 
-    doc = SimpleDocTemplate(str(arquivo_saida), pagesize=A4,
-                            leftMargin=2 * cm, rightMargin=2 * cm,
-                            topMargin=2 * cm, bottomMargin=2 * cm,
-                            title="Simulado Geral — SEDES/DF")
-    story = [Paragraph("SIMULADO GERAL", e_secao),
-             Paragraph(f"{total} questões de todas as matérias", e_questao),
-             Spacer(1, 0.8 * cm)]
+    # Usa BaseDocTemplate com duas colunas como em gerar()
+    doc = _construir_doc(arquivo_saida, "Simulado Geral — SEDES/DF")
+    story = [NextPageTemplate("demais")]
+
+    # Cabeçalho profissional (largura cheia na primeira página)
+    story += [
+        Paragraph("SIMULADO GERAL — CONCURSO PÚBLICO SEDES/DF", e_prova_titulo),
+        Paragraph("SECRETARIA DE ESTADO DE DESENVOLVIMENTO SOCIAL DO DISTRITO FEDERAL",
+                  e_prova_sub),
+        Paragraph("Cargo 202: TÉCNICO EM DESENVOLVIMENTO E ASSISTÊNCIA SOCIAL (TDAS)"
+                  " — ESPECIALIDADE: TÉCNICO ADMINISTRATIVO", e_prova_cargo),
+        Paragraph(f"Simulado geral no estilo da banca Instituto Quadrix — "
+                  f"{total} questões de todas as matérias", e_prova_cargo),
+        Spacer(1, 6),
+        Paragraph("Material de estudo NÃO OFICIAL, elaborado com base no conteúdo "
+                  "programático do edital de abertura. Não possui vínculo com o "
+                  "Instituto Quadrix ou com a SEDES/DF.", e_aviso),
+        Spacer(1, 6),
+        Paragraph("<b>LEIA AS INSTRUÇÕES:</b>", e_instrucoes),
+        Paragraph("Cada questão possui até 5 (cinco) opções de resposta e apenas "
+                  "uma resposta correta, conforme o padrão da prova objetiva do "
+                  "edital.", e_instrucoes),
+        Paragraph(f"Tempo sugerido: {total * 3} minutos, sem consulta.", e_instrucoes),
+        Paragraph("O gabarito comentado encontra-se ao final do caderno.",
+                  e_instrucoes),
+    ]
+    story.append(FrameBreak())
+
+    # Questões por matéria
     numero = 0
     for materia, qs in blocos:
         story.append(Paragraph(escape(materia).upper(), e_secao))
         for q in qs:
             numero += 1
-            story.append(Paragraph(f"<b>QUESTÃO {numero}.</b> {escape(q['enunciado'])}", e_questao))
-            origem = _origem(q)
-            if origem:
-                story.append(Paragraph(escape(origem), e_origem))
-            for letra in sorted(q["alternativas"]):
-                story.append(Paragraph(f"({letra}) {escape(q['alternativas'][letra])}", e_alt))
-        story.append(Spacer(1, 0.5 * cm))
+            story += _questao_flowables(numero, q)
 
+    # Gabarito em duas colunas
     story.append(PageBreak())
-    story.append(Paragraph("GABARITO COMENTADO", e_secao))
-    numero = 0
-    for materia, qs in blocos:
-        for q in qs:
-            numero += 1
-            letra = q["gabarito"] or "— (gabarito ainda não coletado)"
-            linha = f"<b>{numero}. {escape(letra)}</b>"
-            if q.get("comentario"):
-                linha += f" — {escape(q['comentario'])}"
-            story.append(Paragraph(linha, e_gab))
+    todas_qs = []
+    for _, qs in blocos:
+        todas_qs.extend(qs)
+    story += _gabarito_flowables(todas_qs)
 
     doc.build(story)
     for _, qs in blocos:
