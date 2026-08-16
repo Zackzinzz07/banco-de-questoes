@@ -13,7 +13,7 @@ with sync_playwright() as p:
     try:
         for materia in edital.nomes_materias():
             url_base = edital.MATERIAS[materia]["url_qc"]
-            ultima = db.obter_progresso(con, materia)
+            ultima = db.obter_progresso(con, "qconcursos", materia)
             if not url_base or ultima == 0:
                 continue
             for pagina in range(1, ultima + 1):
