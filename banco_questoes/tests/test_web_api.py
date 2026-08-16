@@ -1,10 +1,11 @@
+import config
 import db
 import web_api
 from fastapi.testclient import TestClient
 
 
 def cliente_com_banco(tmp_path, monkeypatch):
-    monkeypatch.setattr(db, "ARQUIVO_BANCO", tmp_path / "t.db")
+    monkeypatch.setattr(db, "DATABASE_URL", config.TEST_DATABASE_URL)
     monkeypatch.setattr(web_api, "PASTA_SIMULADOS", tmp_path)
     return TestClient(web_api.app)
 
@@ -24,7 +25,7 @@ def test_materias(tmp_path, monkeypatch):
 
 def test_simulado_materia_e_download(tmp_path, monkeypatch):
     cliente = cliente_com_banco(tmp_path, monkeypatch)
-    con = db.conectar(tmp_path / "t.db")
+    con = db.conectar()
     for i in range(3):
         db.salvar_questao(con, {
             "id_qc": f"QW{i}", "enunciado": f"Enunciado {i}?",
