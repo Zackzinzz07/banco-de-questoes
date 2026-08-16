@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
+.env
 banco_questoes/banco_de_questoes.db
 banco_questoes/provas_pdf/
 banco_questoes/relatorio_extracao.txt
