@@ -1,15 +1,21 @@
-"""Banco SQLite de questões: conexão, criação de tabelas, salvar com dedupe."""
+"""Banco PostgreSQL de questões: conexão, criação de tabelas, salvar com dedupe."""
 import hashlib
 import json
 import re
-import sqlite3
-from pathlib import Path
 
-ARQUIVO_BANCO = Path(__file__).resolve().parent / "banco_de_questoes.db"
+import psycopg2
+import psycopg2.errors
+from psycopg2.extras import RealDictCursor
+
+import config
+
+DATABASE_URL = config.DATABASE_URL
+
+FONTES_VALIDAS = {"qconcursos", "quadrix_pdf", "pci"}
 
 SQL_CRIAR = """
 CREATE TABLE IF NOT EXISTS questoes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     id_qc TEXT UNIQUE,
     enunciado TEXT NOT NULL,
     hash_enunciado TEXT UNIQUE NOT NULL,
@@ -22,33 +28,68 @@ CREATE TABLE IF NOT EXISTS questoes (
     orgao TEXT,
     ano INTEGER,
     prova TEXT,
-    fonte TEXT NOT NULL CHECK (fonte IN ('qconcursos', 'quadrix_pdf')),
+    fonte TEXT NOT NULL,
     usada_em_simulado INTEGER NOT NULL DEFAULT 0,
     texto_associado TEXT,
     imagens TEXT
 );
+CREATE INDEX IF NOT EXISTS idx_questoes_materia_usada ON questoes(materia, usada_em_simulado);
+CREATE INDEX IF NOT EXISTS idx_questoes_fonte ON questoes(fonte);
 CREATE TABLE IF NOT EXISTS progresso_scraper (
-    materia TEXT PRIMARY KEY,
-    ultima_pagina INTEGER NOT NULL
+    fonte TEXT NOT NULL,
+    chave TEXT NOT NULL,
+    ultima_pagina INTEGER NOT NULL,
+    PRIMARY KEY (fonte, chave)
 );
 """
 
 
+class _Conexao:
+    """Wrapper fino sobre a conexão psycopg2, para manter a API antiga do
+    sqlite3.Connection usada em todo o código (con.execute(...).fetchone()/
+    fetchall(), con.executemany(...), con.commit(), con.close()).
+
+    Cursores usam RealDictCursor (herdado do cursor_factory da conexão), então
+    as linhas suportam dict(linha) e linha["coluna"] como o sqlite3.Row antigo.
+    """
+
+    def __init__(self, con):
+        self._con = con
+
+    def execute(self, sql, params=None):
+        cur = self._con.cursor()
+        cur.execute(sql, params or None)
+        return cur
+
+    def executemany(self, sql, params_list):
+        cur = self._con.cursor()
+        cur.executemany(sql, params_list)
+        return cur
+
+    def cursor(self, *args, **kwargs):
+        return self._con.cursor(*args, **kwargs)
+
+    def commit(self):
+        self._con.commit()
+
+    def rollback(self):
+        self._con.rollback()
+
+    def close(self):
+        self._con.close()
+
+
 def conectar(caminho=None):
-    con = sqlite3.connect(caminho or ARQUIVO_BANCO)
-    con.row_factory = sqlite3.Row
-    con.executescript(SQL_CRIAR)
-    _migrar(con)
-    return con
+    """Abre conexão com o PostgreSQL e garante que as tabelas existam.
 
-
-def _migrar(con):
-    """Acrescenta colunas novas em bancos criados antes desta versão."""
-    colunas = {l["name"] for l in con.execute("PRAGMA table_info(questoes)")}
-    for nome in ("texto_associado", "imagens"):
-        if nome not in colunas:
-            con.execute(f"ALTER TABLE questoes ADD COLUMN {nome} TEXT")
+    `caminho` é um parâmetro legado (do tempo do SQLite) mantido só por
+    compatibilidade retroativa com chamadas existentes; é ignorado — a
+    conexão sempre usa `DATABASE_URL` (de config.py).
+    """
+    con = _Conexao(psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor))
+    con.execute(SQL_CRIAR)
     con.commit()
+    return con
 
 
 def normalizar_enunciado(texto):
@@ -62,15 +103,15 @@ def hash_enunciado(texto):
 def salvar_questao(con, q):
     """Insere a questão; retorna True se inseriu, False se já existia (dedupe)."""
     fonte = q.get("fonte")
-    if fonte not in ("qconcursos", "quadrix_pdf"):
-        raise ValueError(f"fonte inválida: '{fonte}'. Use 'qconcursos' ou 'quadrix_pdf'.")
+    if fonte not in FONTES_VALIDAS:
+        raise ValueError(f"fonte inválida: '{fonte}'. Use {', '.join(sorted(FONTES_VALIDAS))}.")
 
     try:
         con.execute(
             "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, alternativas,"
             " gabarito, comentario, materia, assunto, banca, orgao, ano, prova, fonte,"
             " texto_associado, imagens)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 q.get("id_qc"),
                 q["enunciado"],
@@ -91,21 +132,22 @@ def salvar_questao(con, q):
         )
         con.commit()
         return True
-    except sqlite3.IntegrityError:
+    except psycopg2.errors.UniqueViolation:
+        con.rollback()  # CRITICAL: evita "current transaction is aborted"
         return False
 
 
 def sortear_questoes(con, materia, quantidade):
     """Sorteia questões não usadas; se faltar, avisa e completa com repetidas."""
     linhas = con.execute(
-        "SELECT * FROM questoes WHERE materia=? AND usada_em_simulado=0"
-        " ORDER BY RANDOM() LIMIT ?", (materia, quantidade)).fetchall()
+        "SELECT * FROM questoes WHERE materia=%s AND usada_em_simulado=0"
+        " ORDER BY RANDOM() LIMIT %s", (materia, quantidade)).fetchall()
     questoes = [dict(l) for l in linhas]
     faltam = quantidade - len(questoes)
     if faltam > 0:
         repetidas = con.execute(
-            "SELECT * FROM questoes WHERE materia=? AND usada_em_simulado=1"
-            " ORDER BY RANDOM() LIMIT ?", (materia, faltam)).fetchall()
+            "SELECT * FROM questoes WHERE materia=%s AND usada_em_simulado=1"
+            " ORDER BY RANDOM() LIMIT %s", (materia, faltam)).fetchall()
         if repetidas:
             print(f"Aviso: só {len(questoes)} questões inéditas de {materia};"
                   f" completando com {len(repetidas)} repetidas.")
@@ -117,7 +159,7 @@ def sortear_questoes(con, materia, quantidade):
 
 
 def marcar_usadas(con, ids):
-    con.executemany("UPDATE questoes SET usada_em_simulado=1 WHERE id=?",
+    con.executemany("UPDATE questoes SET usada_em_simulado=1 WHERE id=%s",
                     [(i,) for i in ids])
     con.commit()
 
@@ -127,17 +169,18 @@ def zerar_usadas(con):
     con.commit()
 
 
-def obter_progresso(con, materia):
-    linha = con.execute("SELECT ultima_pagina FROM progresso_scraper WHERE materia=?",
-                        (materia,)).fetchone()
+def obter_progresso(con, fonte, chave):
+    linha = con.execute(
+        "SELECT ultima_pagina FROM progresso_scraper WHERE fonte=%s AND chave=%s",
+        (fonte, chave)).fetchone()
     return linha["ultima_pagina"] if linha else 0
 
 
-def salvar_progresso(con, materia, pagina):
+def salvar_progresso(con, fonte, chave, pagina):
     con.execute(
-        "INSERT INTO progresso_scraper (materia, ultima_pagina) VALUES (?,?)"
-        " ON CONFLICT(materia) DO UPDATE SET ultima_pagina=excluded.ultima_pagina",
-        (materia, pagina))
+        "INSERT INTO progresso_scraper (fonte, chave, ultima_pagina) VALUES (%s,%s,%s)"
+        " ON CONFLICT (fonte, chave) DO UPDATE SET ultima_pagina=excluded.ultima_pagina",
+        (fonte, chave, pagina))
     con.commit()
 
 
@@ -148,7 +191,7 @@ def sem_gabarito(con):
 
 
 def atualizar_gabarito(con, id_qc, gabarito, comentario=None):
-    con.execute("UPDATE questoes SET gabarito=?, comentario=? WHERE id_qc=?",
+    con.execute("UPDATE questoes SET gabarito=%s, comentario=%s WHERE id_qc=%s",
                 (gabarito, comentario, id_qc))
     con.commit()
 
@@ -158,7 +201,7 @@ def completar_texto_associado(con, id_qc, texto, imagens):
     if not id_qc or (not texto and not imagens):
         return False
     cur = con.execute(
-        "UPDATE questoes SET texto_associado=?, imagens=? WHERE id_qc=?"
+        "UPDATE questoes SET texto_associado=%s, imagens=%s WHERE id_qc=%s"
         " AND (texto_associado IS NULL OR texto_associado='')"
         " AND (imagens IS NULL OR imagens='')",
         (texto or None, json.dumps(imagens, ensure_ascii=False) if imagens else None,

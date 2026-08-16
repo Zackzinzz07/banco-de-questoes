@@ -4,7 +4,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: banco_questoes
     ports:
       - "5432:5432"
     volumes:

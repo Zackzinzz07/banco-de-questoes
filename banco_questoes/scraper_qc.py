@@ -400,7 +400,7 @@ def coletar_enunciados():
                 if not url_base:
                     print(f"[{materia}] sem url_qc no edital.py — pulando.")
                     continue
-                pagina = db.obter_progresso(con, materia) + 1
+                pagina = db.obter_progresso(con, "qconcursos", materia) + 1
                 fim = pagina + MAX_PAGINAS_POR_MATERIA
                 while pagina < fim:
                     aba.goto(url_pagina(url_base, pagina))
@@ -409,7 +409,7 @@ def coletar_enunciados():
                     novas = salvar_pagina(html, con, materia)
                     total_blocos = len(extrair_blocos(html))
                     print(f"[{materia}] página {pagina}: {novas} novas ({total_blocos} na página)")
-                    db.salvar_progresso(con, materia, pagina)
+                    db.salvar_progresso(con, "qconcursos", materia, pagina)
                     if total_blocos == 0:  # acabaram as páginas (ou caiu o login)
                         break
                     pagina += 1
