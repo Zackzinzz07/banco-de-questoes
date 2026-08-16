@@ -28,6 +28,8 @@ services:
       - ./banco_questoes:/app
     environment:
       - COLETA_DISPONIVEL=0
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/banco_questoes
+      - TEST_DATABASE_URL=postgresql://postgres:postgres@db:5432/banco_questoes_test
     depends_on:
       db:
         condition: service_healthy
