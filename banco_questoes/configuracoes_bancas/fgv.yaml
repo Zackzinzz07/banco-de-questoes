@@ -1,0 +1,36 @@
+fgv:
+  nome_oficial: "Fundação Getulio Vargas (FGV Conhecimento)"
+  estilo_visual:
+    fonte_titulo: "Arial / Times New Roman Bold, 11pt"
+    fonte_corpo: "Times New Roman / Arial, 9.5pt-10pt"
+    layout_colunas: 2
+    divisor_colunas: "Linha vertical continua fina"
+    cores_dominantes: ["Preto", "Branco"]
+    elementos_graficos:
+      cabecalho: "Marca 'FGV CONHECIMENTO' e indicação da Cor/Tipo de Prova"
+      rodape: "Marcador no formato 'TIPO 1 - PÁGINA X'"
+    margens:
+      superior_cm: 2.0
+      inferior_cm: 2.0
+      esquerda_cm: 1.5
+      direita_cm: 1.5
+    caixa_instrucoes: "Capa minimalista limpa com regras de aplicação e horário"
+  caracteristicas_prova:
+    tipo_predominante: "Múltipla Escolha (5 alternativas: A, B, C, D, E)"
+    total_questoes_padrao: 70
+    frase_antifraude_exemplo: "Não utiliza frase; adota variação por Cor de Caderno (Tipo 1, 2, 3, 4)"
+    altura_media_questao_cm: 11.0
+    densidade_texto: "Extremamente Alta; enunciados extensos e causos práticos"
+  estrutura_disciplinas_padrao:
+    - ordem: 1
+      nome: "Língua Portuguesa (Interpretação e Semântica)"
+      quantidade_questoes: 15
+    - ordem: 2
+      nome: "Raciocínio Lógico-Matemático / Inglês"
+      quantidade_questoes: 10
+    - ordem: 3
+      nome: "Noções de Direito e Legislação Institucional"
+      quantidade_questoes: 10
+    - ordem: 4
+      nome: "Conhecimentos Específicos"
+      quantidade_questoes: 35
