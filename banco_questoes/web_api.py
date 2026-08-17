@@ -300,6 +300,103 @@ def stats_cargo(orgao: str, cargo: str):
         con.close()
 
 
+@app.get("/api/stats/pci")
+def stats_pci_global():
+    """Estatisticas do PCI: total + por categoria."""
+    con = db.conectar()
+    try:
+        from psycopg2.extras import RealDictCursor
+        cur = con.cursor(cursor_factory=RealDictCursor)
+
+        # Total PCI
+        cur.execute("SELECT COUNT(*) as total FROM questoes WHERE fonte = 'pci'")
+        total_pci = cur.fetchone()["total"]
+
+        # Por categoria
+        cur.execute("""
+            SELECT categoria, COUNT(*) as qtd
+            FROM questoes
+            WHERE fonte = 'pci' AND categoria IS NOT NULL
+            GROUP BY categoria
+            ORDER BY qtd DESC
+        """)
+
+        por_categoria = {}
+        for row in cur.fetchall():
+            cat = row["categoria"]
+            por_categoria[cat] = {
+                "total": row["qtd"],
+                "temas": {}
+            }
+
+        # Para cada categoria, pegar temas
+        for categoria in por_categoria.keys():
+            cur.execute("""
+                SELECT tema, COUNT(*) as qtd,
+                       COUNT(CASE WHEN imagens_urls != '[]'::jsonb THEN 1 END) as com_imagens
+                FROM questoes
+                WHERE fonte = 'pci' AND categoria = %s AND tema IS NOT NULL
+                GROUP BY tema
+                ORDER BY qtd DESC
+            """, (categoria,))
+
+            for row in cur.fetchall():
+                por_categoria[categoria]["temas"][row["tema"]] = {
+                    "total": row["qtd"],
+                    "com_imagens": row["com_imagens"]
+                }
+
+        return {
+            "total_pci": total_pci,
+            "por_categoria": por_categoria
+        }
+    finally:
+        con.close()
+
+
+@app.get("/api/stats/pci/{categoria}")
+def stats_pci_categoria(categoria: str):
+    """Estatisticas de uma categoria especifica do PCI."""
+    con = db.conectar()
+    try:
+        from psycopg2.extras import RealDictCursor
+        cur = con.cursor(cursor_factory=RealDictCursor)
+
+        # Total categoria
+        cur.execute("""
+            SELECT COUNT(*) as total FROM questoes
+            WHERE fonte = 'pci' AND categoria = %s
+        """, (categoria,))
+        total = cur.fetchone()["total"]
+
+        # Por tema
+        cur.execute("""
+            SELECT tema, COUNT(*) as qtd,
+                   COUNT(CASE WHEN imagens_urls != '[]'::jsonb THEN 1 END) as com_imagens
+            FROM questoes
+            WHERE fonte = 'pci' AND categoria = %s AND tema IS NOT NULL
+            GROUP BY tema
+            ORDER BY qtd DESC
+        """, (categoria,))
+
+        por_tema = {}
+        for row in cur.fetchall():
+            pct = round((row["com_imagens"] / row["qtd"] * 100), 1) if row["qtd"] > 0 else 0
+            por_tema[row["tema"]] = {
+                "total": row["qtd"],
+                "com_imagens": row["com_imagens"],
+                "percentual_imagens": pct
+            }
+
+        return {
+            "categoria": categoria,
+            "total": total,
+            "por_tema": por_tema
+        }
+    finally:
+        con.close()
+
+
 pasta_web = PASTA / "web"
 if pasta_web.exists():
     app.mount("/", StaticFiles(directory=str(pasta_web), html=True), name="web")

@@ -258,6 +258,49 @@ main {
     display: block;
 }
 
+/* PCI Dashboard */
+#pci-dashboard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#pci-dashboard h2 {
+    color: white;
+    margin-bottom: 20px;
+}
+
+.pci-categoria {
+    margin-bottom: 10px;
+    border-left: 3px solid #667eea;
+    padding-left: 15px;
+}
+
+.pci-cat-header {
+    cursor: pointer;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.pci-cat-header:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.pci-arrow {
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.2s;
+}
+
+.pci-cat-content {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
 footer {
     text-align: center;
     padding: 20px;

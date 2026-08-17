@@ -8,6 +8,7 @@ let estadoAtual = {
 // Load órgãos on page load
 document.addEventListener('DOMContentLoaded', () => {
     carregarPainelGeral();
+    carregarPainelPCI();
     carregarOrgaos();
 });
 
@@ -194,7 +195,7 @@ async function carregarPainelGeral() {
         document.getElementById('total-questoes').textContent = data.total;
 
         // Matérias
-        let htmlMaterias = '<h4>📚 Por Matéria:</h4><ul style="columns: 2;">';
+        let htmlMaterias = '<h4>Por Materia:</h4><ul style="columns: 2;">';
         Object.entries(data.por_materia).forEach(([materia, count]) => {
             htmlMaterias += `<li>${materia}: <strong>${count}</strong></li>`;
         });
@@ -202,7 +203,7 @@ async function carregarPainelGeral() {
         document.getElementById('materias-container').innerHTML = htmlMaterias;
 
         // Órgãos (top 10)
-        let htmlOrgaos = '<h4>🏛️ Por Órgão (Top 10):</h4><ul>';
+        let htmlOrgaos = '<h4>Por Orgao (Top 10):</h4><ul>';
         Object.entries(data.por_orgao).slice(0, 10).forEach(([orgao, count]) => {
             htmlOrgaos += `<li>${orgao}: <strong>${count}</strong></li>`;
         });
@@ -210,5 +211,70 @@ async function carregarPainelGeral() {
         document.getElementById('orgaos-container').innerHTML = htmlOrgaos;
     } catch (erro) {
         console.error('Erro ao carregar painel:', erro);
+    }
+}
+
+async function carregarPainelPCI() {
+    try {
+        const resp = await fetch('/api/stats/pci');
+        const data = await resp.json();
+
+        const container = document.getElementById('pci-content');
+        let html = `<p style="font-size: 1.2em; font-weight: bold;">Total PCI: ${data.total_pci.toLocaleString()} questoes</p>`;
+        html += '<div id="pci-tree" style="margin-top: 20px;"></div>';
+
+        container.innerHTML = html;
+
+        // Renderizar categorias como arvore expansivel
+        const tree = document.getElementById('pci-tree');
+        for (const [categoria, stats] of Object.entries(data.por_categoria)) {
+            const catDiv = document.createElement('div');
+            catDiv.className = 'pci-categoria';
+            catDiv.innerHTML = `
+                <div class="pci-cat-header" onclick="togglePCICat('${categoria}')">
+                    <span class="pci-arrow">▶</span>
+                    <strong>${categoria}</strong>: ${stats.total} questoes
+                </div>
+                <div id="pci-${categoria}" class="pci-cat-content" style="display: none; margin-left: 20px;">
+                    <div style="color: #999; font-size: 0.9em;">Carregando temas...</div>
+                </div>
+            `;
+            tree.appendChild(catDiv);
+        }
+    } catch (erro) {
+        console.error('Erro ao carregar painel PCI:', erro);
+    }
+}
+
+async function togglePCICat(categoria) {
+    const content = document.getElementById(`pci-${categoria}`);
+    const arrow = event.target.closest('.pci-cat-header').querySelector('.pci-arrow');
+
+    if (content.style.display === 'none') {
+        // Abrir e carregar temas
+        try {
+            const resp = await fetch(`/api/stats/pci/${categoria}`);
+            const data = await resp.json();
+
+            let html = '';
+            for (const [tema, stats] of Object.entries(data.por_tema)) {
+                const imgIcon = stats.com_imagens > 0 ? '[img]' : '[-]';
+                html += `
+                    <div style="padding: 5px 0; border-bottom: 1px solid #eee;">
+                        ${imgIcon} <strong>${tema}</strong>: ${stats.total} qs (${stats.percentual_imagens}% com imgs)
+                    </div>
+                `;
+            }
+            content.innerHTML = html;
+            content.style.display = 'block';
+            arrow.textContent = '▼';
+        } catch (erro) {
+            content.innerHTML = `<p style="color: red;">Erro: ${erro}</p>`;
+            content.style.display = 'block';
+        }
+    } else {
+        // Fechar
+        content.style.display = 'none';
+        arrow.textContent = '▶';
     }
 }
