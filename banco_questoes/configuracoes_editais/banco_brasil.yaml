@@ -1,0 +1,32 @@
+banco_brasil:
+  nome: "Concurso Banco Brasil"
+  banca: "Cesgranrio"
+  ano: 2023
+  orgao: "Banco do Brasil S.A."
+  formato: "Multipla_Escolha"
+  total_questoes: 70
+  tempo_minutos: 120
+
+  cargos:
+    "Agente de Atendimento":
+      nivel: "médio"
+      vagas: 2000
+      materias:
+        "Português": 12
+        "Conhecimentos Bancários": 15
+        "Legislação Bancária": 10
+        "Atendimento ao Cliente": 8
+        "Noções de Informática": 7
+        "Produtos e Serviços": 8
+        "Ética Profissional": 10
+
+    "Agente de Tecnologia":
+      nivel: "superior"
+      vagas: 500
+      materias:
+        "Tecnologia da Informação": 35
+        "Segurança da Informação": 12
+        "Redes de Computadores": 8
+        "Legislação Bancária": 5
+        "Português": 5
+        "Ética Profissional": 5

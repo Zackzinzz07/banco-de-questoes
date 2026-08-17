@@ -1,0 +1,21 @@
+inss:
+  nome: "Concurso INSS - Técnico de Seguro Social"
+  banca: "Cebraspe"
+  ano: 2023
+  orgao: "Instituto Nacional do Seguro Social"
+  formato: "Certo_Errado"
+  total_questoes: 120
+  tempo_minutos: 210
+
+  cargos:
+    "Técnico de Seguro Social":
+      nivel: "médio"
+      vagas: 2000
+      materias:
+        "Seguridade Social": 60
+        "Português": 15
+        "Raciocínio Lógico": 12
+        "Legislação Previdenciária": 12
+        "Direito Administrativo": 10
+        "Noções de Atendimento": 8
+        "Informática": 3

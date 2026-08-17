@@ -1,0 +1,37 @@
+bacen:
+  nome: "Concurso BACEN - Técnico"
+  banca: "Cebraspe"
+  ano: 2024
+  orgao: "Banco Central do Brasil"
+  formato: "Certo_Errado"
+  total_questoes: 120
+  tempo_minutos: 240
+
+  cargos:
+    "Analista Técnico - Tecnologia da Informação":
+      nivel: "superior"
+      vagas: 100
+      materias:
+        "Ciência de Dados": 20
+        "Engenharia de Software": 15
+        "Segurança da Informação": 15
+        "Arquitetura de Sistemas": 15
+        "Programação": 20
+        "Redes de Computadores": 15
+        "Direito": 10
+        "Contabilidade": 5
+        "Noções de Economia": 5
+
+    "Analista Técnico - Economia":
+      nivel: "superior"
+      vagas: 100
+      materias:
+        "Macroeconomia": 15
+        "Finanças Públicas": 15
+        "Microeconomia": 14
+        "Economia Monetária": 14
+        "Economia Internacional": 12
+        "Estatística": 12
+        "Contabilidade": 12
+        "Direito": 12
+        "Legislação": 14

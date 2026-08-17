@@ -1,0 +1,22 @@
+sedes_df:
+  nome: "Edital SEDES/DF - Técnico de Atendimento Direto ao Cidadão (TDAS)"
+  banca: "Instituto Quadrix"
+  ano: 2026
+  orgao: "Secretaria de Estado de Desenvolvimento Social e Transferência de Renda (SEDES)"
+  formato: "Multipla_Escolha"
+  total_questoes: 60
+  tempo_minutos: 120
+
+  cargos:
+    "Técnico de Atendimento Direto ao Cidadão":
+      nivel: "médio"
+      vagas: 1500
+      materias:
+        "Língua Portuguesa": 10
+        "Conhecimentos do DF e Legislação": 10
+        "SUAS": 10
+        "Programas e Benefícios do DF": 10
+        "Direito Administrativo": 5
+        "Direito Constitucional": 5
+        "Atendimento, Rotinas Administrativas e Arquivologia": 5
+        "Recursos Materiais, Patrimônio e Compras": 5
