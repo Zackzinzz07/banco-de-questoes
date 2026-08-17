@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 import db
 import edital
+import edital_loader
 from simulados import gerar_simulado
 
 PASTA = Path(__file__).resolve().parent
@@ -28,6 +29,11 @@ class PedidoMateria(BaseModel):
 
 class PedidoCompleto(BaseModel):
     quantidade: int = 60
+
+
+class PedidoCargoSimulado(BaseModel):
+    quantidade: int = 60
+    banca: str = None  # Optional banca filter
 
 
 @app.get("/api/stats")
@@ -95,6 +101,171 @@ def coletar():
     if not COLETA_DISPONIVEL:
         raise HTTPException(status_code=503, detail="Coleta fora do Docker. Rode de seu host.")
     return {"ok": True}
+
+
+# ============================================================================
+# CARGO-BASED ENDPOINTS (NEW)
+# ============================================================================
+
+@app.get("/api/orgaos")
+def listar_orgaos():
+    """Return list of all available órgãos/concursos."""
+    orgaos = edital_loader.listar_concursos()
+    return {"orgaos": orgaos}
+
+
+@app.get("/api/cargos/{orgao}")
+def listar_cargos_por_orgao(orgao: str):
+    """Return cargos available for given órgão."""
+    cargos = edital_loader.listar_cargos(orgao)
+    if not cargos:
+        raise HTTPException(status_code=404, detail=f"Órgão não encontrado: {orgao}")
+    return {"orgao": orgao, "cargos": cargos}
+
+
+@app.get("/api/materias/{orgao}/{cargo}")
+def listar_materias_por_cargo(orgao: str, cargo: str):
+    """Return materias and weights for specific cargo."""
+    try:
+        materias = edital_loader.obter_materias(orgao, cargo)
+        pesos = edital_loader.obter_pesos(orgao, cargo)
+
+        if materias is None or pesos is None:
+            raise ValueError("Cargo não encontrado")
+
+        return {
+            "orgao": orgao,
+            "cargo": cargo,
+            "materias": list(materias.keys()),
+            "pesos": pesos,
+            "total_questoes": sum(pesos.values())
+        }
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(status_code=404, detail=f"Cargo não encontrado: {cargo}")
+
+
+@app.post("/api/simulado/cargo/{orgao}/{cargo}")
+def gerar_simulado_cargo(orgao: str, cargo: str, pedido: PedidoCargoSimulado):
+    """Generate simulado for specific cargo with optional banca filter."""
+    from datetime import date
+    from pathlib import Path
+    from reportlab.platypus import NextPageTemplate, FrameBreak, Paragraph, PageBreak
+
+    try:
+        pesos = edital_loader.obter_pesos(orgao, cargo)
+        if not pesos:
+            raise ValueError("Cargo não encontrado")
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(status_code=404, detail=f"Cargo não encontrado: {str(e)}")
+
+    PASTA_SIMULADOS.mkdir(parents=True, exist_ok=True)
+
+    # Generate filename: simulado_{orgao}_{cargo}_{banca}_{date}.pdf
+    nome_cargo_safe = cargo.lower().replace(" ", "_").replace(",", "").replace("(", "").replace(")", "")[:20]
+    nome_banca_safe = pedido.banca.lower().replace(" ", "_") if pedido.banca else "geral"
+    nome = f"simulado_{orgao}_{nome_cargo_safe}_{nome_banca_safe}_{date.today():%Y%m%d}.pdf"
+    saida = PASTA_SIMULADOS / nome
+
+    con = db.conectar()
+
+    try:
+        from simulados import gerar_simulado as gs
+        from xml.sax.saxutils import escape
+
+        # Distribute questions by weight
+        questoes_todas = []
+        distribuicao = edital_loader.distribuir_por_peso(pedido.quantidade, pesos)
+
+        for materia, quantidade in distribuicao.items():
+            if quantidade > 0:
+                qs = db.sortear_questoes(
+                    con, materia, quantidade,
+                    banca=pedido.banca,
+                    cargo=cargo,
+                    orgao=orgao
+                )
+                questoes_todas.extend(qs)
+
+        if not questoes_todas:
+            raise HTTPException(status_code=404, detail=f"Nenhuma questão encontrada para {orgao}/{cargo}")
+
+        # Build PDF using gerar_simulado's internal functions
+        doc = gs._construir_doc(saida, f"Simulado — {cargo}")
+        story = [NextPageTemplate("demais")]
+        story += gs._cabecalho(cargo, len(questoes_todas))
+        story.append(FrameBreak())
+        story.append(Paragraph(escape(cargo).upper(), gs.e_secao))
+
+        for numero, q in enumerate(questoes_todas, 1):
+            story += gs._questao_flowables(numero, q)
+
+        story.append(PageBreak())
+        story += gs._gabarito_flowables(questoes_todas)
+        doc.build(story)
+
+        # Mark as used
+        ids_usadas = [q["id"] for q in questoes_todas]
+        db.marcar_usadas(con, ids_usadas)
+
+        return {
+            "arquivo": saida.name,
+            "orgao": orgao,
+            "cargo": cargo,
+            "quantidade": len(questoes_todas),
+            "banca": pedido.banca
+        }
+    finally:
+        con.close()
+
+
+@app.get("/api/stats/cargo/{orgao}/{cargo}")
+def stats_cargo(orgao: str, cargo: str):
+    """Return statistics (question count) for specific cargo."""
+    try:
+        materias = edital_loader.obter_materias(orgao, cargo)
+        pesos = edital_loader.obter_pesos(orgao, cargo)
+
+        if materias is None or pesos is None:
+            raise ValueError("Cargo não encontrado")
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    con = db.conectar()
+
+    try:
+        stats = {}
+        for materia in materias.keys():
+            # Count questions for this materia/cargo combination
+            linhas = con.execute(
+                "SELECT COUNT(*) as c FROM questoes WHERE materia=%s AND cargo=%s",
+                (materia, cargo)
+            ).fetchone()
+            coletadas = linhas["c"] if linhas else 0
+            esperadas = pesos.get(materia, 0)
+            percentual = round(100 * coletadas / esperadas, 1) if esperadas > 0 else 0
+
+            stats[materia] = {
+                "coletadas": coletadas,
+                "esperadas": esperadas,
+                "percentual": percentual
+            }
+
+        total_coletadas = sum(s["coletadas"] for s in stats.values())
+        total_esperadas = sum(pesos.values())
+        percentual_total = round(100 * total_coletadas / total_esperadas, 1) if total_esperadas > 0 else 0
+
+        return {
+            "orgao": orgao,
+            "cargo": cargo,
+            "materias": stats,
+            "total": {
+                "coletadas": total_coletadas,
+                "esperadas": total_esperadas,
+                "percentual": percentual_total
+            }
+        }
+    finally:
+        con.close()
 
 
 pasta_web = PASTA / "web"
