@@ -25,8 +25,92 @@ def _pagina_nao_encontrada(html):
     return any(marcador in texto for marcador in _MARCADORES_NAO_ENCONTRADO)
 
 
+def descobrir_subcategorias_do_html(html, categoria):
+    """Extrai hierarquia completa: subcategoria → temas.
+
+    PCI structure: /simulados/categoria/subcategoria/tema (opcional)
+
+    Args:
+        html: HTML da página principal de simulados.
+        categoria: slug da categoria.
+
+    Returns:
+        Dict {
+            "subcategoria_slug": {
+                "nome": "Nome da Subcategoria",
+                "url": "/simulados/cat/subcat",
+                "temas": [
+                    {"nome": "Tema 1", "url": "/simulados/cat/subcat/tema1", "slug": "tema1"},
+                    ...
+                ]
+            },
+            ...
+        }
+    """
+    if not html or _pagina_nao_encontrada(html):
+        return {}
+
+    soup = BeautifulSoup(html, "html.parser")
+    subcategorias = {}
+
+    # Padrão para links de subcategoria: /simulados/categoria/subcategoria
+    padrao_subcat = re.compile(rf"/simulados/{re.escape(categoria)}/([^/\"?#]+)/?$")
+    # Padrão para links de tema: /simulados/categoria/subcategoria/tema
+    padrao_tema = re.compile(rf"/simulados/{re.escape(categoria)}/([^/\"?#]+)/([^/\"?#]+)/?$")
+
+    links = soup.find_all("a", href=True)
+
+    for link in links:
+        href = link.get("href", "")
+        texto = link.get_text(strip=True)
+
+        if not href or f"/simulados/{categoria}/" not in href:
+            continue
+
+        # Verificar se é tema (3+ partes)
+        m_tema = padrao_tema.search(href)
+        if m_tema:
+            subcat_slug = m_tema.group(1)
+            tema_slug = m_tema.group(2)
+
+            if subcat_slug not in subcategorias:
+                subcategorias[subcat_slug] = {
+                    "nome": subcat_slug.replace("-", " ").title(),
+                    "url": f"/simulados/{categoria}/{subcat_slug}",
+                    "slug": subcat_slug,
+                    "temas": [],
+                }
+
+            tema = {
+                "nome": texto,
+                "url": href,
+                "slug": tema_slug,
+            }
+            if tema not in subcategorias[subcat_slug]["temas"]:
+                subcategorias[subcat_slug]["temas"].append(tema)
+            continue
+
+        # Verificar se é subcategoria (2 partes)
+        m_subcat = padrao_subcat.search(href)
+        if m_subcat:
+            subcat_slug = m_subcat.group(1)
+
+            if subcat_slug not in subcategorias:
+                subcategorias[subcat_slug] = {
+                    "nome": texto,
+                    "url": href,
+                    "slug": subcat_slug,
+                    "temas": [],
+                }
+
+    return subcategorias
+
+
 def descobrir_temas_do_html(html, categoria):
     """Extrai {tema_slug: url} de uma página de listagem de categoria do PCI.
+
+    DEPRECATED: Use descobrir_subcategorias_do_html() para obter hierarquia completa.
+    Esta função mantida para compatibilidade com código antigo.
 
     Args:
         html: HTML completo da página de listagem da categoria.
@@ -43,18 +127,16 @@ def descobrir_temas_do_html(html, categoria):
     if _pagina_nao_encontrada(html):
         return None
 
-    soup = BeautifulSoup(html, "html.parser")
+    # Usar nova função e converter resultado
+    subcats = descobrir_subcategorias_do_html(html, categoria)
+    if not subcats:
+        return None
 
-    padrao_href = re.compile(rf"/simulados/{re.escape(categoria)}/([^/\"?#]+)/?$")
+    # Extrair todos os temas de todas as subcategorias
     temas = {}
-    for link in soup.find_all("a", href=padrao_href):
-        href = link.get("href", "")
-        m = padrao_href.search(href)
-        if not m:
-            continue
-        tema_slug = m.group(1)
-        if tema_slug:
-            temas[tema_slug] = href
+    for subcat_data in subcats.values():
+        for tema in subcat_data["temas"]:
+            temas[tema["slug"]] = tema["url"]
 
     return temas or None
 
@@ -93,6 +175,37 @@ def _extrair_texto_associado(bloco):
     texto = area.get_text(" ", strip=True)
     imagens = [img.get("src") for img in area.find_all("img") if img.get("src")]
     return texto, imagens
+
+
+def _extrair_todas_imagens(bloco):
+    """Extrai TODAS as imagens de um bloco de questão (enunciado + alternativas + texto associado).
+
+    Returns:
+        list: URLs de imagens (strings), deduplicated
+    """
+    urls = set()
+
+    # Imagens do enunciado
+    for img in bloco.find_all("img"):
+        src = img.get("src")
+        if src:
+            # Normalizar URL absoluta
+            if not src.startswith("http"):
+                src = f"https://www.pciconcursos.com.br{src}"
+            urls.add(src)
+
+    # background-image em style
+    for el in bloco.find_all(style=True):
+        style = el.get("style", "")
+        if "background-image" in style:
+            match = re.search(r"url\(['\"]?([^'\")+]+)['\"]?\)", style)
+            if match:
+                url = match.group(1)
+                if not url.startswith("http"):
+                    url = f"https://www.pciconcursos.com.br{url}"
+                urls.add(url)
+
+    return list(urls)
 
 
 def extrair_questoes_pagina(html):
@@ -149,12 +262,16 @@ def extrair_questoes_pagina(html):
 
         texto_associado, imagens = _extrair_texto_associado(bloco)
 
+        # Extrair TODAS as imagens (incluindo enunciado + alternativas + texto associado)
+        todas_imagens = _extrair_todas_imagens(bloco)
+
         questoes.append({
             "id_pci": sid,
             "enunciado": enunciado,
             "alternativas": alternativas,
             "texto_associado": texto_associado,
-            "imagens": imagens,
+            "imagens": imagens,  # Mantém para compatibilidade
+            "imagens_urls": todas_imagens,  # Nova: todas as imagens de uma vez
             "banca": banca,
             "orgao": orgao,
             "ano": ano,

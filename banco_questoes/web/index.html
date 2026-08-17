@@ -14,6 +14,18 @@
         </header>
 
         <main>
+            <!-- Painel de Estatísticas Gerais -->
+            <section class="card" id="painel-geral">
+                <h2>📊 Banco de Questões</h2>
+                <div id="stats-painel">
+                    <p style="font-size: 1.5em; font-weight: bold; color: #2c3e50;">
+                        Total: <span id="total-questoes">--</span> questões
+                    </p>
+                    <div id="materias-container" style="margin-top: 20px;"></div>
+                    <div id="orgaos-container" style="margin-top: 20px;"></div>
+                </div>
+            </section>
+
             <!-- Seleção de Órgão/Cargo -->
             <section class="card">
                 <h2>🎯 Selecionar Concurso</h2>
@@ -77,11 +89,11 @@
                 <div id="status-geracao"></div>
             </section>
 
-            <!-- Estatísticas Gerais (Opcional) -->
-            <section class="card" id="stats-geral-section">
-                <h2>📈 Estatísticas Gerais</h2>
-                <div id="stats-geral"></div>
-            </section>
+            <!-- Estatísticas Gerais (TODAS as Questões) - Removido por enquanto -->
+            <!-- <section class="card" id="stats-geral-section" style="display: block !important;">
+                <h2>📈 Estatísticas Gerais - TODAS as Questões</h2>
+                <div id="stats-geral">Carregando...</div>
+            </section> -->
         </main>
 
         <footer>

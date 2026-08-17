@@ -7,6 +7,7 @@ let estadoAtual = {
 
 // Load órgãos on page load
 document.addEventListener('DOMContentLoaded', () => {
+    carregarPainelGeral();
     carregarOrgaos();
 });
 
@@ -182,5 +183,32 @@ async function gerarSimulado(orgao, cargo) {
         statusDiv.innerHTML = `<p>❌ Erro: ${erro.message}</p>`;
         statusDiv.className = 'error';
         console.error(erro);
+    }
+}
+
+async function carregarPainelGeral() {
+    try {
+        const resp = await fetch('/api/stats/todas');
+        const data = await resp.json();
+
+        document.getElementById('total-questoes').textContent = data.total;
+
+        // Matérias
+        let htmlMaterias = '<h4>📚 Por Matéria:</h4><ul style="columns: 2;">';
+        Object.entries(data.por_materia).forEach(([materia, count]) => {
+            htmlMaterias += `<li>${materia}: <strong>${count}</strong></li>`;
+        });
+        htmlMaterias += '</ul>';
+        document.getElementById('materias-container').innerHTML = htmlMaterias;
+
+        // Órgãos (top 10)
+        let htmlOrgaos = '<h4>🏛️ Por Órgão (Top 10):</h4><ul>';
+        Object.entries(data.por_orgao).slice(0, 10).forEach(([orgao, count]) => {
+            htmlOrgaos += `<li>${orgao}: <strong>${count}</strong></li>`;
+        });
+        htmlOrgaos += '</ul>';
+        document.getElementById('orgaos-container').innerHTML = htmlOrgaos;
+    } catch (erro) {
+        console.error('Erro ao carregar painel:', erro);
     }
 }

@@ -9,10 +9,16 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-import db
-import edital
-import edital_loader
-from simulados import gerar_simulado
+try:
+    from . import db
+    from . import edital
+    from . import edital_loader
+    from .simulados import gerar_simulado
+except ImportError:
+    import db
+    import edital
+    import edital_loader
+    from simulados import gerar_simulado
 
 PASTA = Path(__file__).resolve().parent
 PASTA_SIMULADOS = PASTA / "simulados"
@@ -42,6 +48,32 @@ def stats():
     est = db.estatisticas(con)
     con.close()
     return est
+
+
+@app.get("/api/stats/todas")
+def stats_todas():
+    """Return statistics for ALL questions in the database."""
+    con = db.conectar()
+
+    # Total geral
+    total_row = con.execute("SELECT COUNT(*) as cnt FROM questoes").fetchone()
+    total = total_row["cnt"] if hasattr(total_row, "__getitem__") else total_row[0]
+
+    # Por órgão
+    orgaos = con.execute("SELECT orgao, COUNT(*) as cnt FROM questoes GROUP BY orgao ORDER BY cnt DESC").fetchall()
+    por_orgao = {row["orgao"]: row["cnt"] for row in orgaos}
+
+    # Por matéria
+    materias = con.execute("SELECT materia, COUNT(*) as cnt FROM questoes GROUP BY materia ORDER BY cnt DESC").fetchall()
+    por_materia = {row["materia"]: row["cnt"] for row in materias}
+
+    con.close()
+
+    return {
+        "total": total,
+        "por_orgao": por_orgao,
+        "por_materia": por_materia
+    }
 
 
 @app.get("/api/materias")

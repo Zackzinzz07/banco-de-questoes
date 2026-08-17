@@ -12,11 +12,18 @@ from pathlib import Path
 # sys.path, independentemente de como este módulo é importado/executado.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-import db  # noqa: E402
+try:
+    from . import db  # noqa: E402
+except ImportError:
+    from banco_questoes import db  # noqa: E402
 
-from . import config  # noqa: E402
-from . import parser  # noqa: E402
-from .. import http_utils  # noqa: E402
+try:
+    from . import config  # noqa: E402
+    from . import parser  # noqa: E402
+    from .. import http_utils  # noqa: E402
+except ImportError:
+    from banco_questoes.scrapers.pci import config, parser  # noqa: E402
+    from banco_questoes.scrapers import http_utils  # noqa: E402
 
 BASE_URL = "https://www.pciconcursos.com.br/simulados"
 

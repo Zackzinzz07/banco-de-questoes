@@ -19,8 +19,12 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
-import db
-import edital
+try:
+    from . import db
+    from . import edital
+except ImportError:
+    import db
+    import edital
 
 # ── SELETORES CENTRALIZADOS (ajustar aqui se o QC mudar o layout) ──────────
 # Calibrados contra fixture real (tests/fixtures/pagina_qc.html): ver notas
@@ -165,7 +169,7 @@ def salvar_pagina(html, con, materia):
             "materia": materia,
             "assunto": q["assunto"],
             "banca": q["banca"],
-            "orgao": q["orgao"],
+            "orgao": "SEDES/DF",  # Força orgao SEDES/DF para matérias do edital
             "ano": q["ano"],
             "prova": q["prova"],
             "fonte": "qconcursos",

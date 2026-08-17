@@ -50,9 +50,11 @@ PCI_CATEGORIAS = {
     "transito": ("Trânsito", 569),
 }
 
-# Mapeamento de temas para matérias do edital SEDES.
-# "categoria/tema" -> matéria_edital
+# Mapeamento de categorias PCI para matérias genéricas.
+# Estratégia: capturar TUDO do PCI com mapeamento simples categoria -> matéria
+# Depois a gente reorganiza conforme necessário para cada concurso.
 MAPEAMENTO_TEMAS = {
+    # Administração Pública (22 temas mapeados)
     "administracao-publica/atendimento-ao-cidadao": "Atendimento, Rotinas Administrativas e Arquivologia",
     "administracao-publica/atendimento-ao-publico": "Atendimento, Rotinas Administrativas e Arquivologia",
     "administracao-publica/comportamento-organizacional": "Atendimento, Rotinas Administrativas e Arquivologia",
@@ -76,13 +78,63 @@ MAPEAMENTO_TEMAS = {
     "administracao-publica/relacionamento-interpessoal": "Atendimento, Rotinas Administrativas e Arquivologia",
     "administracao-publica/teorias-da-administracao": "Atendimento, Rotinas Administrativas e Arquivologia",
 
-    "direito-administrativo/direito-administrativo": "Direito Administrativo",
+    # Direito
+    "direito-administrativo/*": "Direito Administrativo",
+    "direito-constitucional/*": "Direito Constitucional",
+    "direito-ambiental/*": "Direito Ambiental",
+    "direito-financeiro/*": "Direito Financeiro",
+    "direito-penal/*": "Direito Penal",
+    "direito-processual-civil/*": "Direito Processual Civil",
+    "direito-trabalhista/*": "Direito Trabalhista",
+    "direito-tributario/*": "Direito Tributário",
 
-    "direito-constitucional/direito-constitucional": "Direito Constitucional",
+    # Linguagem
+    "portugues/*": "Língua Portuguesa",
+    "ingles/*": "Inglês",
 
-    "portugues/portugues": "Língua Portuguesa",
+    # Humanidades
+    "historia/*": "História",
+    "geografia/*": "Geografia",
+    "filosofia/*": "Filosofia",
+    "sociologia/*": "Sociologia",
+    "artes/*": "Artes",
+    "musica/*": "Música",
 
-    "historia/historia": "Conhecimentos do DF e Legislação",
+    # Ciências Exatas
+    "matematica/*": "Matemática",
+    "fisica/*": "Física",
+    "quimica/*": "Química",
+    "raciocinio-logico-matematico/*": "Raciocínio Lógico Matemático",
+
+    # Ciências da Natureza
+    "biologia/*": "Biologia",
+    "meio-ambiente/*": "Meio Ambiente",
+
+    # Educação, Serviços Sociais, Saúde
+    "educacao/*": "Educação",
+    "pedagogia/*": "Pedagogia",
+    "servico-social/*": "Serviço Social",
+    "psicologia/*": "Psicologia",
+    "enfermagem/*": "Enfermagem",
+    "saude/*": "Saúde",
+    "saude-publica/*": "Saúde Pública",
+    "seguranca-do-trabalho/*": "Segurança do Trabalho",
+
+    # Profissional/Técnico
+    "informatica/*": "Informática",
+    "biblioteconomia/*": "Biblioteconomia",
+    "contabilidade/*": "Contabilidade",
+    "engenharia-civil/*": "Engenharia Civil",
+
+    # Legislação, Economia, Atualidades
+    "legislacao-especifica/*": "Legislação Específica",
+    "economia/*": "Economia",
+    "atualidades/*": "Atualidades",
+    "transito/*": "Legislação de Trânsito",
+    "seguranca-publica/*": "Segurança Pública",
+
+    # Genérico
+    "outra/*": "Outros Conhecimentos",
 }
 
 
@@ -92,9 +144,23 @@ def get_categoria_info(categoria_slug):
 
 
 def get_materia_do_tema(categoria, tema):
-    """Retorna a matéria do edital para um tema específico, ou None se não mapeado."""
-    chave = f"{categoria}/{tema}"
-    return MAPEAMENTO_TEMAS.get(chave)
+    """Retorna a matéria do edital para um tema específico.
+
+    Tenta:
+    1. Mapeamento exato: categoria/tema
+    2. Fallback com wildcard: categoria/*
+    3. Fallback só categoria
+    """
+    chave_exata = f"{categoria}/{tema}"
+    if chave_exata in MAPEAMENTO_TEMAS:
+        return MAPEAMENTO_TEMAS[chave_exata]
+
+    chave_wildcard = f"{categoria}/*"
+    if chave_wildcard in MAPEAMENTO_TEMAS:
+        return MAPEAMENTO_TEMAS[chave_wildcard]
+
+    # Se nada encontrou, retorna None (tema será pulado)
+    return None
 
 
 def listar_categorias():

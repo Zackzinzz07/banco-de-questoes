@@ -33,6 +33,6 @@ def criar_sessao(timeout_s=30, max_retries=3):
     return sessao
 
 
-def aguardar(min_s=3, max_s=6):
+def aguardar(min_s=1, max_s=3):
     """Pausa de rate-limiting com jitter, para não sobrecarregar o servidor."""
     time.sleep(random.uniform(min_s, max_s))

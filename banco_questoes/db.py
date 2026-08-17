@@ -7,7 +7,10 @@ import psycopg2
 import psycopg2.errors
 from psycopg2.extras import RealDictCursor
 
-import config
+try:
+    from . import config
+except ImportError:
+    import config
 
 DATABASE_URL = config.DATABASE_URL
 
@@ -118,10 +121,21 @@ def content_hash(enunciado, alternativas):
 
 
 def salvar_questao(con, q):
-    """Insere a questão; retorna True se inseriu, False se já existia (dedupe)."""
+    """Insere a questão; retorna True se inseriu, False se já existia (dedupe por content_hash)."""
     fonte = q.get("fonte")
     if fonte not in FONTES_VALIDAS:
         raise ValueError(f"fonte inválida: '{fonte}'. Use {', '.join(sorted(FONTES_VALIDAS))}.")
+
+    c_hash = content_hash(q["enunciado"], q["alternativas"])
+
+    # Verificar se questão com mesmo conteúdo já existe
+    existente = con.execute(
+        "SELECT id FROM questoes WHERE content_hash = %s",
+        (c_hash,),
+    ).fetchone()
+
+    if existente:
+        return False  # Questão duplicada, ignora
 
     try:
         con.execute(
@@ -133,7 +147,7 @@ def salvar_questao(con, q):
                 q.get("id_qc"),
                 q["enunciado"],
                 hash_enunciado(q["enunciado"]),
-                content_hash(q["enunciado"], q["alternativas"]),
+                c_hash,
                 json.dumps(q["alternativas"], ensure_ascii=False),
                 q.get("gabarito"),
                 q.get("comentario"),
