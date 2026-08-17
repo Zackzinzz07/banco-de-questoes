@@ -21,18 +21,16 @@ Example:
 
 from .base import BaseBancaStyle
 from .cebraspe import EstiloCebraspe
-
-# Placeholder imports for banca-specific styles (to be implemented in Tasks 3-4)
-# IadesStyle = None     # Task 3
-# QuadrixStyle = None   # Task 3
-# FgvStyle = None       # Task 4
-# AocpStyle = None      # Task 4
+from .iades import EstiloIADES
+from .quadrix import EstiloQuadrix
+from .fgv import EstiloFGV
+from .aocp import EstiloAOCP
 
 __all__ = [
     'BaseBancaStyle',
     'EstiloCebraspe',
-    # 'IadesStyle',
-    # 'QuadrixStyle',
-    # 'FgvStyle',
-    # 'AocpStyle',
+    'EstiloIADES',
+    'EstiloQuadrix',
+    'EstiloFGV',
+    'EstiloAOCP',
 ]

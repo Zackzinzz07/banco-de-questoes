@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m banco_questoes.simulados.cli_multibanca --help)",
+      "Bash(docker-compose up *)",
+      "Bash(python -m banco_questoes.simulados.cli_multibanca --banca cebraspe --quantidade 30 --nome teste.pdf)",
+      "Bash(cat >> *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Felps\\Documents\\training\\.superpowers\\sdd\\2026-08-17-multi-banca-simulado"
+    ]
+  }
+}
