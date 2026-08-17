@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS questoes (
     assunto TEXT,
     banca TEXT,
     orgao TEXT,
+    cargo TEXT,
     ano INTEGER,
     prova TEXT,
     fonte TEXT NOT NULL,
@@ -91,6 +92,14 @@ def conectar(caminho=None):
     con = _Conexao(psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor))
     con.execute(SQL_CRIAR)
     con.commit()
+
+    # Apply migrations
+    try:
+        from migrations import migration_001
+        migration_001.aplicar(con)
+    except ImportError:
+        pass  # Migrations not available (should not happen in normal use)
+
     return con
 
 
@@ -117,9 +126,9 @@ def salvar_questao(con, q):
     try:
         con.execute(
             "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash, alternativas,"
-            " gabarito, comentario, materia, assunto, banca, orgao, ano, prova, fonte,"
+            " gabarito, comentario, materia, assunto, banca, orgao, cargo, ano, prova, fonte,"
             " texto_associado, imagens)"
-            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 q.get("id_qc"),
                 q["enunciado"],
@@ -132,6 +141,7 @@ def salvar_questao(con, q):
                 q.get("assunto"),
                 q.get("banca"),
                 q.get("orgao"),
+                q.get("cargo"),
                 q.get("ano"),
                 q.get("prova"),
                 fonte,
@@ -146,7 +156,7 @@ def salvar_questao(con, q):
         return False
 
 
-def sortear_questoes(con, materia, quantidade, banca=None, orgao=None):
+def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=None):
     """Sorteia questões não usadas (deduplicadas por conteúdo); se faltar, avisa e completa com repetidas.
 
     Args:
@@ -155,6 +165,7 @@ def sortear_questoes(con, materia, quantidade, banca=None, orgao=None):
         quantidade: Número de questões desejadas
         banca: Nome da banca examinadora para filtro (opcional, ex: "Instituto Quadrix")
         orgao: Órgão/concurso para filtro (opcional, ex: "SEDES/DF")
+        cargo: Cargo para filtro (opcional, ex: "Policial Rodoviário Federal")
     """
     # Construir WHERE dinamicamente
     where_parts = ["materia=%s", "usada_em_simulado=0", "content_hash IS NOT NULL"]
@@ -166,6 +177,9 @@ def sortear_questoes(con, materia, quantidade, banca=None, orgao=None):
     if orgao:
         where_parts.append("orgao=%s")
         params.append(orgao)
+    if cargo:
+        where_parts.append("cargo=%s")
+        params.append(cargo)
 
     where_clause = " AND ".join(where_parts)
     params.append(quantidade)  # Para LIMIT
@@ -187,6 +201,9 @@ def sortear_questoes(con, materia, quantidade, banca=None, orgao=None):
         if orgao:
             where_parts_rep.append("orgao=%s")
             params_rep.append(orgao)
+        if cargo:
+            where_parts_rep.append("cargo=%s")
+            params_rep.append(cargo)
         where_clause_rep = " AND ".join(where_parts_rep)
         params_rep.append(faltam)
 

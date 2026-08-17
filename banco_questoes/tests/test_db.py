@@ -143,3 +143,115 @@ def test_estatisticas():
     assert est["Língua Portuguesa"] == {"total": 2, "ineditas": 2, "usadas": 0,
                                         "sem_gabarito": 1}
     assert est["SUAS"] == {"total": 1, "ineditas": 0, "usadas": 1, "sem_gabarito": 0}
+
+
+def test_salvar_questao_com_cargo():
+    """Test saving question with cargo field."""
+    con = db.conectar()
+    q = questao_exemplo(
+        id_qc="QCARGO1",
+        enunciado="Teste com cargo",
+        cargo="Policial Rodoviário Federal"
+    )
+    resultado = db.salvar_questao(con, q)
+    assert resultado is True
+
+    # Verify cargo was saved
+    linhas = con.execute(
+        "SELECT cargo FROM questoes WHERE enunciado=%s",
+        ("Teste com cargo",)
+    ).fetchall()
+    assert len(linhas) == 1
+    assert linhas[0]["cargo"] == "Policial Rodoviário Federal"
+
+
+def test_sortear_questoes_com_cargo():
+    """Test cargo filtering in sortear_questoes."""
+    con = db.conectar()
+    # Insert two questions with different cargos
+    q1 = questao_exemplo(
+        id_qc="QPRF1",
+        enunciado="Q1 PRF",
+        materia="Direito Constitucional",
+        cargo="Policial Rodoviário Federal",
+        orgao="PRF",
+        banca="Cebraspe"
+    )
+    q2 = questao_exemplo(
+        id_qc="QBACEN1",
+        enunciado="Q2 BACEN",
+        materia="Direito Constitucional",
+        cargo="Técnico",
+        orgao="Banco Central",
+        banca="Cebraspe"
+    )
+    db.salvar_questao(con, q1)
+    db.salvar_questao(con, q2)
+
+    # Filter by cargo
+    resultados = db.sortear_questoes(
+        con, "Direito Constitucional", 1, cargo="Policial Rodoviário Federal"
+    )
+    assert len(resultados) == 1
+    assert "PRF" in resultados[0]["enunciado"]
+
+
+def test_sortear_questoes_sem_cargo_filter():
+    """Test that sorting still works without cargo filter (backward compat)."""
+    con = db.conectar()
+    q = questao_exemplo(
+        id_qc="QSEMCARGO",
+        enunciado="Q sem cargo",
+        materia="Português"
+    )
+    db.salvar_questao(con, q)
+
+    # Should work without cargo parameter
+    resultados = db.sortear_questoes(con, "Português", 1)
+    assert len(resultados) >= 1
+    assert resultados[0]["enunciado"] == "Q sem cargo"
+
+
+def test_sortear_questoes_com_multiplos_filtros():
+    """Test combining cargo + banca + orgao filters."""
+    con = db.conectar()
+    q = questao_exemplo(
+        id_qc="QMULTIFILTRO",
+        enunciado="Q filtros múltiplos",
+        materia="Matemática",
+        cargo="Técnico",
+        orgao="BACEN",
+        banca="Cebraspe"
+    )
+    db.salvar_questao(con, q)
+
+    # Combined filter
+    resultados = db.sortear_questoes(
+        con,
+        "Matemática",
+        1,
+        banca="Cebraspe",
+        orgao="BACEN",
+        cargo="Técnico"
+    )
+    assert len(resultados) >= 1
+    assert "filtros múltiplos" in resultados[0]["enunciado"]
+
+
+def test_sortear_questoes_cargo_nao_encontra_quando_diferente():
+    """Test that filtering by different cargo returns no results."""
+    con = db.conectar()
+    q = questao_exemplo(
+        id_qc="QCARGO2",
+        enunciado="Q com cargo PRF",
+        materia="Direito",
+        cargo="Policial Rodoviário Federal",
+        orgao="PRF"
+    )
+    db.salvar_questao(con, q)
+
+    # Filter by different cargo - should return empty
+    resultados = db.sortear_questoes(
+        con, "Direito", 1, cargo="Técnico Administrativo"
+    )
+    assert len(resultados) == 0
