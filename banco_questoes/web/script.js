@@ -1,0 +1,186 @@
+let estadoAtual = {
+    orgao: null,
+    cargo: null,
+    materias: {},
+    pesos: {},
+};
+
+// Load órgãos on page load
+document.addEventListener('DOMContentLoaded', () => {
+    carregarOrgaos();
+});
+
+async function carregarOrgaos() {
+    try {
+        const resp = await fetch('/api/orgaos');
+        const data = await resp.json();
+
+        const select = document.getElementById('orgao');
+        data.orgaos.forEach(orgao => {
+            const option = document.createElement('option');
+            option.value = orgao;
+            option.textContent = orgao.toUpperCase().replace(/_/g, ' ');
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => onOrgaoChange(select.value));
+    } catch (erro) {
+        console.error('Erro ao carregar órgãos:', erro);
+    }
+}
+
+async function onOrgaoChange(orgao) {
+    estadoAtual.orgao = orgao;
+    estadoAtual.cargo = null;
+
+    const cargoSelect = document.getElementById('cargo');
+    const cargoGroup = document.getElementById('cargo-group');
+    const bancaGroup = document.getElementById('banca-group');
+    const statsSection = document.getElementById('stats-section');
+    const geracaoSection = document.getElementById('geracao-section');
+
+    // Reset
+    cargoSelect.innerHTML = '<option value="">-- Escolha um cargo --</option>';
+    document.getElementById('stats-list').innerHTML = '';
+
+    if (!orgao) {
+        cargoGroup.style.display = 'none';
+        bancaGroup.style.display = 'none';
+        statsSection.style.display = 'none';
+        geracaoSection.style.display = 'none';
+        return;
+    }
+
+    try {
+        const resp = await fetch(`/api/cargos/${orgao}`);
+        const data = await resp.json();
+
+        data.cargos.forEach(cargo => {
+            const option = document.createElement('option');
+            option.value = cargo;
+            option.textContent = cargo;
+            cargoSelect.appendChild(option);
+        });
+
+        cargoGroup.style.display = 'block';
+        cargoSelect.addEventListener('change', () => onCargoChange(orgao, cargoSelect.value));
+    } catch (erro) {
+        console.error('Erro ao carregar cargos:', erro);
+    }
+}
+
+async function onCargoChange(orgao, cargo) {
+    estadoAtual.cargo = cargo;
+
+    const bancaGroup = document.getElementById('banca-group');
+    const statsSection = document.getElementById('stats-section');
+    const geracaoSection = document.getElementById('geracao-section');
+
+    if (!cargo) {
+        bancaGroup.style.display = 'none';
+        statsSection.style.display = 'none';
+        geracaoSection.style.display = 'none';
+        return;
+    }
+
+    try {
+        // Fetch materias
+        const cargoEncoded = encodeURIComponent(cargo);
+        const resp = await fetch(`/api/materias/${orgao}/${cargoEncoded}`);
+        const data = await resp.json();
+
+        estadoAtual.materias = data.materias;
+        estadoAtual.pesos = data.pesos;
+
+        // Fetch stats (coleta atual)
+        const statsResp = await fetch(`/api/stats/cargo/${orgao}/${cargoEncoded}`);
+        const statsData = await statsResp.json();
+
+        // Display stats
+        displayStats(statsData);
+
+        bancaGroup.style.display = 'block';
+        statsSection.style.display = 'block';
+        geracaoSection.style.display = 'block';
+
+        // Attach button listener
+        document.getElementById('btn-gerar').onclick = () => gerarSimulado(orgao, cargo);
+    } catch (erro) {
+        console.error('Erro ao carregar matérias:', erro);
+    }
+}
+
+function displayStats(statsData) {
+    const title = document.getElementById('stats-title');
+    const list = document.getElementById('stats-list');
+    const progressText = document.getElementById('progress-text');
+    const progressFill = document.getElementById('progress-fill');
+
+    title.textContent = `${statsData.cargo}`;
+    list.innerHTML = '';
+
+    const total = statsData.total;
+    const percentual = total.percentual || 0;
+
+    progressFill.style.width = `${percentual}%`;
+    progressText.textContent = `${total.coletadas}/${total.esperadas} questões (${percentual.toFixed(1)}% completo)`;
+
+    // Display by materia
+    Object.entries(statsData.materias).forEach(([materia, stats]) => {
+        const div = document.createElement('div');
+        div.className = 'materia-item';
+
+        const pct = stats.percentual || 0;
+        const statusClass = pct === 0 ? 'status-danger' : pct < 50 ? 'status-warning' : 'status-success';
+
+        div.innerHTML = `
+            <h4>${materia}</h4>
+            <div class="materia-stats">
+                <div class="materia-progress">
+                    <div class="materia-progress-fill" style="width: ${pct}%"></div>
+                </div>
+                <div class="materia-numbers">
+                    <span class="${statusClass}">${stats.coletadas}/${stats.esperadas}</span>
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function gerarSimulado(orgao, cargo) {
+    const quantidade = parseInt(document.getElementById('quantidade').value) || 60;
+    const banca = document.getElementById('banca').value || null;
+    const statusDiv = document.getElementById('status-geracao');
+
+    statusDiv.textContent = '⏳ Gerando PDF...';
+    statusDiv.className = '';
+    statusDiv.style.display = 'block';
+
+    try {
+        const body = { quantidade };
+        if (banca) body.banca = banca;
+
+        const cargoEncoded = encodeURIComponent(cargo);
+        const resp = await fetch(`/api/simulado/cargo/${orgao}/${cargoEncoded}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Erro: ${resp.statusText}`);
+        }
+
+        const data = await resp.json();
+        statusDiv.innerHTML = `
+            <p>✓ Simulado gerado com sucesso!</p>
+            <a href="/api/simulados/download/${data.arquivo}" class="btn-download">📥 Baixar PDF</a>
+        `;
+        statusDiv.className = 'success';
+    } catch (erro) {
+        statusDiv.innerHTML = `<p>❌ Erro: ${erro.message}</p>`;
+        statusDiv.className = 'error';
+        console.error(erro);
+    }
+}
