@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS questoes (
     id_qc TEXT UNIQUE,
     enunciado TEXT NOT NULL,
     hash_enunciado TEXT UNIQUE NOT NULL,
+    content_hash TEXT,
     alternativas TEXT NOT NULL,
     gabarito TEXT,
     comentario TEXT,
@@ -35,6 +36,7 @@ CREATE TABLE IF NOT EXISTS questoes (
 );
 CREATE INDEX IF NOT EXISTS idx_questoes_materia_usada ON questoes(materia, usada_em_simulado);
 CREATE INDEX IF NOT EXISTS idx_questoes_fonte ON questoes(fonte);
+CREATE INDEX IF NOT EXISTS idx_questoes_content_hash ON questoes(content_hash);
 CREATE TABLE IF NOT EXISTS progresso_scraper (
     fonte TEXT NOT NULL,
     chave TEXT NOT NULL,
@@ -100,6 +102,12 @@ def hash_enunciado(texto):
     return hashlib.sha256(normalizar_enunciado(texto).encode("utf-8")).hexdigest()
 
 
+def content_hash(enunciado, alternativas):
+    """MD5 de enunciado + alternativas serializadas para dedupe rápido."""
+    content = normalizar_enunciado(enunciado) + "|" + json.dumps(alternativas, sort_keys=True, ensure_ascii=False)
+    return hashlib.md5(content.encode("utf-8")).hexdigest()
+
+
 def salvar_questao(con, q):
     """Insere a questão; retorna True se inseriu, False se já existia (dedupe)."""
     fonte = q.get("fonte")
@@ -108,14 +116,15 @@ def salvar_questao(con, q):
 
     try:
         con.execute(
-            "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, alternativas,"
+            "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash, alternativas,"
             " gabarito, comentario, materia, assunto, banca, orgao, ano, prova, fonte,"
             " texto_associado, imagens)"
-            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 q.get("id_qc"),
                 q["enunciado"],
                 hash_enunciado(q["enunciado"]),
+                content_hash(q["enunciado"], q["alternativas"]),
                 json.dumps(q["alternativas"], ensure_ascii=False),
                 q.get("gabarito"),
                 q.get("comentario"),
@@ -138,16 +147,22 @@ def salvar_questao(con, q):
 
 
 def sortear_questoes(con, materia, quantidade):
-    """Sorteia questões não usadas; se faltar, avisa e completa com repetidas."""
+    """Sorteia questões não usadas (deduplicadas por conteúdo); se faltar, avisa e completa com repetidas."""
     linhas = con.execute(
-        "SELECT * FROM questoes WHERE materia=%s AND usada_em_simulado=0"
-        " ORDER BY RANDOM() LIMIT %s", (materia, quantidade)).fetchall()
+        "SELECT DISTINCT ON (content_hash) * FROM questoes"
+        " WHERE materia=%s AND usada_em_simulado=0 AND content_hash IS NOT NULL"
+        " ORDER BY content_hash,"
+        "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
+        "   RANDOM() LIMIT %s", (materia, quantidade)).fetchall()
     questoes = [dict(l) for l in linhas]
     faltam = quantidade - len(questoes)
     if faltam > 0:
         repetidas = con.execute(
-            "SELECT * FROM questoes WHERE materia=%s AND usada_em_simulado=1"
-            " ORDER BY RANDOM() LIMIT %s", (materia, faltam)).fetchall()
+            "SELECT DISTINCT ON (content_hash) * FROM questoes"
+            " WHERE materia=%s AND usada_em_simulado=1 AND content_hash IS NOT NULL"
+            " ORDER BY content_hash,"
+            "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
+            "   RANDOM() LIMIT %s", (materia, faltam)).fetchall()
         if repetidas:
             print(f"Aviso: só {len(questoes)} questões inéditas de {materia};"
                   f" completando com {len(repetidas)} repetidas.")

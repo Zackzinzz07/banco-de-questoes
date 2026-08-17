@@ -193,15 +193,22 @@ class GeradorSimuladoMultiBanca:
 
     def _sortear_generico(self, con, quantidade: int, excluir_ids=None) -> List[Dict[str, Any]]:
         """Sorteia questões de qualquer matéria (ineditas primeiro, repetidas
-        para completar), ignorando ids já selecionados. Usado como fallback
+        para completar), ignorando ids já selecionados e DEDUPLICANDO POR CONTEÚDO.
+        Prioriza fontes: qconcursos > pci > quadrix_pdf. Usado como fallback
         de `_buscar_questoes` quando a distribuição por disciplina não é
         suficiente.
         """
         import json
 
         excluir_ids = excluir_ids or set()
+        # DISTINCT ON (content_hash) deduplica por conteúdo
         linhas = con.execute(
-            "SELECT * FROM questoes WHERE usada_em_simulado=0 ORDER BY RANDOM() LIMIT %s",
+            "SELECT DISTINCT ON (content_hash) * FROM questoes"
+            " WHERE usada_em_simulado=0 AND content_hash IS NOT NULL"
+            " ORDER BY content_hash,"
+            "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
+            "   RANDOM()"
+            " LIMIT %s",
             (quantidade + len(excluir_ids),),
         ).fetchall()
         candidatas = [dict(l) for l in linhas if dict(l)["id"] not in excluir_ids][:quantidade]
@@ -209,7 +216,12 @@ class GeradorSimuladoMultiBanca:
         faltam = quantidade - len(candidatas)
         if faltam > 0:
             linhas_rep = con.execute(
-                "SELECT * FROM questoes WHERE usada_em_simulado=1 ORDER BY RANDOM() LIMIT %s",
+                "SELECT DISTINCT ON (content_hash) * FROM questoes"
+                " WHERE usada_em_simulado=1 AND content_hash IS NOT NULL"
+                " ORDER BY content_hash,"
+                "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
+                "   RANDOM()"
+                " LIMIT %s",
                 (faltam + len(excluir_ids),),
             ).fetchall()
             repetidas = [dict(l) for l in linhas_rep if dict(l)["id"] not in excluir_ids][:faltam]
