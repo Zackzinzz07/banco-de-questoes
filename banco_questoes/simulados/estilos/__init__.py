@@ -20,9 +20,9 @@ Example:
 """
 
 from .base import BaseBancaStyle
+from .cebraspe import EstiloCebraspe
 
 # Placeholder imports for banca-specific styles (to be implemented in Tasks 3-4)
-# CebraspeStyle = None  # Task 3
 # IadesStyle = None     # Task 3
 # QuadrixStyle = None   # Task 3
 # FgvStyle = None       # Task 4
@@ -30,7 +30,7 @@ from .base import BaseBancaStyle
 
 __all__ = [
     'BaseBancaStyle',
-    # 'CebraspeStyle',
+    'EstiloCebraspe',
     # 'IadesStyle',
     # 'QuadrixStyle',
     # 'FgvStyle',
