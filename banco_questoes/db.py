@@ -146,23 +146,56 @@ def salvar_questao(con, q):
         return False
 
 
-def sortear_questoes(con, materia, quantidade):
-    """Sorteia questões não usadas (deduplicadas por conteúdo); se faltar, avisa e completa com repetidas."""
+def sortear_questoes(con, materia, quantidade, banca=None, orgao=None):
+    """Sorteia questões não usadas (deduplicadas por conteúdo); se faltar, avisa e completa com repetidas.
+
+    Args:
+        con: Conexão com o banco
+        materia: Matéria/disciplina para filtro
+        quantidade: Número de questões desejadas
+        banca: Nome da banca examinadora para filtro (opcional, ex: "Instituto Quadrix")
+        orgao: Órgão/concurso para filtro (opcional, ex: "SEDES/DF")
+    """
+    # Construir WHERE dinamicamente
+    where_parts = ["materia=%s", "usada_em_simulado=0", "content_hash IS NOT NULL"]
+    params = [materia]
+
+    if banca:
+        where_parts.append("banca=%s")
+        params.append(banca)
+    if orgao:
+        where_parts.append("orgao=%s")
+        params.append(orgao)
+
+    where_clause = " AND ".join(where_parts)
+    params.append(quantidade)  # Para LIMIT
+
     linhas = con.execute(
-        "SELECT DISTINCT ON (content_hash) * FROM questoes"
-        " WHERE materia=%s AND usada_em_simulado=0 AND content_hash IS NOT NULL"
-        " ORDER BY content_hash,"
-        "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-        "   RANDOM() LIMIT %s", (materia, quantidade)).fetchall()
+        f"SELECT DISTINCT ON (content_hash) * FROM questoes"
+        f" WHERE {where_clause} AND content_hash IS NOT NULL"
+        f" ORDER BY content_hash,"
+        f"   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
+        f"   RANDOM() LIMIT %s", tuple(params)).fetchall()
     questoes = [dict(l) for l in linhas]
     faltam = quantidade - len(questoes)
     if faltam > 0:
+        where_parts_rep = ["materia=%s", "usada_em_simulado=1", "content_hash IS NOT NULL"]
+        params_rep = [materia]
+        if banca:
+            where_parts_rep.append("banca=%s")
+            params_rep.append(banca)
+        if orgao:
+            where_parts_rep.append("orgao=%s")
+            params_rep.append(orgao)
+        where_clause_rep = " AND ".join(where_parts_rep)
+        params_rep.append(faltam)
+
         repetidas = con.execute(
-            "SELECT DISTINCT ON (content_hash) * FROM questoes"
-            " WHERE materia=%s AND usada_em_simulado=1 AND content_hash IS NOT NULL"
-            " ORDER BY content_hash,"
-            "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-            "   RANDOM() LIMIT %s", (materia, faltam)).fetchall()
+            f"SELECT DISTINCT ON (content_hash) * FROM questoes"
+            f" WHERE {where_clause_rep}"
+            f" ORDER BY content_hash,"
+            f"   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
+            f"   RANDOM() LIMIT %s", tuple(params_rep)).fetchall()
         if repetidas:
             print(f"Aviso: só {len(questoes)} questões inéditas de {materia};"
                   f" completando com {len(repetidas)} repetidas.")

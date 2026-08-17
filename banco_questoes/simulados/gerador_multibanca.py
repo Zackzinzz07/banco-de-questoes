@@ -56,13 +56,18 @@ class GeradorSimuladoMultiBanca:
         >>> caminho = gerador.gerar(quantidade=10, simulado_nome="teste_cebraspe")
     """
 
-    def __init__(self, banca_nome: str, con=None) -> None:
+    def __init__(self, banca_nome: str, con=None, banca_concurso: Optional[str] = None,
+                 orgao: Optional[str] = None) -> None:
         """
         Args:
             banca_nome: Chave da banca em BANCAS (ex: "cebraspe", "iades",
                 "quadrix", "fgv", "aocp").
             con: Conexão já aberta com o banco (ver `db.conectar()`). Se None,
                 uma conexão própria é aberta em `gerar()` e fechada ao final.
+            banca_concurso: Nome da banca examinadora para filtro (ex: "Instituto Quadrix").
+                Se None, usa questões de qualquer banca.
+            orgao: Órgão/concurso para filtro (ex: "SEDES/DF").
+                Se None, usa questões de qualquer órgão.
 
         Raises:
             ValueError: Se banca_nome não estiver em BANCAS.
@@ -75,6 +80,8 @@ class GeradorSimuladoMultiBanca:
 
         self.banca_nome = banca_nome
         self.con = con
+        self.banca_concurso = banca_concurso
+        self.orgao = orgao
 
         self.config = self._carregar_config()
         self.estilo = self._carregar_estilo()
@@ -154,6 +161,9 @@ class GeradorSimuladoMultiBanca:
         proporção de peso configurada em cada disciplina, com fallback
         genérico (qualquer matéria) para completar o que faltar.
 
+        Se banca_concurso ou orgao foram especificados, filtra questões
+        dessas origens primeiro, depois fallback para qualquer banca/órgão.
+
         Args:
             con: Conexão com o banco (db.conectar()).
             quantidade: Número total de questões desejado.
@@ -175,7 +185,11 @@ class GeradorSimuladoMultiBanca:
                 if n_disciplina <= 0:
                     continue
                 materia = disciplina.get("nome", "")
-                encontradas = db.sortear_questoes(con, materia, n_disciplina)
+                # Filtro por banca/órgão se especificados
+                encontradas = db.sortear_questoes(
+                    con, materia, n_disciplina,
+                    banca=self.banca_concurso, orgao=self.orgao
+                )
                 for q in encontradas:
                     if q["id"] not in ids_vistos:
                         ids_vistos.add(q["id"])
