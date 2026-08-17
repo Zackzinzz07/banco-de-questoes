@@ -125,7 +125,7 @@ class EstiloQuadrix(BaseBancaStyle):
         y_rodape = margens['inferior'] + self.MARGEM_INTERNA_PT
 
         # Draw page number in simple format
-        canvas_obj.setFont('Arial', 9)
+        canvas_obj.setFont('Helvetica', 9)
         canvas_obj.setFillColor(colors.black)
         numero_pagina_formatado = f"{pagina_numero}"
         canvas_obj.drawCentredString(x_centro, y_rodape, numero_pagina_formatado)

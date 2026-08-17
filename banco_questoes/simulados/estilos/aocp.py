@@ -305,7 +305,7 @@ class EstiloAOCP(BaseBancaStyle):
     def _desenhar_texto_quebrado(self, canvas_obj: canvas.Canvas, texto: str,
                                  x: float, y: float, largura_maxima_pt: float,
                                  tamanho_fonte: int = 10,
-                                 fonte: str = 'Open-Sans') -> float:
+                                 fonte: str = 'Helvetica') -> float:
         """
         Helper method to draw text with automatic line wrapping.
 
