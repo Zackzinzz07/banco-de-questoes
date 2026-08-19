@@ -9,16 +9,21 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+# Garantir que o path está correto
+project_root = Path(__file__).resolve().parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 try:
     from . import db
     from . import edital
     from . import edital_loader
     from .simulados import gerar_simulado
 except ImportError:
-    import db
-    import edital
-    import edital_loader
-    from simulados import gerar_simulado
+    from banco_questoes import db
+    from banco_questoes import edital
+    from banco_questoes import edital_loader
+    from banco_questoes.simulados import gerar_simulado
 
 PASTA = Path(__file__).resolve().parent
 PASTA_SIMULADOS = PASTA / "simulados"
@@ -50,6 +55,41 @@ def stats():
     return est
 
 
+@app.get("/api/pci/status")
+def pci_status():
+    """Status do PCI com categoria/tema."""
+    con = db.conectar()
+
+    cur = con.execute("SELECT COUNT(*) FROM questoes WHERE fonte='pci'")
+    total = cur.fetchone()[0]
+
+    cur = con.execute("SELECT COUNT(*) FROM questoes WHERE fonte='pci' AND categoria IS NOT NULL")
+    com_cat = cur.fetchone()[0]
+
+    cur = con.execute("SELECT COUNT(DISTINCT categoria) FROM questoes WHERE fonte='pci'")
+    num_cats = cur.fetchone()[0]
+
+    cur = con.execute("""
+        SELECT categoria, COUNT(*) as qtd
+        FROM questoes
+        WHERE fonte='pci'
+        GROUP BY categoria
+        ORDER BY qtd DESC
+        LIMIT 10
+    """)
+
+    top_cats = [{"nome": row["categoria"], "total": row["qtd"]} for row in cur.fetchall()]
+
+    con.close()
+
+    return {
+        "total": total,
+        "com_categoria": com_cat,
+        "categorias_unicas": num_cats,
+        "top_categorias": top_cats
+    }
+
+
 @app.get("/api/stats/todas")
 def stats_todas():
     """Return statistics for ALL questions in the database."""
@@ -72,6 +112,57 @@ def stats_todas():
     return {
         "total": total,
         "por_orgao": por_orgao,
+        "por_materia": por_materia
+    }
+
+
+@app.get("/api/stats/materias")
+def stats_materias():
+    """Dashboard: Estatísticas por MATÉRIA com conteúdo (categoria/tema)."""
+    con = db.conectar()
+
+    # Total geral
+    total_row = con.execute("SELECT COUNT(*) FROM questoes").fetchone()
+    total = total_row[0] if total_row else 0
+
+    # Contagem de materias únicas
+    materias_unicas = con.execute("SELECT COUNT(DISTINCT materia) FROM questoes WHERE materia IS NOT NULL").fetchone()[0]
+
+    # Contagem de fontes únicas
+    fontes_unicas = con.execute("SELECT COUNT(DISTINCT fonte) FROM questoes WHERE fonte IS NOT NULL").fetchone()[0]
+
+    # Contagem de categorias/temas
+    categorias_unicas = con.execute("SELECT COUNT(DISTINCT categoria) FROM questoes WHERE categoria IS NOT NULL").fetchone()[0]
+
+    # Por matéria com fontes e categorias
+    materias_data = con.execute("""
+        SELECT
+            materia,
+            COUNT(*) as count,
+            STRING_AGG(DISTINCT fonte, ', ' ORDER BY fonte) as fontes,
+            STRING_AGG(DISTINCT categoria, ', ' ORDER BY categoria LIMIT 3) as categorias
+        FROM questoes
+        WHERE materia IS NOT NULL
+        GROUP BY materia
+        ORDER BY count DESC
+    """).fetchall()
+
+    por_materia = []
+    for row in materias_data:
+        por_materia.append({
+            "materia": row[0],
+            "count": row[1],
+            "fontes": row[2],
+            "categorias": row[3]
+        })
+
+    con.close()
+
+    return {
+        "total": total,
+        "materias_unicas": materias_unicas,
+        "fontes_unicas": fontes_unicas,
+        "categorias_unicas": categorias_unicas,
         "por_materia": por_materia
     }
 
@@ -395,6 +486,13 @@ def stats_pci_categoria(categoria: str):
         }
     finally:
         con.close()
+
+
+@app.get("/")
+def home():
+    """Redireciona pra dashboard educacional"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/dashboard_educacional.html")
 
 
 pasta_web = PASTA / "web"

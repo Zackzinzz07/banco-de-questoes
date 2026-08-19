@@ -28,15 +28,15 @@ CREATE TABLE IF NOT EXISTS questoes (
     comentario TEXT,
     materia TEXT NOT NULL,
     assunto TEXT,
-    banca TEXT,
-    orgao TEXT,
-    cargo TEXT,
     ano INTEGER,
     prova TEXT,
     fonte TEXT NOT NULL,
     usada_em_simulado INTEGER NOT NULL DEFAULT 0,
     texto_associado TEXT,
-    imagens TEXT
+    imagens TEXT,
+    categoria VARCHAR(255),
+    tema VARCHAR(255),
+    imagens_urls JSONB DEFAULT '[]'::jsonb
 );
 CREATE INDEX IF NOT EXISTS idx_questoes_materia_usada ON questoes(materia, usada_em_simulado);
 CREATE INDEX IF NOT EXISTS idx_questoes_fonte ON questoes(fonte);
@@ -140,9 +140,9 @@ def salvar_questao(con, q):
     try:
         con.execute(
             "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash, alternativas,"
-            " gabarito, comentario, materia, assunto, banca, orgao, cargo, ano, prova, fonte,"
+            " gabarito, comentario, materia, assunto, ano, prova, fonte,"
             " texto_associado, imagens, categoria, tema, imagens_urls)"
-            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 q.get("id_qc"),
                 q["enunciado"],
@@ -153,17 +153,14 @@ def salvar_questao(con, q):
                 q.get("comentario"),
                 q["materia"],
                 q.get("assunto"),
-                q.get("banca"),
-                q.get("orgao"),
-                q.get("cargo"),
                 q.get("ano"),
                 q.get("prova"),
                 fonte,
                 q.get("texto_associado"),
                 json.dumps(q["imagens"], ensure_ascii=False) if q.get("imagens") else None,
-                q.get("categoria"),  # NEW
-                q.get("tema"),  # NEW
-                json.dumps(q.get("imagens_urls", []), ensure_ascii=False),  # NEW
+                q.get("categoria"),
+                q.get("tema"),
+                json.dumps(q.get("imagens_urls", []), ensure_ascii=False),
             ),
         )
         con.commit()

@@ -4,10 +4,38 @@
       "Bash(python -m banco_questoes.simulados.cli_multibanca --help)",
       "Bash(docker-compose up *)",
       "Bash(python -m banco_questoes.simulados.cli_multibanca --banca cebraspe --quantidade 30 --nome teste.pdf)",
-      "Bash(cat >> *)"
+      "Bash(cat >> *)",
+      "Bash(curl -I http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"HTTP Status: %{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(tee build.log)",
+      "Bash(tee -a build.log)",
+      "Bash(tee build-final.log)",
+      "Bash(curl -s http://localhost:3000 -w \"\\\\n%{http_code}\\\\n\")",
+      "Bash(npm run *)",
+      "Bash(docker build *)",
+      "Bash(docker run *)",
+      "Bash(curl -s -w \"Status: %{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(curl -s -w \"\\\\n%{http_code}\\\\n\" http://localhost:3000)",
+      "PowerShell(Start-Process -FilePath \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker.exe\" -WindowStyle Hidden)",
+      "PowerShell(docker --version)",
+      "Bash(curl -s -w \"\\\\nStatus: %{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(curl -s -m 5 http://localhost:3000)",
+      "PowerShell(Start-Process -FilePath 'C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker.exe' -WindowStyle Hidden)",
+      "PowerShell(head -5)",
+      "Bash(docker compose *)",
+      "Bash(curl -s -m 3 http://localhost:3000)",
+      "Bash(tee /tmp/docker.log)",
+      "Bash(curl -s -m 2 http://localhost:3000)",
+      "PowerShell($path = \"C:\\\\Users\\\\Felps\\\\Documents\\\\training\\\\plataforma-estudos-app\"; Start-Sleep -Seconds 2; Get-Process | Where-Object {$_.ProcessName -match \"docker|node|code\"} | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Remove-Item -Path $path -Recurse -Force; \"✅ Deletado!\")",
+      "Bash(cd \"c:\\\\Users\\\\Felps\\\\Documents\\\\training\" && rm -f backup_db.py check_*.py cleanup_old_pci.py consolidar_sedes.py debug_*.py fill_all_*.py fill_cargo.py fix_*.py monitor_tasks.py monitorar_coleta.py normalize_orgao.py relatorio_coleta.py roda_pci_completo.py test.py test_*.py teste_*.py verify*.py validate_endpoints.py && ls -la *.py)",
+      "Bash(pip install *)",
+      "Bash(timeout 5 python -m uvicorn banco_questoes.web_api:app --host 0.0.0.0 --port 8000)",
+      "Bash(git add *)"
     ],
     "additionalDirectories": [
-      "c:\\Users\\Felps\\Documents\\training\\.superpowers\\sdd\\2026-08-17-multi-banca-simulado"
+      "c:\\Users\\Felps\\Documents\\training\\.superpowers\\sdd\\2026-08-17-multi-banca-simulado",
+      "C:\\Users\\Felps\\Documents\\training"
     ]
   }
 }

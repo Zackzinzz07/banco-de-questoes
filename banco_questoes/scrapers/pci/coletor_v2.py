@@ -63,23 +63,20 @@ def coletar_tema_v2(sessao, categoria, tema_slug, tema_nome, tema_url, con):
             salvou = db.salvar_questao(con, {
                 "id_qc": q.get("id_pci"),
                 "enunciado": q.get("enunciado"),
-                "alternativas": str(q.get("alternativas", "")),
+                "alternativas": q.get("alternativas", {}),
                 "gabarito": None,
                 "comentario": None,
                 "materia": materia,
                 "assunto": None,
-                "banca": q.get("banca"),
-                "orgao": q.get("orgao") or "PCI",
                 "ano": q.get("ano"),
                 "prova": q.get("prova"),
                 "fonte": "pci",
                 "texto_associado": q.get("texto_associado"),
                 "imagens": q.get("imagens", []),
                 "imagens_urls": q.get("imagens_urls", []),
-                # NEW: Hierarquia (categoria/tema apenas)
                 "categoria": categoria,
                 "tema": tema_slug,
-            }, cargo=None)
+            })
             if salvou:
                 total_novas += 1
 

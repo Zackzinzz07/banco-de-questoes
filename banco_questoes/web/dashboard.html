@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCI Concursos - Banco Hierárquico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: #f9f9f9;
+            color: #1a1a2e;
+            line-height: 1.6;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+            border-bottom: 3px solid #f59e0b;
+        }
+
+        .hero-logo {
+            font-family: 'Crimson Text', serif;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .big-number {
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: #f59e0b;
+            margin: 30px 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .big-number-label {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 20px auto 0;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1300px;
+            margin: -40px auto 0;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* GRID LAYOUT */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+        }
+
+        /* CATEGORIAS - LEFT SIDE */
+        .categorias-section h2 {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 16px;
+            top: 14px;
+            color: #9ca3af;
+            font-size: 1.2rem;
+        }
+
+        .tree-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 12px;
+        }
+
+        .tree-item {
+            margin-bottom: 12px;
+            padding: 16px;
+            background: #f9f9f9;
+            border-left: 3px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tree-item:hover {
+            border-left-color: #6366f1;
+            background: #f0f4ff;
+            transform: translateX(4px);
+        }
+
+        .tree-item-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .tree-item-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .tree-item-count {
+            background: white;
+            padding: 2px 10px;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #6366f1;
+        }
+
+        .tree-progress {
+            height: 3px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .tree-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* STATS - RIGHT SIDE */
+        .stats-section h2 {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stat-box {
+            padding: 24px;
+            background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            border-color: #6366f1;
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.08);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .stat-number.accent {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-detail {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        /* CHART SECTION */
+        .chart-section {
+            background: #fafafa;
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chart-section h2 {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .chart-item {
+            margin-bottom: 28px;
+        }
+
+        .chart-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .chart-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 0.95rem;
+        }
+
+        .chart-value {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .chart-bar {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        /* Loading & Scrollbar */
+        .loading {
+            padding: 40px 20px;
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-top: 40px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 3px 10px;
+            background: #ecfdf5;
+            color: #047857;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 40px 24px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .big-number {
+                font-size: 3rem;
+            }
+
+            .container {
+                margin: -30px auto 0;
+                padding: 24px;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-section {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-logo">PCI CONCURSOS</div>
+        <h1>Banco Hierárquico</h1>
+        <div class="big-number" id="total-big">-</div>
+        <div class="big-number-label">questões coletadas</div>
+        <p>Organizado por Matéria → Categoria → Tema</p>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+        <div class="content-grid">
+            <!-- CATEGORIAS (LEFT) -->
+            <div class="categorias-section">
+                <h2>Explore Categorias</h2>
+                <div class="search-container">
+                    <input type="text" id="search" placeholder="Buscar categoria...">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div class="tree-list" id="tree">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Carregando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATS (RIGHT) -->
+            <div class="stats-section">
+                <h2>Estatísticas</h2>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Categorias</div>
+                        <div class="stat-number accent" id="total-cats">-</div>
+                        <div class="stat-detail">áreas de conhecimento</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Temas</div>
+                        <div class="stat-number accent" id="total-temas">-</div>
+                        <div class="stat-detail">subdivisões temáticas</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Com Imagens</div>
+                        <div class="stat-number accent" id="com-imagens">-</div>
+                        <div class="stat-detail">questões ilustradas</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Completude</div>
+                        <div class="stat-number accent" id="completude">100%</div>
+                        <div class="stat-detail">com categoria/tema</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHART SECTION -->
+        <div class="chart-section">
+            <h2>Distribuição por Matéria</h2>
+            <div id="materias-chart">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando dados...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Dashboard PCI Concursos • Última atualização: <span id="last-update">-</span><span class="status-badge">Rodando</span></p>
+    </footer>
+
+    <script>
+        const API = '/api';
+        let allData = null;
+
+        async function load() {
+            try {
+                const [pci, materias] = await Promise.all([
+                    fetch(`${API}/stats/pci`).then(r => r.json()),
+                    fetch(`${API}/stats/materias`).then(r => r.json())
+                ]);
+                allData = { pci, materias };
+                render();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('tree').innerHTML =
+                    '<div style="padding: 20px; color: #ef4444;">Erro ao carregar. Verifique a API.</div>';
+            }
+        }
+
+        function render() {
+            updateHero();
+            updateStats();
+            updateTree();
+            updateChart();
+            document.getElementById('last-update').textContent =
+                new Date().toLocaleString('pt-BR');
+        }
+
+        function updateHero() {
+            const total = allData.pci.total_pci || 0;
+            document.getElementById('total-big').textContent =
+                total.toLocaleString('pt-BR');
+        }
+
+        function updateStats() {
+            const { pci } = allData;
+
+            const cats = Object.keys(pci.por_categoria || {}).length;
+            document.getElementById('total-cats').textContent = cats;
+
+            let temas = 0;
+            Object.values(pci.por_categoria || {}).forEach(c => {
+                temas += Object.keys(c.temas || {}).length;
+            });
+            document.getElementById('total-temas').textContent = temas;
+
+            let imgs = 0;
+            Object.values(pci.por_categoria || {}).forEach(c => {
+                Object.values(c.temas || {}).forEach(t => {
+                    imgs += t.com_imagens || 0;
+                });
+            });
+            document.getElementById('com-imagens').textContent =
+                imgs.toLocaleString('pt-BR');
+        }
+
+        function updateTree() {
+            const { pci } = allData;
+            const cats = Object.entries(pci.por_categoria || {})
+                .sort((a, b) => b[1].total - a[1].total);
+
+            const html = cats.map(([cat, data]) => {
+                const pct = (data.total / pci.total_pci) * 100;
+                return `
+                    <div class="tree-item">
+                        <div class="tree-item-name">${cat}</div>
+                        <div class="tree-item-stats">
+                            <span>${Object.keys(data.temas || {}).length} temas</span>
+                            <span class="tree-item-count">${data.total}</span>
+                        </div>
+                        <div class="tree-progress">
+                            <div class="tree-progress-fill" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('tree').innerHTML = html ||
+                '<p style="padding: 20px; color: #9ca3af;">Nenhuma categoria encontrada</p>';
+
+            // Busca
+            document.getElementById('search').addEventListener('input', (e) => {
+                const termo = e.target.value.toLowerCase();
+                document.querySelectorAll('.tree-item').forEach(item => {
+                    const nome = item.querySelector('.tree-item-name').textContent.toLowerCase();
+                    item.style.display = nome.includes(termo) ? '' : 'none';
+                });
+            });
+        }
+
+        function updateChart() {
+            const { materias } = allData;
+            const max = Math.max(...(materias.por_materia || []).map(m => m.count));
+
+            const colors = [
+                'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                'linear-gradient(90deg, #8b5cf6, #d946ef)',
+                'linear-gradient(90deg, #d946ef, #f59e0b)',
+                'linear-gradient(90deg, #f59e0b, #10b981)',
+                'linear-gradient(90deg, #10b981, #3b82f6)'
+            ];
+
+            const html = (materias.por_materia || [])
+                .sort((a, b) => b.count - a.count)
+                .map((m, i) => {
+                    const pct = (m.count / max) * 100;
+                    const color = colors[i % colors.length];
+                    return `
+                        <div class="chart-item">
+                            <div class="chart-label">
+                                <span class="chart-name">${m.materia}</span>
+                                <span class="chart-value">${m.count.toLocaleString('pt-BR')} questões</span>
+                            </div>
+                            <div class="chart-bar">
+                                <div class="chart-bar-fill" style="background: ${color}; width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            document.getElementById('materias-chart').innerHTML = html ||
+                '<p style="color: #9ca3af;">Nenhum dado disponível</p>';
+        }
+
+        load();
+        setInterval(load, 30000);
+    </script>
+</body>
+</html>
