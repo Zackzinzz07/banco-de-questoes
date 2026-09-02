@@ -1,0 +1,6 @@
+# Commits puramente cosmeticos, ignorados pelo git blame.
+# Ativado neste repo com:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: formata o projeto com ruff (banco_questoes)
+9be4f717bf456f17e33d20b32a88b6748f28501f
