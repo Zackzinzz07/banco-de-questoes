@@ -238,6 +238,43 @@ def test_sortear_questoes_com_multiplos_filtros():
     assert "filtros múltiplos" in resultados[0]["enunciado"]
 
 
+def test_salvar_questao_normaliza_gabarito_vazio_para_null():
+    """Gabarito '' (string vazia) é 'sem gabarito', não um gabarito válido.
+    O SQLite legado trazia 367 questões assim; guardá-las como '' as torna
+    invisíveis para a fase de coleta de gabaritos."""
+    con = db.conectar()
+    db.salvar_questao(con, questao_exemplo(
+        id_qc="QVAZIO1", enunciado="Gabarito vazio?", gabarito=""))
+    linha = con.execute(
+        "SELECT gabarito FROM questoes WHERE id_qc='QVAZIO1'").fetchone()
+    assert linha["gabarito"] is None
+    con.close()
+
+
+def test_sem_gabarito_encontra_gabarito_string_vazia():
+    """'WHERE gabarito IS NULL' sozinho não acha as questões com ''."""
+    con = db.conectar()
+    con.execute(
+        "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash,"
+        " alternativas, gabarito, materia, fonte)"
+        " VALUES ('QVAZIO2','Enunciado vazio?','h_vazio2','c_vazio2','{}','',"
+        " 'SUAS','qconcursos')")
+    pendentes = db.sem_gabarito(con)
+    assert "QVAZIO2" in [p["id_qc"] for p in pendentes]
+    con.close()
+
+
+def test_estatisticas_conta_gabarito_vazio_como_sem_gabarito():
+    con = db.conectar()
+    con.execute(
+        "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash,"
+        " alternativas, gabarito, materia, fonte)"
+        " VALUES ('QVAZIO3','Outro vazio?','h_vazio3','c_vazio3','{}','',"
+        " 'SUAS','qconcursos')")
+    assert db.estatisticas(con)["SUAS"]["sem_gabarito"] == 1
+    con.close()
+
+
 def test_salvar_questao_persiste_banca_e_orgao():
     """banca/orgao são usados como filtro em sortear_questoes mas nenhum
     teste checava a coluna direto — cobrindo o mesmo bug do cargo."""

@@ -203,7 +203,10 @@ def salvar_pagina(html, con, materia):
             "tema": q["tema"],
             "cargo": q["cargo"],
             "banca": q["banca"],
-            "orgao": "SEDES/DF",  # Força orgao SEDES/DF para matérias do edital
+            # O órgão é o da prova de origem da questão, extraído da própria
+            # página. Sobrescrever por um valor fixo faria questão de outro
+            # estado se passar por questão do concurso alvo.
+            "orgao": q["orgao"],
             "ano": q["ano"],
             "prova": q["prova"],
             "fonte": "qconcursos",

@@ -83,6 +83,18 @@ def test_salvar_pagina_grava_cargo_categoria_tema(html):
     con.close()
 
 
+def test_salvar_pagina_preserva_orgao_real_da_questao(html):
+    """O órgão vem da própria questão e não pode ser sobrescrito por um valor
+    fixo: carimbar 'SEDES/DF' em tudo faz questão de outro estado se passar
+    por questão do DF (foi o que sujou o primeiro simulado gerado)."""
+    import db
+    con = db.conectar()
+    scraper_qc.salvar_pagina(html, con, "Contabilidade Geral")
+    linha = con.execute("SELECT orgao FROM questoes LIMIT 1").fetchone()
+    assert linha["orgao"] == "Câmara de Jardim - MS"
+    con.close()
+
+
 def test_atingiu_limite_pelo_atributo_do_botao():
     # Achado de calibração ao vivo: a cota diária esgotada é sinalizada
     # primeiro no próprio botão "Responder" (data-limit-reached="true").

@@ -140,6 +140,9 @@ def salvar_questao(con, q):
         raise ValueError(f"fonte inválida: '{fonte}'. Use {', '.join(sorted(FONTES_VALIDAS))}.")
 
     c_hash = content_hash(q["enunciado"], q["alternativas"])
+    # Gabarito "" é ausência de gabarito, não gabarito válido: guardar a string
+    # vazia esconderia a questão de sem_gabarito() para sempre.
+    gabarito = (q.get("gabarito") or "").strip() or None
 
     # Verificar se questão com mesmo conteúdo já existe
     existente = con.execute(
@@ -163,7 +166,7 @@ def salvar_questao(con, q):
                 hash_enunciado(q["enunciado"]),
                 c_hash,
                 json.dumps(q["alternativas"], ensure_ascii=False),
-                q.get("gabarito"),
+                gabarito,
                 q.get("comentario"),
                 q["materia"],
                 q.get("assunto"),
@@ -282,7 +285,8 @@ def salvar_progresso(con, fonte, chave, pagina):
 
 def sem_gabarito(con):
     linhas = con.execute(
-        "SELECT * FROM questoes WHERE gabarito IS NULL AND id_qc IS NOT NULL").fetchall()
+        "SELECT * FROM questoes WHERE (gabarito IS NULL OR gabarito = '')"
+        " AND id_qc IS NOT NULL").fetchall()
     return [dict(l) for l in linhas]
 
 
@@ -312,7 +316,7 @@ def estatisticas(con):
         "SELECT materia, COUNT(*) total,"
         " SUM(CASE WHEN usada_em_simulado=0 THEN 1 ELSE 0 END) ineditas,"
         " SUM(usada_em_simulado) usadas,"
-        " SUM(CASE WHEN gabarito IS NULL THEN 1 ELSE 0 END) sem_gabarito"
+        " SUM(CASE WHEN gabarito IS NULL OR gabarito = '' THEN 1 ELSE 0 END) sem_gabarito"
         " FROM questoes GROUP BY materia ORDER BY materia").fetchall()
     return {l["materia"]: {"total": l["total"], "ineditas": l["ineditas"],
                            "usadas": l["usadas"], "sem_gabarito": l["sem_gabarito"]}
