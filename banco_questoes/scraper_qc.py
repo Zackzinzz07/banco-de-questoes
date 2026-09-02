@@ -199,6 +199,9 @@ def salvar_pagina(html, con, materia):
             "gabarito": None,
             "materia": materia,
             "assunto": q["assunto"],
+            "categoria": q["categoria"],
+            "tema": q["tema"],
+            "cargo": q["cargo"],
             "banca": q["banca"],
             "orgao": "SEDES/DF",  # Força orgao SEDES/DF para matérias do edital
             "ano": q["ano"],

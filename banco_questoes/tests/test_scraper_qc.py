@@ -70,6 +70,19 @@ def test_salvar_pagina_grava_no_banco(html, tmp_path):
     assert scraper_qc.salvar_pagina(html, con, "Língua Portuguesa") == 0
 
 
+def test_salvar_pagina_grava_cargo_categoria_tema(html):
+    import db
+    con = db.conectar()
+    scraper_qc.salvar_pagina(html, con, "Contabilidade Geral")
+    linha = con.execute(
+        "SELECT cargo, categoria, tema FROM questoes LIMIT 1"
+    ).fetchone()
+    assert linha["cargo"] == "Contador"
+    assert linha["categoria"] == "Legislação de Contabilidade"
+    assert linha["tema"] == "Normas Brasileiras de Contabilidade - NBC"
+    con.close()
+
+
 def test_atingiu_limite_pelo_atributo_do_botao():
     # Achado de calibração ao vivo: a cota diária esgotada é sinalizada
     # primeiro no próprio botão "Responder" (data-limit-reached="true").
