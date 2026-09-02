@@ -9,9 +9,11 @@ Classes:
     EstiloFGV: Concrete implementation of BaseBancaStyle for FGV exams.
 """
 
-from typing import Dict, Any, List
-from reportlab.pdfgen import canvas
+from typing import Any, Dict, List
+
 from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+
 from .base import BaseBancaStyle
 
 
@@ -62,8 +64,9 @@ class EstiloFGV(BaseBancaStyle):
         """
         super().__init__(config)
 
-    def desenhar_cabecalho(self, canvas_obj: canvas.Canvas, pagina_numero: int,
-                          largura: float, altura: float) -> float:
+    def desenhar_cabecalho(
+        self, canvas_obj: canvas.Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """
         Draw the FGV header with minimalist design and exam type indicator.
 
@@ -85,12 +88,12 @@ class EstiloFGV(BaseBancaStyle):
         altura_cabecalho_pt = self.cm_para_pontos(self.ALTURA_CABECALHO_CM)
 
         # Calculate header coordinates
-        x_inicio = margens['esquerda']
-        y_base = altura - margens['superior'] - altura_cabecalho_pt
-        largura_cabecalho = largura - margens['esquerda'] - margens['direita']
+        x_inicio = margens["esquerda"]
+        y_base = altura - margens["superior"] - altura_cabecalho_pt
+        largura_cabecalho = largura - margens["esquerda"] - margens["direita"]
 
         # Draw FGV CONHECIMENTO text
-        canvas_obj.setFont('Helvetica-Bold', 12)
+        canvas_obj.setFont("Helvetica-Bold", 12)
         canvas_obj.setFillColor(colors.black)
         x_esquerda = x_inicio
         y_texto = y_base + altura_cabecalho_pt / 2 + 5
@@ -98,7 +101,7 @@ class EstiloFGV(BaseBancaStyle):
 
         # Draw exam type indicator on the right
         x_direita = x_inicio + largura_cabecalho - 50
-        canvas_obj.setFont('Helvetica', 10)
+        canvas_obj.setFont("Helvetica", 10)
         canvas_obj.drawRightString(x_direita, y_texto, f"Tipo {self.TIPO_PROVA_PADRAO}")
 
         # Draw horizontal divider line
@@ -108,8 +111,9 @@ class EstiloFGV(BaseBancaStyle):
 
         return altura_cabecalho_pt
 
-    def desenhar_rodape(self, canvas_obj: canvas.Canvas, pagina_numero: int,
-                       largura: float, altura: float) -> float:
+    def desenhar_rodape(
+        self, canvas_obj: canvas.Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """
         Draw the FGV footer with "TIPO X - PÁGINA Y" format.
 
@@ -130,18 +134,24 @@ class EstiloFGV(BaseBancaStyle):
 
         # Calculate footer coordinates (centered at bottom)
         x_centro = largura / 2
-        y_rodape = margens['inferior'] + self.MARGEM_INTERNA_PT
+        y_rodape = margens["inferior"] + self.MARGEM_INTERNA_PT
 
         # Draw page number in "TIPO X - PÁGINA Y" format
-        canvas_obj.setFont('Helvetica', 10)
+        canvas_obj.setFont("Helvetica", 10)
         canvas_obj.setFillColor(colors.black)
         numero_pagina_formatado = f"TIPO {self.TIPO_PROVA_PADRAO} - PÁGINA {pagina_numero}"
         canvas_obj.drawCentredString(x_centro, y_rodape, numero_pagina_formatado)
 
         return altura_rodape_pt
 
-    def desenhar_questao(self, canvas_obj: canvas.Canvas, questao_data: Dict[str, Any],
-                        posicao_x: float, posicao_y: float, largura_disponivel: float) -> float:
+    def desenhar_questao(
+        self,
+        canvas_obj: canvas.Canvas,
+        questao_data: Dict[str, Any],
+        posicao_x: float,
+        posicao_y: float,
+        largura_disponivel: float,
+    ) -> float:
         """
         Draw a single FGV multiple choice question with 5 alternatives.
 
@@ -164,11 +174,11 @@ class EstiloFGV(BaseBancaStyle):
         Returns:
             float: Height occupied by the question in points.
         """
-        numero_questao = questao_data.get('numero', 0)
-        enunciado = questao_data.get('enunciado', '')
+        numero_questao = questao_data.get("numero", 0)
+        enunciado = questao_data.get("enunciado", "")
 
         # Set font for question number
-        canvas_obj.setFont('Helvetica-Bold', 11)
+        canvas_obj.setFont("Helvetica-Bold", 11)
         canvas_obj.setFillColor(colors.black)
 
         # Draw question number
@@ -176,11 +186,11 @@ class EstiloFGV(BaseBancaStyle):
         canvas_obj.drawString(posicao_x, posicao_y, numero_str)
 
         # Get width of question number for text indentation
-        largura_numero = canvas_obj.stringWidth(numero_str, 'Helvetica-Bold', 11)
+        largura_numero = canvas_obj.stringWidth(numero_str, "Helvetica-Bold", 11)
         x_enunciado = posicao_x + largura_numero + self.MARGEM_INTERNA_PT
 
         # Draw question text (enunciado) - using Times for longer texts
-        canvas_obj.setFont('Times-Roman', 10)
+        canvas_obj.setFont("Times-Roman", 10)
         altura_usada = self._desenhar_texto_quebrado(
             canvas_obj,
             enunciado,
@@ -188,14 +198,14 @@ class EstiloFGV(BaseBancaStyle):
             posicao_y,
             largura_disponivel - (x_enunciado - posicao_x),
             tamanho_fonte=10,
-            fonte='Times-Roman'
+            fonte="Times-Roman",
         )
 
         # Calculate position for answer options
         y_opcoes = posicao_y - altura_usada - self.MARGEM_INTERNA_PT
 
         # Draw response options: (A) (B) (C) (D) (E)
-        canvas_obj.setFont('Helvetica', 10)
+        canvas_obj.setFont("Helvetica", 10)
         opcoes_texto = "( ) A    ( ) B    ( ) C    ( ) D    ( ) E"
         canvas_obj.drawString(x_enunciado, y_opcoes, opcoes_texto)
 
@@ -204,8 +214,9 @@ class EstiloFGV(BaseBancaStyle):
 
         return altura_total
 
-    def calcular_altura_questao(self, questao_data: Dict[str, Any],
-                               largura_disponivel: float) -> float:
+    def calcular_altura_questao(
+        self, questao_data: Dict[str, Any], largura_disponivel: float
+    ) -> float:
         """
         Calculate the height needed to render an FGV question.
 
@@ -221,10 +232,10 @@ class EstiloFGV(BaseBancaStyle):
         Returns:
             float: Calculated height needed in points.
         """
-        enunciado = questao_data.get('enunciado', '')
+        enunciado = questao_data.get("enunciado", "")
 
         # Get baseline height from configuration (FGV has extremely high density)
-        altura_media_cm = self.caracteristicas_prova.get('altura_media_questao_cm', 11.0)
+        altura_media_cm = self.caracteristicas_prova.get("altura_media_questao_cm", 11.0)
         altura_base_pt = self.cm_para_pontos(altura_media_cm)
 
         # Calculate number of lines based on text length
@@ -240,8 +251,9 @@ class EstiloFGV(BaseBancaStyle):
 
         return altura_total
 
-    def _quebrar_texto(self, texto: str, largura_maxima_pt: float,
-                      tamanho_fonte: int = 10) -> List[str]:
+    def _quebrar_texto(
+        self, texto: str, largura_maxima_pt: float, tamanho_fonte: int = 10
+    ) -> List[str]:
         """
         Break text into multiple lines to fit within a maximum width.
 
@@ -294,10 +306,16 @@ class EstiloFGV(BaseBancaStyle):
 
         return linhas if linhas else [""]
 
-    def _desenhar_texto_quebrado(self, canvas_obj: canvas.Canvas, texto: str,
-                                 x: float, y: float, largura_maxima_pt: float,
-                                 tamanho_fonte: int = 10,
-                                 fonte: str = 'Helvetica') -> float:
+    def _desenhar_texto_quebrado(
+        self,
+        canvas_obj: canvas.Canvas,
+        texto: str,
+        x: float,
+        y: float,
+        largura_maxima_pt: float,
+        tamanho_fonte: int = 10,
+        fonte: str = "Helvetica",
+    ) -> float:
         """
         Helper method to draw text with automatic line wrapping.
 

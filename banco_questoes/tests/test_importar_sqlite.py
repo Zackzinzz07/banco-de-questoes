@@ -1,4 +1,5 @@
 """Testes da importação do SQLite legado (pré-PostgreSQL) para o banco atual."""
+
 import json
 import sqlite3
 
@@ -43,11 +44,26 @@ def _sqlite_legado(caminho, linhas):
 
 
 def test_ler_questoes_converte_json_de_alternativas(tmp_path):
-    caminho = _sqlite_legado(tmp_path / "legado.db", [(
-        "Q1", "Enunciado um?", json.dumps({"A": "alt a", "B": "alt b"}), "A",
-        "Língua Portuguesa", "Crase", "Cebraspe", "PRF", 2024, "prova x",
-        "qconcursos", "", None,
-    )])
+    caminho = _sqlite_legado(
+        tmp_path / "legado.db",
+        [
+            (
+                "Q1",
+                "Enunciado um?",
+                json.dumps({"A": "alt a", "B": "alt b"}),
+                "A",
+                "Língua Portuguesa",
+                "Crase",
+                "Cebraspe",
+                "PRF",
+                2024,
+                "prova x",
+                "qconcursos",
+                "",
+                None,
+            )
+        ],
+    )
 
     questoes = importar_sqlite.ler_questoes(caminho)
 
@@ -58,24 +74,53 @@ def test_ler_questoes_converte_json_de_alternativas(tmp_path):
 
 
 def test_importar_grava_no_postgres_e_conta_duplicadas(tmp_path):
-    caminho = _sqlite_legado(tmp_path / "legado.db", [
-        ("Q1", "Enunciado um?", json.dumps({"A": "a", "B": "b"}), "A",
-         "Língua Portuguesa", None, "Cebraspe", "PRF", 2024, None,
-         "qconcursos", None, None),
-        ("Q2", "Enunciado dois?", json.dumps({"A": "a", "B": "b"}), "B",
-         "SUAS", None, "Instituto Quadrix", "SEDES/DF", 2026, None,
-         "quadrix_pdf", None, None),
-    ])
+    caminho = _sqlite_legado(
+        tmp_path / "legado.db",
+        [
+            (
+                "Q1",
+                "Enunciado um?",
+                json.dumps({"A": "a", "B": "b"}),
+                "A",
+                "Língua Portuguesa",
+                None,
+                "Cebraspe",
+                "PRF",
+                2024,
+                None,
+                "qconcursos",
+                None,
+                None,
+            ),
+            (
+                "Q2",
+                "Enunciado dois?",
+                json.dumps({"A": "a", "B": "b"}),
+                "B",
+                "SUAS",
+                None,
+                "Instituto Quadrix",
+                "SEDES/DF",
+                2026,
+                None,
+                "quadrix_pdf",
+                None,
+                None,
+            ),
+        ],
+    )
     con = db.conectar()
 
-    importadas, duplicadas = importar_sqlite.importar(
-        importar_sqlite.ler_questoes(caminho), con)
+    importadas, duplicadas = importar_sqlite.importar(importar_sqlite.ler_questoes(caminho), con)
 
     assert (importadas, duplicadas) == (2, 0)
-    linha = con.execute(
-        "SELECT banca, orgao, ano, fonte FROM questoes WHERE id_qc='Q1'").fetchone()
+    linha = con.execute("SELECT banca, orgao, ano, fonte FROM questoes WHERE id_qc='Q1'").fetchone()
     assert (linha["banca"], linha["orgao"], linha["ano"], linha["fonte"]) == (
-        "Cebraspe", "PRF", 2024, "qconcursos")
+        "Cebraspe",
+        "PRF",
+        2024,
+        "qconcursos",
+    )
 
     # Rodar de novo não duplica — o dedupe por content_hash barra.
     de_novo = importar_sqlite.importar(importar_sqlite.ler_questoes(caminho), con)
@@ -84,12 +129,41 @@ def test_importar_grava_no_postgres_e_conta_duplicadas(tmp_path):
 
 
 def test_importar_ignora_questao_sem_enunciado_ou_alternativas(tmp_path):
-    caminho = _sqlite_legado(tmp_path / "legado.db", [
-        ("Q1", "", json.dumps({"A": "a"}), "A", "SUAS", None, None, None,
-         2026, None, "qconcursos", None, None),
-        ("Q2", "Tem enunciado mas sem alternativas?", json.dumps({}), "A",
-         "SUAS", None, None, None, 2026, None, "qconcursos", None, None),
-    ])
+    caminho = _sqlite_legado(
+        tmp_path / "legado.db",
+        [
+            (
+                "Q1",
+                "",
+                json.dumps({"A": "a"}),
+                "A",
+                "SUAS",
+                None,
+                None,
+                None,
+                2026,
+                None,
+                "qconcursos",
+                None,
+                None,
+            ),
+            (
+                "Q2",
+                "Tem enunciado mas sem alternativas?",
+                json.dumps({}),
+                "A",
+                "SUAS",
+                None,
+                None,
+                None,
+                2026,
+                None,
+                "qconcursos",
+                None,
+                None,
+            ),
+        ],
+    )
 
     questoes = importar_sqlite.ler_questoes(caminho)
 

@@ -1,8 +1,8 @@
 """Data consistency tests: verify data integrity across all layers."""
 
-import edital_loader
 import config
 import db
+import edital_loader
 
 
 class TestYAMLStructure:
@@ -37,10 +37,10 @@ class TestYAMLStructure:
 
                 # All materias should have numeric weights
                 for materia, peso in materias.items():
-                    assert isinstance(peso, (int, float)), \
+                    assert isinstance(peso, (int, float)), (
                         f"{concurso}/{cargo}/{materia} peso should be numeric, got {type(peso)}"
-                    assert peso > 0, \
-                        f"{concurso}/{cargo}/{materia} peso should be positive"
+                    )
+                    assert peso > 0, f"{concurso}/{cargo}/{materia} peso should be positive"
 
     def test_sedes_df_fallback_valido(self):
         """Verify SEDES/DF fallback is valid when YAML not found."""
@@ -61,16 +61,12 @@ class TestYAMLStructure:
 
             for cargo in cargos:
                 materias = edital_loader.obter_materias(concurso, cargo)
-                assert materias is not None, \
-                    f"{concurso}/{cargo} should have materias"
-                assert len(materias) > 0, \
-                    f"{concurso}/{cargo} has no materias"
+                assert materias is not None, f"{concurso}/{cargo} should have materias"
+                assert len(materias) > 0, f"{concurso}/{cargo} has no materias"
 
                 pesos = edital_loader.obter_pesos(concurso, cargo)
-                assert pesos is not None, \
-                    f"{concurso}/{cargo} should have pesos"
-                assert len(pesos) > 0, \
-                    f"{concurso}/{cargo} has no pesos"
+                assert pesos is not None, f"{concurso}/{cargo} should have pesos"
+                assert len(pesos) > 0, f"{concurso}/{cargo} has no pesos"
 
     def test_no_duplicate_materias_same_cargo(self):
         """Verify no duplicate materias within same cargo."""
@@ -83,8 +79,9 @@ class TestYAMLStructure:
                 if materias:
                     materia_names = list(materias.keys())
                     unique_names = set(materia_names)
-                    assert len(materia_names) == len(unique_names), \
+                    assert len(materia_names) == len(unique_names), (
                         f"{concurso}/{cargo} has duplicate materias"
+                    )
 
     def test_pesos_nao_negativos(self):
         """Verify all pesos are non-negative."""
@@ -95,8 +92,7 @@ class TestYAMLStructure:
             for cargo in cargos:
                 pesos = edital_loader.obter_pesos(concurso, cargo)
                 for materia, peso in pesos.items():
-                    assert peso > 0, \
-                        f"{concurso}/{cargo}/{materia}: peso should be > 0, got {peso}"
+                    assert peso > 0, f"{concurso}/{cargo}/{materia}: peso should be > 0, got {peso}"
 
 
 class TestWeightDistribution:
@@ -175,8 +171,9 @@ class TestCargoStructure:
             # At least some difference expected
             if len(set1) > 0 and len(set2) > 0:
                 # Not identical
-                assert set1 != set2 or cargo1 == cargo2, \
+                assert set1 != set2 or cargo1 == cargo2, (
                     f"Different cargos should have different or same subject sets"
+                )
 
     def test_prf_validacao_cargos(self):
         """Test PRF cargo validation."""
@@ -200,7 +197,13 @@ class TestDatabaseDataConsistency:
             q = {
                 "id_qc": "TEST_COMPLETE_Q",
                 "enunciado": "Complete question test",
-                "alternativas": {"A": "Alt A", "B": "Alt B", "C": "Alt C", "D": "Alt D", "E": "Alt E"},
+                "alternativas": {
+                    "A": "Alt A",
+                    "B": "Alt B",
+                    "C": "Alt C",
+                    "D": "Alt D",
+                    "E": "Alt E",
+                },
                 "gabarito": "C",
                 "comentario": "This is a comment",
                 "materia": "Direito",
@@ -249,7 +252,7 @@ class TestDatabaseDataConsistency:
                     "enunciado": f"Test question {i}",
                     "alternativas": {"A": "A", "B": "B"},
                     "fonte": "qconcursos",
-                    **combo
+                    **combo,
                 }
                 db.salvar_questao(con, q)
 

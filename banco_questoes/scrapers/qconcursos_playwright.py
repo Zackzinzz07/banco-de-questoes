@@ -4,14 +4,15 @@ Requer: pip install playwright
          playwright install chromium
 """
 
-import sys
 import re
+import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import yaml
 from banco_questoes import db
 from banco_questoes.scrapers import http_utils
-import yaml
 
 try:
     from playwright.sync_api import sync_playwright
@@ -50,36 +51,32 @@ def extrair_questoes_pagina(html):
     blocos = re.findall(
         r'<(?:div|article)[^>]*(?:class="[^"]*question[^"]*"[^>]*|[^>]*id="[^"]*question[^"]*")[^>]*>.*?(?=<(?:div|article)[^>]*class="[^"]*question|$)',
         html,
-        re.IGNORECASE | re.DOTALL
+        re.IGNORECASE | re.DOTALL,
     )
 
     for bloco in blocos[:50]:  # Limitar para evitar parsing muito longo
         try:
             # Extrair enunciado (primeiro parágrafo/texto)
-            match_enunciado = re.search(
-                r'<(?:p|div|span)[^>]*>(.{20,500}?)</',
-                bloco,
-                re.DOTALL
-            )
+            match_enunciado = re.search(r"<(?:p|div|span)[^>]*>(.{20,500}?)</", bloco, re.DOTALL)
 
             if not match_enunciado:
                 continue
 
             enunciado = match_enunciado.group(1)
-            enunciado = re.sub(r'<[^>]+>', '', enunciado).strip()
+            enunciado = re.sub(r"<[^>]+>", "", enunciado).strip()
 
             if len(enunciado) < 15:
                 continue
 
             # Extrair alternativas (A) B) C) D) E) ou semelhantes)
-            alt_pattern = r'(?:^|\s)([A-E])\)?\s*([^\n]+?)(?=\n|[A-E]\)|\s*<|$)'
+            alt_pattern = r"(?:^|\s)([A-E])\)?\s*([^\n]+?)(?=\n|[A-E]\)|\s*<|$)"
             alternativas_matches = re.findall(alt_pattern, bloco, re.MULTILINE | re.IGNORECASE)
 
             alternativas = {}
             for letra, texto in alternativas_matches:
                 letra = letra.upper()
-                if letra in ['A', 'B', 'C', 'D', 'E']:
-                    texto = re.sub(r'<[^>]+>', '', texto).strip()
+                if letra in ["A", "B", "C", "D", "E"]:
+                    texto = re.sub(r"<[^>]+>", "", texto).strip()
                     if len(texto) > 2:
                         alternativas[letra] = texto[:200]
 
@@ -89,19 +86,21 @@ def extrair_questoes_pagina(html):
             # Extrair gabarito
             gabarito = None
             # Procurar por "Resposta:" ou "Gabarito:" seguido de letra
-            match_gab = re.search(r'[Gg](?:abarito|abarit|ab\.|resposta)[:\s]+([A-E])', bloco, re.IGNORECASE)
+            match_gab = re.search(
+                r"[Gg](?:abarito|abarit|ab\.|resposta)[:\s]+([A-E])", bloco, re.IGNORECASE
+            )
             if match_gab:
                 gabarito = match_gab.group(1).upper()
 
             questao = {
-                'enunciado': enunciado[:500],
-                'alternativas': alternativas,
-                'gabarito': gabarito,
-                'comentario': None,
-                'ano': None,
-                'prova': None,
-                'fonte': 'qconcursos',
-                'banca': 'QConcursos'
+                "enunciado": enunciado[:500],
+                "alternativas": alternativas,
+                "gabarito": gabarito,
+                "comentario": None,
+                "ano": None,
+                "prova": None,
+                "fonte": "qconcursos",
+                "banca": "QConcursos",
             }
 
             questoes.append(questao)
@@ -167,9 +166,9 @@ def coletar_materia_com_playwright(page, exame_nome, materia, con):
 def main():
     """Coleta questões com Playwright."""
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("QConcursos Coletor (Playwright - CloudFlare bypass)")
-    print("="*60)
+    print("=" * 60)
 
     con = db.conectar()
 
@@ -178,7 +177,7 @@ def main():
         total_global = 0
 
         # Ordem de coleta
-        ordem = ['sedes_df', 'prf', 'bacen', 'receita_federal', 'inss', 'correios', 'banco_brasil']
+        ordem = ["sedes_df", "prf", "bacen", "receita_federal", "inss", "correios", "banco_brasil"]
 
         with sync_playwright() as p:
             # Abrir navegador
@@ -202,13 +201,13 @@ def main():
                 exame_config = editais[exame_key]
                 print(f"\n[EXAME] {exame_key}")
 
-                cargos = exame_config.get('cargos', {})
+                cargos = exame_config.get("cargos", {})
                 if not cargos:
                     continue
 
                 cargo_nome = list(cargos.keys())[0]
                 cargo_config = cargos[cargo_nome]
-                materias = cargo_config.get('materias', {})
+                materias = cargo_config.get("materias", {})
 
                 for materia in materias:
                     total = coletar_materia_com_playwright(page, exame_key, materia, con)
@@ -216,9 +215,9 @@ def main():
 
             browser.close()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"[FINAL] Total coletado: {total_global} questoes")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
     finally:
         con.close()

@@ -43,7 +43,9 @@ def test_extrair_cargo_da_prova_isolada():
     # separador entre banca/ano/orgao/cargo.
     cargo = scraper_qc._extrair_cargo_da_prova(
         prova="IAN - 2026 - Câmara de Jardim - MS - Contador",
-        banca="IAN", ano="2026", orgao="Câmara de Jardim - MS",
+        banca="IAN",
+        ano="2026",
+        orgao="Câmara de Jardim - MS",
     )
     assert cargo == "Contador"
 
@@ -60,6 +62,7 @@ def test_url_pagina():
 
 def test_salvar_pagina_grava_no_banco(html, tmp_path):
     import db
+
     con = db.conectar(tmp_path / "t.db")
     novas = scraper_qc.salvar_pagina(html, con, "Língua Portuguesa")
     assert novas >= 5
@@ -72,11 +75,10 @@ def test_salvar_pagina_grava_no_banco(html, tmp_path):
 
 def test_salvar_pagina_grava_cargo_categoria_tema(html):
     import db
+
     con = db.conectar()
     scraper_qc.salvar_pagina(html, con, "Contabilidade Geral")
-    linha = con.execute(
-        "SELECT cargo, categoria, tema FROM questoes LIMIT 1"
-    ).fetchone()
+    linha = con.execute("SELECT cargo, categoria, tema FROM questoes LIMIT 1").fetchone()
     assert linha["cargo"] == "Contador"
     assert linha["categoria"] == "Legislação de Contabilidade"
     assert linha["tema"] == "Normas Brasileiras de Contabilidade - NBC"
@@ -88,6 +90,7 @@ def test_salvar_pagina_preserva_orgao_real_da_questao(html):
     fixo: carimbar 'SEDES/DF' em tudo faz questão de outro estado se passar
     por questão do DF (foi o que sujou o primeiro simulado gerado)."""
     import db
+
     con = db.conectar()
     scraper_qc.salvar_pagina(html, con, "Contabilidade Geral")
     linha = con.execute("SELECT orgao FROM questoes LIMIT 1").fetchone()
@@ -111,7 +114,7 @@ def test_atingiu_limite_pelo_atributo_do_botao():
 def test_atingiu_limite_pelo_modal():
     html_modal = (
         '<div id="js-questions-limit-modal">'
-        'Você atingiu o seu limite diário de questões gratuitas.</div>'
+        "Você atingiu o seu limite diário de questões gratuitas.</div>"
     )
     assert scraper_qc.atingiu_limite(html_modal)
 
@@ -136,10 +139,10 @@ def test_extrair_resposta_do_bloco_quando_errou():
     bloco_html = (
         '<div class="js-response-wrong q-inline-answer q-wrong feedback-redesign" role="alert">'
         '<div class="q-answer-feedback"><p class="q-answer-feedback-item">'
-        'Incorreta. Gabarito oficial da banca: '
+        "Incorreta. Gabarito oficial da banca: "
         '<span class="hide-question-answer-template">'
         '<b><span class="js-question-right-answer" role="text" aria-label="B">B</span></b>'
-        '</span></p></div></div>'
+        "</span></p></div></div>"
     )
     gabarito, comentario = scraper_qc.extrair_resposta_do_bloco(bloco_html, "A")
     assert gabarito == "B"
@@ -152,7 +155,7 @@ def test_extrair_resposta_do_bloco_quando_acertou():
     bloco_html = (
         '<div class="js-response-correct q-inline-answer q-correct feedback-redesign" role="alert">'
         '<div class="q-answer-feedback"><p class="q-answer-feedback-item">'
-        'Parabéns! Você acertou!</p></div></div>'
+        "Parabéns! Você acertou!</p></div></div>"
     )
     gabarito, comentario = scraper_qc.extrair_resposta_do_bloco(bloco_html, "b")
     assert gabarito == "B"

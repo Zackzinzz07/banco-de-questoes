@@ -1,7 +1,8 @@
 """Dynamic edital loader with YAML support and fallback to hardcoded configs."""
 
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
+
 import yaml
 
 # Try to import the hardcoded edital for fallback

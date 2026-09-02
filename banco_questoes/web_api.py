@@ -6,6 +6,7 @@ Rodar (só neste PC):
 Rodar (acessível também pelo tablet, na mesma Wi-Fi):
     python -m uvicorn web_api:app --reload --host 0.0.0.0 --port 8000
 """
+
 import os
 import sys
 from pathlib import Path
@@ -26,9 +27,7 @@ try:
     import edital_loader
     from simulados import gerar_simulado
 except ImportError:
-    from banco_questoes import db
-    from banco_questoes import edital
-    from banco_questoes import edital_loader
+    from banco_questoes import db, edital, edital_loader
     from banco_questoes.simulados import gerar_simulado
 
 PASTA = Path(__file__).resolve().parent
@@ -93,7 +92,7 @@ def pci_status():
         "total": total,
         "com_categoria": com_cat,
         "categorias_unicas": num_cats,
-        "top_categorias": top_cats
+        "top_categorias": top_cats,
     }
 
 
@@ -107,20 +106,20 @@ def stats_todas():
     total = total_row["cnt"] if hasattr(total_row, "__getitem__") else total_row[0]
 
     # Por órgão
-    orgaos = con.execute("SELECT orgao, COUNT(*) as cnt FROM questoes GROUP BY orgao ORDER BY cnt DESC").fetchall()
+    orgaos = con.execute(
+        "SELECT orgao, COUNT(*) as cnt FROM questoes GROUP BY orgao ORDER BY cnt DESC"
+    ).fetchall()
     por_orgao = {row["orgao"]: row["cnt"] for row in orgaos}
 
     # Por matéria
-    materias = con.execute("SELECT materia, COUNT(*) as cnt FROM questoes GROUP BY materia ORDER BY cnt DESC").fetchall()
+    materias = con.execute(
+        "SELECT materia, COUNT(*) as cnt FROM questoes GROUP BY materia ORDER BY cnt DESC"
+    ).fetchall()
     por_materia = {row["materia"]: row["cnt"] for row in materias}
 
     con.close()
 
-    return {
-        "total": total,
-        "por_orgao": por_orgao,
-        "por_materia": por_materia
-    }
+    return {"total": total, "por_orgao": por_orgao, "por_materia": por_materia}
 
 
 @app.get("/api/stats/materias")
@@ -133,13 +132,19 @@ def stats_materias():
     total = total_row[0] if total_row else 0
 
     # Contagem de materias únicas
-    materias_unicas = con.execute("SELECT COUNT(DISTINCT materia) FROM questoes WHERE materia IS NOT NULL").fetchone()[0]
+    materias_unicas = con.execute(
+        "SELECT COUNT(DISTINCT materia) FROM questoes WHERE materia IS NOT NULL"
+    ).fetchone()[0]
 
     # Contagem de fontes únicas
-    fontes_unicas = con.execute("SELECT COUNT(DISTINCT fonte) FROM questoes WHERE fonte IS NOT NULL").fetchone()[0]
+    fontes_unicas = con.execute(
+        "SELECT COUNT(DISTINCT fonte) FROM questoes WHERE fonte IS NOT NULL"
+    ).fetchone()[0]
 
     # Contagem de categorias/temas
-    categorias_unicas = con.execute("SELECT COUNT(DISTINCT categoria) FROM questoes WHERE categoria IS NOT NULL").fetchone()[0]
+    categorias_unicas = con.execute(
+        "SELECT COUNT(DISTINCT categoria) FROM questoes WHERE categoria IS NOT NULL"
+    ).fetchone()[0]
 
     # Por matéria com fontes e categorias
     materias_data = con.execute("""
@@ -156,12 +161,9 @@ def stats_materias():
 
     por_materia = []
     for row in materias_data:
-        por_materia.append({
-            "materia": row[0],
-            "count": row[1],
-            "fontes": row[2],
-            "categorias": row[3]
-        })
+        por_materia.append(
+            {"materia": row[0], "count": row[1], "fontes": row[2], "categorias": row[3]}
+        )
 
     con.close()
 
@@ -170,7 +172,7 @@ def stats_materias():
         "materias_unicas": materias_unicas,
         "fontes_unicas": fontes_unicas,
         "categorias_unicas": categorias_unicas,
-        "por_materia": por_materia
+        "por_materia": por_materia,
     }
 
 
@@ -182,6 +184,7 @@ def materias():
 @app.post("/api/simulado/materia")
 def simulado_materia(pedido: PedidoMateria):
     from datetime import date
+
     materia_slug = pedido.materia.lower().replace(" ", "_").replace(",", "")
     subpasta = PASTA_SIMULADOS / "_por_materia" / materia_slug
     subpasta.mkdir(parents=True, exist_ok=True)
@@ -198,6 +201,7 @@ def simulado_materia(pedido: PedidoMateria):
 @app.post("/api/simulado/completo")
 def simulado_completo(pedido: PedidoCompleto):
     from datetime import date
+
     subpasta = PASTA_SIMULADOS / "_geral"
     subpasta.mkdir(parents=True, exist_ok=True)
     nome = f"simulado_geral_{date.today():%Y%m%d}.pdf"
@@ -240,6 +244,7 @@ def coletar():
 # CARGO-BASED ENDPOINTS (NEW)
 # ============================================================================
 
+
 @app.get("/api/orgaos")
 def listar_orgaos():
     """Return list of all available órgãos/concursos."""
@@ -271,7 +276,7 @@ def listar_materias_por_cargo(orgao: str, cargo: str):
             "cargo": cargo,
             "materias": list(materias.keys()),
             "pesos": pesos,
-            "total_questoes": sum(pesos.values())
+            "total_questoes": sum(pesos.values()),
         }
     except (FileNotFoundError, ValueError) as e:
         raise HTTPException(status_code=404, detail=f"Cargo não encontrado: {cargo}")
@@ -281,7 +286,8 @@ def listar_materias_por_cargo(orgao: str, cargo: str):
 def gerar_simulado_cargo(orgao: str, cargo: str, pedido: PedidoCargoSimulado):
     """Generate simulado for specific cargo with optional banca filter."""
     from datetime import date
-    from reportlab.platypus import NextPageTemplate, FrameBreak, Paragraph, PageBreak
+
+    from reportlab.platypus import FrameBreak, NextPageTemplate, PageBreak, Paragraph
 
     try:
         pesos = edital_loader.obter_pesos(orgao, cargo)
@@ -291,7 +297,9 @@ def gerar_simulado_cargo(orgao: str, cargo: str, pedido: PedidoCargoSimulado):
         raise HTTPException(status_code=404, detail=f"Cargo não encontrado: {str(e)}")
 
     # Organiza por concurso: estudo_autonomo/{orgao}/{cargo}/simulado_{banca}_{data}.pdf
-    nome_cargo_safe = cargo.lower().replace(" ", "_").replace(",", "").replace("(", "").replace(")", "")[:20]
+    nome_cargo_safe = (
+        cargo.lower().replace(" ", "_").replace(",", "").replace("(", "").replace(")", "")[:20]
+    )
     nome_banca_safe = pedido.banca.lower().replace(" ", "_") if pedido.banca else "geral"
     subpasta = PASTA_SIMULADOS / orgao / nome_cargo_safe
     subpasta.mkdir(parents=True, exist_ok=True)
@@ -301,8 +309,9 @@ def gerar_simulado_cargo(orgao: str, cargo: str, pedido: PedidoCargoSimulado):
     con = db.conectar()
 
     try:
-        from simulados import gerar_simulado as gs
         from xml.sax.saxutils import escape
+
+        from simulados import gerar_simulado as gs
 
         # Distribute questions by weight
         questoes_todas = []
@@ -311,15 +320,14 @@ def gerar_simulado_cargo(orgao: str, cargo: str, pedido: PedidoCargoSimulado):
         for materia, quantidade in distribuicao.items():
             if quantidade > 0:
                 qs = db.sortear_questoes(
-                    con, materia, quantidade,
-                    banca=pedido.banca,
-                    cargo=cargo,
-                    orgao=orgao
+                    con, materia, quantidade, banca=pedido.banca, cargo=cargo, orgao=orgao
                 )
                 questoes_todas.extend(qs)
 
         if not questoes_todas:
-            raise HTTPException(status_code=404, detail=f"Nenhuma questão encontrada para {orgao}/{cargo}")
+            raise HTTPException(
+                status_code=404, detail=f"Nenhuma questão encontrada para {orgao}/{cargo}"
+            )
 
         # Build PDF using gerar_simulado's internal functions
         doc = gs._construir_doc(saida, f"Simulado — {cargo}")
@@ -344,7 +352,7 @@ def gerar_simulado_cargo(orgao: str, cargo: str, pedido: PedidoCargoSimulado):
             "orgao": orgao,
             "cargo": cargo,
             "quantidade": len(questoes_todas),
-            "banca": pedido.banca
+            "banca": pedido.banca,
         }
     finally:
         con.close()
@@ -369,8 +377,7 @@ def stats_cargo(orgao: str, cargo: str):
         for materia in materias.keys():
             # Count questions for this materia/cargo combination
             linhas = con.execute(
-                "SELECT COUNT(*) as c FROM questoes WHERE materia=%s AND cargo=%s",
-                (materia, cargo)
+                "SELECT COUNT(*) as c FROM questoes WHERE materia=%s AND cargo=%s", (materia, cargo)
             ).fetchone()
             coletadas = linhas["c"] if linhas else 0
             esperadas = pesos.get(materia, 0)
@@ -379,12 +386,14 @@ def stats_cargo(orgao: str, cargo: str):
             stats[materia] = {
                 "coletadas": coletadas,
                 "esperadas": esperadas,
-                "percentual": percentual
+                "percentual": percentual,
             }
 
         total_coletadas = sum(s["coletadas"] for s in stats.values())
         total_esperadas = sum(pesos.values())
-        percentual_total = round(100 * total_coletadas / total_esperadas, 1) if total_esperadas > 0 else 0
+        percentual_total = (
+            round(100 * total_coletadas / total_esperadas, 1) if total_esperadas > 0 else 0
+        )
 
         return {
             "orgao": orgao,
@@ -393,8 +402,8 @@ def stats_cargo(orgao: str, cargo: str):
             "total": {
                 "coletadas": total_coletadas,
                 "esperadas": total_esperadas,
-                "percentual": percentual_total
-            }
+                "percentual": percentual_total,
+            },
         }
     finally:
         con.close()
@@ -406,6 +415,7 @@ def stats_pci_global():
     con = db.conectar()
     try:
         from psycopg2.extras import RealDictCursor
+
         cur = con.cursor(cursor_factory=RealDictCursor)
 
         # Total PCI
@@ -424,32 +434,29 @@ def stats_pci_global():
         por_categoria = {}
         for row in cur.fetchall():
             cat = row["categoria"]
-            por_categoria[cat] = {
-                "total": row["qtd"],
-                "temas": {}
-            }
+            por_categoria[cat] = {"total": row["qtd"], "temas": {}}
 
         # Para cada categoria, pegar temas
         for categoria in por_categoria.keys():
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT tema, COUNT(*) as qtd,
                        COUNT(CASE WHEN imagens_urls != '[]'::jsonb THEN 1 END) as com_imagens
                 FROM questoes
                 WHERE fonte = 'pci' AND categoria = %s AND tema IS NOT NULL
                 GROUP BY tema
                 ORDER BY qtd DESC
-            """, (categoria,))
+            """,
+                (categoria,),
+            )
 
             for row in cur.fetchall():
                 por_categoria[categoria]["temas"][row["tema"]] = {
                     "total": row["qtd"],
-                    "com_imagens": row["com_imagens"]
+                    "com_imagens": row["com_imagens"],
                 }
 
-        return {
-            "total_pci": total_pci,
-            "por_categoria": por_categoria
-        }
+        return {"total_pci": total_pci, "por_categoria": por_categoria}
     finally:
         con.close()
 
@@ -460,24 +467,31 @@ def stats_pci_categoria(categoria: str):
     con = db.conectar()
     try:
         from psycopg2.extras import RealDictCursor
+
         cur = con.cursor(cursor_factory=RealDictCursor)
 
         # Total categoria
-        cur.execute("""
+        cur.execute(
+            """
             SELECT COUNT(*) as total FROM questoes
             WHERE fonte = 'pci' AND categoria = %s
-        """, (categoria,))
+        """,
+            (categoria,),
+        )
         total = cur.fetchone()["total"]
 
         # Por tema
-        cur.execute("""
+        cur.execute(
+            """
             SELECT tema, COUNT(*) as qtd,
                    COUNT(CASE WHEN imagens_urls != '[]'::jsonb THEN 1 END) as com_imagens
             FROM questoes
             WHERE fonte = 'pci' AND categoria = %s AND tema IS NOT NULL
             GROUP BY tema
             ORDER BY qtd DESC
-        """, (categoria,))
+        """,
+            (categoria,),
+        )
 
         por_tema = {}
         for row in cur.fetchall():
@@ -485,14 +499,10 @@ def stats_pci_categoria(categoria: str):
             por_tema[row["tema"]] = {
                 "total": row["qtd"],
                 "com_imagens": row["com_imagens"],
-                "percentual_imagens": pct
+                "percentual_imagens": pct,
             }
 
-        return {
-            "categoria": categoria,
-            "total": total,
-            "por_tema": por_tema
-        }
+        return {"categoria": categoria, "total": total, "por_tema": por_tema}
     finally:
         con.close()
 
@@ -501,6 +511,7 @@ def stats_pci_categoria(categoria: str):
 def home():
     """Redireciona pra dashboard educacional"""
     from fastapi.responses import RedirectResponse
+
     return RedirectResponse(url="/dashboard_educacional.html")
 
 
@@ -511,4 +522,5 @@ if pasta_web.exists():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -5,6 +5,7 @@ sessão HTTP compartilhada de `scrapers.http_utils`) e o banco (via `db`),
 usando `fonte='pci'` para checkpoint (`progresso_scraper`) e persistência
 (`questoes`).
 """
+
 import sys
 from pathlib import Path
 
@@ -18,12 +19,14 @@ except ImportError:
     from banco_questoes import db  # noqa: E402
 
 try:
-    from . import config  # noqa: E402
-    from . import parser  # noqa: E402
     from .. import http_utils  # noqa: E402
+    from . import (
+        config,  # noqa: E402
+        parser,  # noqa: E402
+    )
 except ImportError:
-    from banco_questoes.scrapers.pci import config, parser  # noqa: E402
     from banco_questoes.scrapers import http_utils  # noqa: E402
+    from banco_questoes.scrapers.pci import config, parser  # noqa: E402
 
 BASE_URL = "https://www.pciconcursos.com.br/simulados"
 
@@ -67,22 +70,25 @@ def coletar_tema(sessao, categoria, tema_nome, tema_url, con):
             break
 
         for q in questoes:
-            salvou = db.salvar_questao(con, {
-                "id_qc": q["id_pci"],
-                "enunciado": q["enunciado"],
-                "alternativas": q["alternativas"],
-                "gabarito": None,
-                "comentario": None,
-                "materia": materia,
-                "assunto": None,
-                "banca": q.get("banca"),
-                "orgao": q.get("orgao"),
-                "ano": q.get("ano"),
-                "prova": q.get("prova"),
-                "fonte": "pci",
-                "texto_associado": q.get("texto_associado"),
-                "imagens": q.get("imagens"),
-            })
+            salvou = db.salvar_questao(
+                con,
+                {
+                    "id_qc": q["id_pci"],
+                    "enunciado": q["enunciado"],
+                    "alternativas": q["alternativas"],
+                    "gabarito": None,
+                    "comentario": None,
+                    "materia": materia,
+                    "assunto": None,
+                    "banca": q.get("banca"),
+                    "orgao": q.get("orgao"),
+                    "ano": q.get("ano"),
+                    "prova": q.get("prova"),
+                    "fonte": "pci",
+                    "texto_associado": q.get("texto_associado"),
+                    "imagens": q.get("imagens"),
+                },
+            )
             if salvou:
                 total_novas += 1
 

@@ -77,7 +77,6 @@ MAPEAMENTO_TEMAS = {
     "administracao-publica/politicas-publicas": "Atendimento, Rotinas Administrativas e Arquivologia",
     "administracao-publica/relacionamento-interpessoal": "Atendimento, Rotinas Administrativas e Arquivologia",
     "administracao-publica/teorias-da-administracao": "Atendimento, Rotinas Administrativas e Arquivologia",
-
     # Direito
     "direito-administrativo/*": "Direito Administrativo",
     "direito-constitucional/*": "Direito Constitucional",
@@ -87,11 +86,9 @@ MAPEAMENTO_TEMAS = {
     "direito-processual-civil/*": "Direito Processual Civil",
     "direito-trabalhista/*": "Direito Trabalhista",
     "direito-tributario/*": "Direito Tributário",
-
     # Linguagem
     "portugues/*": "Língua Portuguesa",
     "ingles/*": "Inglês",
-
     # Humanidades
     "historia/*": "História",
     "geografia/*": "Geografia",
@@ -99,17 +96,14 @@ MAPEAMENTO_TEMAS = {
     "sociologia/*": "Sociologia",
     "artes/*": "Artes",
     "musica/*": "Música",
-
     # Ciências Exatas
     "matematica/*": "Matemática",
     "fisica/*": "Física",
     "quimica/*": "Química",
     "raciocinio-logico-matematico/*": "Raciocínio Lógico Matemático",
-
     # Ciências da Natureza
     "biologia/*": "Biologia",
     "meio-ambiente/*": "Meio Ambiente",
-
     # Educação, Serviços Sociais, Saúde
     "educacao/*": "Educação",
     "pedagogia/*": "Pedagogia",
@@ -119,20 +113,17 @@ MAPEAMENTO_TEMAS = {
     "saude/*": "Saúde",
     "saude-publica/*": "Saúde Pública",
     "seguranca-do-trabalho/*": "Segurança do Trabalho",
-
     # Profissional/Técnico
     "informatica/*": "Informática",
     "biblioteconomia/*": "Biblioteconomia",
     "contabilidade/*": "Contabilidade",
     "engenharia-civil/*": "Engenharia Civil",
-
     # Legislação, Economia, Atualidades
     "legislacao-especifica/*": "Legislação Específica",
     "economia/*": "Economia",
     "atualidades/*": "Atualidades",
     "transito/*": "Legislação de Trânsito",
     "seguranca-publica/*": "Segurança Pública",
-
     # Genérico
     "outra/*": "Outros Conhecimentos",
 }

@@ -1,7 +1,8 @@
+from fastapi.testclient import TestClient
+
 import config
 import db
 import web_api
-from fastapi.testclient import TestClient
 
 
 def cliente_com_banco(tmp_path, monkeypatch):
@@ -27,10 +28,17 @@ def test_simulado_materia_e_download(tmp_path, monkeypatch):
     cliente = cliente_com_banco(tmp_path, monkeypatch)
     con = db.conectar()
     for i in range(3):
-        db.salvar_questao(con, {
-            "id_qc": f"QW{i}", "enunciado": f"Enunciado {i}?",
-            "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-            "gabarito": "A", "materia": "SUAS", "fonte": "qconcursos"})
+        db.salvar_questao(
+            con,
+            {
+                "id_qc": f"QW{i}",
+                "enunciado": f"Enunciado {i}?",
+                "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+                "gabarito": "A",
+                "materia": "SUAS",
+                "fonte": "qconcursos",
+            },
+        )
     r = cliente.post("/api/simulado/materia", json={"materia": "SUAS", "quantidade": 3})
     assert r.status_code == 200
     nome = r.json()["arquivo"]

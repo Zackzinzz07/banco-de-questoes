@@ -1,13 +1,15 @@
 """Performance tests: verify system meets performance targets."""
-import pytest
+
 import time
 from urllib.parse import quote
 
-import db
-import config
-import web_api
-import edital_loader
+import pytest
 from fastapi.testclient import TestClient
+
+import config
+import db
+import edital_loader
+import web_api
 
 
 def cliente_com_banco(tmp_path, monkeypatch):
@@ -59,7 +61,7 @@ class TestAPIResponseTimes:
             pytest.skip("No cargos available")
 
         cargo = cargos[0]
-        cargo_encoded = quote(cargo, safe='')
+        cargo_encoded = quote(cargo, safe="")
 
         start = time.time()
         response = client.get(f"/api/materias/sedes_df/{cargo_encoded}")
@@ -82,7 +84,7 @@ class TestAPIResponseTimes:
             pytest.skip("No cargos available")
 
         cargo = cargos[0]
-        cargo_encoded = quote(cargo, safe='')
+        cargo_encoded = quote(cargo, safe="")
 
         start = time.time()
         response = client.get(f"/api/stats/cargo/sedes_df/{cargo_encoded}")
@@ -171,9 +173,7 @@ class TestDatabasePerformance:
             # Benchmark with filters
             start = time.time()
             result = db.sortear_questoes(
-                con, "Matemática", 30,
-                cargo="CargoEspecifico",
-                orgao="ORG_X"
+                con, "Matemática", 30, cargo="CargoEspecifico", orgao="ORG_X"
             )
             elapsed = (time.time() - start) * 1000
 
@@ -230,8 +230,7 @@ class TestLoadTesting:
         elapsed = (time.time() - start) * 1000
         average_ms = elapsed / len(endpoints)
 
-        assert average_ms < 100, \
-            f"Average response time should be < 100ms, got {average_ms:.2f}ms"
+        assert average_ms < 100, f"Average response time should be < 100ms, got {average_ms:.2f}ms"
 
     @pytest.mark.performance
     def test_massive_database_query(self, monkeypatch):

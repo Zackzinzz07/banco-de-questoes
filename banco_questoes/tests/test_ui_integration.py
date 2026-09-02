@@ -5,12 +5,14 @@ Install with: pip install pytest-playwright
 
 Run with: pytest test_ui_integration.py --browser chromium
 """
+
 import pytest
 
 # Try to import Playwright, skip tests if not available
 playwright_available = False
 try:
     from playwright.sync_api import sync_playwright
+
     playwright_available = True
 except ImportError:
     pass
@@ -19,7 +21,7 @@ except ImportError:
 # Skip entire module if Playwright not available
 pytestmark = pytest.mark.skipif(
     not playwright_available,
-    reason="Playwright not installed. Install with: pip install pytest-playwright"
+    reason="Playwright not installed. Install with: pip install pytest-playwright",
 )
 
 

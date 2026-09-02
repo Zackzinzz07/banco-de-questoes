@@ -2,23 +2,23 @@
 
 try:
     from edital_loader import (
-        listar_concursos,
         carregar_edital,
+        distribuir_por_peso,
         listar_cargos,
+        listar_concursos,
+        obter_assuntos,
         obter_materias,
         obter_pesos,
-        distribuir_por_peso,
-        obter_assuntos,
     )
 except ImportError:  # rodando de fora da pasta do projeto
     from banco_questoes.edital_loader import (
-        listar_concursos,
         carregar_edital,
+        distribuir_por_peso,
         listar_cargos,
+        listar_concursos,
+        obter_assuntos,
         obter_materias,
         obter_pesos,
-        distribuir_por_peso,
-        obter_assuntos,
     )
 
 
@@ -168,8 +168,7 @@ class TestObterMaterias:
         materias = obter_materias("prf", "Policial Rodoviário Federal")
         assert materias is not None
         assert "Legislação Especial de Trânsito - CTB e CONTRAN (Bloco II)" in materias
-        assert materias[
-            "Legislação Especial de Trânsito - CTB e CONTRAN (Bloco II)"]["pesos"] == 30
+        assert materias["Legislação Especial de Trânsito - CTB e CONTRAN (Bloco II)"]["pesos"] == 30
 
     def test_materias_bacen_ti(self):
         """BACEN TI area should have Ciência de Dados."""

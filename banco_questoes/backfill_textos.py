@@ -1,5 +1,6 @@
 r"""Preenche texto-base e imagens das questões já coletadas.
 Rodar de banco_questoes\: ..\.venv\Scripts\python.exe backfill_textos.py"""
+
 from playwright.sync_api import sync_playwright
 
 import db
@@ -21,8 +22,9 @@ with sync_playwright() as p:
                 scraper_qc._pausa()
                 novas = 0
                 for q in scraper_qc.extrair_blocos(aba.content()):
-                    if db.completar_texto_associado(con, q["id_qc"],
-                                                    q["texto_associado"], q["imagens"]):
+                    if db.completar_texto_associado(
+                        con, q["id_qc"], q["texto_associado"], q["imagens"]
+                    ):
                         novas += 1
                 preenchidas += novas
                 print(f"[{materia}] página {pagina}: {novas} textos preenchidos")

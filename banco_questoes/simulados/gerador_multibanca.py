@@ -13,6 +13,7 @@ classe de estilo esteja ausente (regressão ou banca nova ainda não
 implementada), `_carregar_estilo()` levanta NotImplementedError de forma
 explícita em vez de falhar silenciosamente.
 """
+
 import importlib
 import io
 from datetime import date
@@ -56,8 +57,13 @@ class GeradorSimuladoMultiBanca:
         >>> caminho = gerador.gerar(quantidade=10, simulado_nome="teste_cebraspe")
     """
 
-    def __init__(self, banca_nome: str, con=None, banca_concurso: Optional[str] = None,
-                 orgao: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        banca_nome: str,
+        con=None,
+        banca_concurso: Optional[str] = None,
+        orgao: Optional[str] = None,
+    ) -> None:
         """
         Args:
             banca_nome: Chave da banca em BANCAS (ex: "cebraspe", "iades",
@@ -187,8 +193,7 @@ class GeradorSimuladoMultiBanca:
                 materia = disciplina.get("nome", "")
                 # Filtro por banca/órgão se especificados
                 encontradas = db.sortear_questoes(
-                    con, materia, n_disciplina,
-                    banca=self.banca_concurso, orgao=self.orgao
+                    con, materia, n_disciplina, banca=self.banca_concurso, orgao=self.orgao
                 )
                 for q in encontradas:
                     if q["id"] not in ids_vistos:
@@ -260,10 +265,7 @@ class GeradorSimuladoMultiBanca:
         (numero, enunciado, opcoes, tipo).
         """
         alternativas = q.get("alternativas") or {}
-        opcoes = [
-            {"letra": letra, "texto": texto}
-            for letra, texto in sorted(alternativas.items())
-        ]
+        opcoes = [{"letra": letra, "texto": texto} for letra, texto in sorted(alternativas.items())]
         tipo = self.config.get("caracteristicas_prova", {}).get(
             "tipo_predominante", "Múltipla Escolha"
         )
@@ -280,7 +282,9 @@ class GeradorSimuladoMultiBanca:
     # Geometria de página / paginação
     # ------------------------------------------------------------------
 
-    def _layout_pagina(self, canvas_obj, pagina_numero: int) -> Tuple[float, float, float, List[float]]:
+    def _layout_pagina(
+        self, canvas_obj, pagina_numero: int
+    ) -> Tuple[float, float, float, List[float]]:
         """Desenha cabeçalho e rodapé da página atual e calcula a geometria
         de colunas disponível para as questões.
 
@@ -300,9 +304,7 @@ class GeradorSimuladoMultiBanca:
         colunas = max(1, colunas)
         calha_pt = self.estilo.cm_para_pontos(CALHA_CM) if colunas > 1 else 0.0
         largura_coluna = (largura_util - calha_pt * (colunas - 1)) / colunas
-        x_colunas = [
-            margens["esquerda"] + i * (largura_coluna + calha_pt) for i in range(colunas)
-        ]
+        x_colunas = [margens["esquerda"] + i * (largura_coluna + calha_pt) for i in range(colunas)]
 
         return y_topo, y_fundo, largura_coluna, x_colunas
 

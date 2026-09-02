@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 try:
@@ -10,11 +11,11 @@ except ImportError:
     import db
 
 try:
-    from . import config, parser
     from .. import http_utils
+    from . import config, parser
 except ImportError:
-    from banco_questoes.scrapers.pci import config, parser
     from banco_questoes.scrapers import http_utils
+    from banco_questoes.scrapers.pci import config, parser
 
 BASE_URL = "https://www.pciconcursos.com.br/simulados"
 MAX_PAGINAS_POR_TEMA = 200
@@ -60,27 +61,30 @@ def coletar_tema_v2(sessao, categoria, tema_slug, tema_nome, tema_url, con):
             break
 
         for q in questoes:
-            salvou = db.salvar_questao(con, {
-                "id_qc": q.get("id_pci"),
-                "enunciado": q.get("enunciado"),
-                "alternativas": q.get("alternativas", {}),
-                # O PCI publica o gabarito da página inteira num JSON no HTML
-                # (simGabaritos), então a resposta vem junto do enunciado.
-                "gabarito": q.get("gabarito"),
-                "comentario": None,
-                "materia": materia,
-                "assunto": None,
-                "banca": q.get("banca"),
-                "orgao": q.get("orgao"),
-                "ano": q.get("ano"),
-                "prova": q.get("prova"),
-                "fonte": "pci",
-                "texto_associado": q.get("texto_associado"),
-                "imagens": q.get("imagens", []),
-                "imagens_urls": q.get("imagens_urls", []),
-                "categoria": categoria,
-                "tema": tema_slug,
-            })
+            salvou = db.salvar_questao(
+                con,
+                {
+                    "id_qc": q.get("id_pci"),
+                    "enunciado": q.get("enunciado"),
+                    "alternativas": q.get("alternativas", {}),
+                    # O PCI publica o gabarito da página inteira num JSON no HTML
+                    # (simGabaritos), então a resposta vem junto do enunciado.
+                    "gabarito": q.get("gabarito"),
+                    "comentario": None,
+                    "materia": materia,
+                    "assunto": None,
+                    "banca": q.get("banca"),
+                    "orgao": q.get("orgao"),
+                    "ano": q.get("ano"),
+                    "prova": q.get("prova"),
+                    "fonte": "pci",
+                    "texto_associado": q.get("texto_associado"),
+                    "imagens": q.get("imagens", []),
+                    "imagens_urls": q.get("imagens_urls", []),
+                    "categoria": categoria,
+                    "tema": tema_slug,
+                },
+            )
             if salvou:
                 total_novas += 1
 
@@ -114,12 +118,7 @@ def coletar_categoria_v2(sessao, categoria, con):
     for tema_slug, tema_data in subcategorias.items():
         print(f"  [TEMA] {tema_slug}...")
         total_novas += coletar_tema_v2(
-            sessao,
-            categoria,
-            tema_slug,
-            tema_data["nome"],
-            tema_data["url"],
-            con
+            sessao, categoria, tema_slug, tema_data["nome"], tema_data["url"], con
         )
         http_utils.aguardar()
 
@@ -132,9 +131,9 @@ def coletar_multiplas_categorias_v2(categorias):
     sessao = http_utils.criar_sessao()
     con = db.conectar()
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("COLETA PCI v2 - HIERARQUIA COMPLETA (categoria/tema)")
-    print("="*80)
+    print("=" * 80)
 
     try:
         for categoria in categorias:
@@ -146,9 +145,9 @@ def coletar_multiplas_categorias_v2(categorias):
     finally:
         con.close()
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("[COMPLETE] Coleta finalizada!")
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":

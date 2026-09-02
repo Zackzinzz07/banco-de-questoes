@@ -1,8 +1,10 @@
 """Comprehensive tests for multi-banca simulado generator."""
+
+from pathlib import Path
+from typing import Any, Dict
+
 import pytest
 import yaml
-from pathlib import Path
-from typing import Dict, Any
 
 import db
 from simulados import gerar_simulado
@@ -15,6 +17,7 @@ def test_teste_nunca_aponta_para_o_banco_de_producao():
     pro banco de teste, e ao virar teste de integração passou a gravar
     questões falsas na produção."""
     import config
+
     assert db.DATABASE_URL == config.TEST_DATABASE_URL
 
 
@@ -23,7 +26,13 @@ def questao_fake(i, materia="Língua Portuguesa"):
     return {
         "id_qc": f"Q{i}",
         "enunciado": f"Enunciado de teste número {i}: assinale a alternativa correta. Texto com < & > para escapar.",
-        "alternativas": {"A": "Opção A", "B": "Opção B", "C": "Opção C", "D": "Opção D", "E": "Opção E"},
+        "alternativas": {
+            "A": "Opção A",
+            "B": "Opção B",
+            "C": "Opção C",
+            "D": "Opção D",
+            "E": "Opção E",
+        },
         "gabarito": "B" if i % 2 else None,
         "comentario": "Comentário da questão." if i == 1 else None,
         "materia": materia,
@@ -49,7 +58,7 @@ def test_load_all_configs(config_paths: Dict[str, Path]) -> None:
 
     for banca_name, config_path in config_paths.items():
         assert config_path.exists(), f"Config file missing for {banca_name}: {config_path}"
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         assert config is not None, f"Config file empty or invalid for {banca_name}"
         banca_key = banca_keys[banca_name]
@@ -59,7 +68,9 @@ def test_load_all_configs(config_paths: Dict[str, Path]) -> None:
             assert section in banca_config, f"Missing section '{section}' in {banca_name} config"
         assert "nome_oficial" in banca_config, f"Missing 'nome_oficial' in {banca_name}"
         assert "estilo_visual" in banca_config, f"Missing 'estilo_visual' in {banca_name}"
-        assert "margens" in banca_config["estilo_visual"], f"Missing 'margens' in {banca_name} estilo_visual"
+        assert "margens" in banca_config["estilo_visual"], (
+            f"Missing 'margens' in {banca_name} estilo_visual"
+        )
 
 
 def test_estilo_cebraspe_instantiate(configs: Dict[str, Dict[str, Any]]) -> None:
@@ -68,18 +79,23 @@ def test_estilo_cebraspe_instantiate(configs: Dict[str, Dict[str, Any]]) -> None
     style = EstiloCebraspe(cebraspe_config)
     assert isinstance(style, BaseBancaStyle), "EstiloCebraspe must inherit from BaseBancaStyle"
     assert style.nome_oficial is not None, "Config not properly loaded"
-    assert "Centro Brasileiro" in style.nome_oficial, "Banca name not correctly extracted from config"
+    assert "Centro Brasileiro" in style.nome_oficial, (
+        "Banca name not correctly extracted from config"
+    )
 
 
 def test_estilo_iades_instantiate(configs: Dict[str, Dict[str, Any]]) -> None:
     """Test that EstiloIADES can be instantiated with valid config."""
     pytest.importorskip("simulados.estilos.iades", minversion=None)
     from simulados.estilos.iades import EstiloIADES
+
     iades_config = configs["iades"]["iades"]
     style = EstiloIADES(iades_config)
     assert isinstance(style, BaseBancaStyle), "EstiloIADES must inherit from BaseBancaStyle"
     assert style.nome_oficial is not None, "Config not properly loaded"
-    assert "Instituto Americano" in style.nome_oficial, "Banca name not correctly extracted from config"
+    assert "Instituto Americano" in style.nome_oficial, (
+        "Banca name not correctly extracted from config"
+    )
 
 
 def test_gerar_simulado_cebraspe(tmp_path: Path, questao_fake) -> None:

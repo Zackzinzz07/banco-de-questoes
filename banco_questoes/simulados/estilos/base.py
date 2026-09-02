@@ -10,10 +10,11 @@ Classes:
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict
+
 import yaml
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
 
 
@@ -75,20 +76,21 @@ class BaseBancaStyle(ABC):
             raise TypeError(f"config must be a dictionary, got {type(config)}")
 
         # Validate required keys
-        required_keys = {'estilo_visual', 'caracteristicas_prova', 'estrutura_disciplinas_padrao'}
+        required_keys = {"estilo_visual", "caracteristicas_prova", "estrutura_disciplinas_padrao"}
         if not required_keys.issubset(config.keys()):
             missing = required_keys - set(config.keys())
             raise ValueError(f"Missing required configuration keys: {missing}")
 
         self.config = config
-        self.nome_oficial = config.get('nome_oficial', 'Unnamed Banca')
-        self.estilo_visual = config.get('estilo_visual', {})
-        self.caracteristicas_prova = config.get('caracteristicas_prova', {})
-        self.estrutura_disciplinas = config.get('estrutura_disciplinas_padrao', [])
+        self.nome_oficial = config.get("nome_oficial", "Unnamed Banca")
+        self.estilo_visual = config.get("estilo_visual", {})
+        self.caracteristicas_prova = config.get("caracteristicas_prova", {})
+        self.estrutura_disciplinas = config.get("estrutura_disciplinas_padrao", [])
 
     @abstractmethod
-    def desenhar_cabecalho(self, canvas_obj: canvas.Canvas, pagina_numero: int,
-                          largura: float, altura: float) -> float:
+    def desenhar_cabecalho(
+        self, canvas_obj: canvas.Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """
         Draw the document header on the current page.
 
@@ -104,8 +106,9 @@ class BaseBancaStyle(ABC):
         pass
 
     @abstractmethod
-    def desenhar_rodape(self, canvas_obj: canvas.Canvas, pagina_numero: int,
-                       largura: float, altura: float) -> float:
+    def desenhar_rodape(
+        self, canvas_obj: canvas.Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """
         Draw the document footer on the current page.
 
@@ -121,8 +124,14 @@ class BaseBancaStyle(ABC):
         pass
 
     @abstractmethod
-    def desenhar_questao(self, canvas_obj: canvas.Canvas, questao_data: Dict[str, Any],
-                        posicao_x: float, posicao_y: float, largura_disponivel: float) -> float:
+    def desenhar_questao(
+        self,
+        canvas_obj: canvas.Canvas,
+        questao_data: Dict[str, Any],
+        posicao_x: float,
+        posicao_y: float,
+        largura_disponivel: float,
+    ) -> float:
         """
         Draw a single question on the page.
 
@@ -143,8 +152,9 @@ class BaseBancaStyle(ABC):
         pass
 
     @abstractmethod
-    def calcular_altura_questao(self, questao_data: Dict[str, Any],
-                               largura_disponivel: float) -> float:
+    def calcular_altura_questao(
+        self, questao_data: Dict[str, Any], largura_disponivel: float
+    ) -> float:
         """
         Calculate the height needed to render a question.
 
@@ -182,17 +192,18 @@ class BaseBancaStyle(ABC):
         sample_styles = getSampleStyleSheet()
 
         # Extract font configuration from estilo_visual
-        fonte_titulo = self.estilo_visual.get('fonte_titulo', 'Helvetica 12pt')
-        fonte_corpo = self.estilo_visual.get('fonte_corpo', 'Times-Roman 10pt')
+        fonte_titulo = self.estilo_visual.get("fonte_titulo", "Helvetica 12pt")
+        fonte_corpo = self.estilo_visual.get("fonte_corpo", "Times-Roman 10pt")
 
         # Parse font sizes (simple parsing for "Font Name Size" format)
         # e.g., "Helvetica / Arial Bold, 12pt-14pt" -> extract 12pt
         def extrair_tamanho_font(fonte_str: str) -> int:
             """Extract font size from font string."""
-            if 'pt' in fonte_str:
+            if "pt" in fonte_str:
                 # Find all numbers followed by 'pt'
                 import re
-                matches = re.findall(r'(\d+(?:\.\d+)?)pt', fonte_str)
+
+                matches = re.findall(r"(\d+(?:\.\d+)?)pt", fonte_str)
                 if matches:
                     return int(float(matches[0]))
             return 12  # Default fallback
@@ -201,44 +212,44 @@ class BaseBancaStyle(ABC):
         tamanho_corpo = extrair_tamanho_font(fonte_corpo)
 
         # Get dominant colors or use defaults
-        cores = self.estilo_visual.get('cores_dominantes', ['Preto', 'Branco'])
+        cores = self.estilo_visual.get("cores_dominantes", ["Preto", "Branco"])
         cor_principal = colors.black  # Default to black
-        if cores and cores[0].lower() != 'preto':
+        if cores and cores[0].lower() != "preto":
             # Could be extended to map color names to ReportLab colors
             cor_principal = colors.black
 
         # Define paragraph styles
         estilos = {
-            'titulo': ParagraphStyle(
-                name='BancaTitulo',
-                fontName='Helvetica-Bold',
+            "titulo": ParagraphStyle(
+                name="BancaTitulo",
+                fontName="Helvetica-Bold",
                 fontSize=tamanho_titulo,
                 textColor=cor_principal,
                 spaceAfter=6,
                 leading=tamanho_titulo * 1.2,
-                alignment=0  # Left alignment (TA_LEFT)
+                alignment=0,  # Left alignment (TA_LEFT)
             ),
-            'corpo': ParagraphStyle(
-                name='BancaCorpo',
-                fontName='Times-Roman',
+            "corpo": ParagraphStyle(
+                name="BancaCorpo",
+                fontName="Times-Roman",
                 fontSize=tamanho_corpo,
                 textColor=cor_principal,
                 spaceAfter=4,
                 leading=tamanho_corpo * 1.4,
-                alignment=4  # Justified alignment (TA_JUSTIFY)
+                alignment=4,  # Justified alignment (TA_JUSTIFY)
             ),
-            'opcoes': ParagraphStyle(
-                name='BancaOpcoes',
-                fontName='Helvetica',
+            "opcoes": ParagraphStyle(
+                name="BancaOpcoes",
+                fontName="Helvetica",
                 fontSize=tamanho_corpo - 1,
                 textColor=cor_principal,
                 spaceAfter=2,
                 leading=tamanho_corpo * 1.2,
-                alignment=0  # Left alignment
+                alignment=0,  # Left alignment
             ),
-            'instrucoes': ParagraphStyle(
-                name='BancaInstrucoes',
-                fontName='Helvetica',
+            "instrucoes": ParagraphStyle(
+                name="BancaInstrucoes",
+                fontName="Helvetica",
                 fontSize=tamanho_corpo - 1,
                 textColor=cor_principal,
                 spaceAfter=4,
@@ -246,17 +257,17 @@ class BaseBancaStyle(ABC):
                 alignment=4,  # Justified alignment
                 borderPadding=6,
                 borderColor=cor_principal,
-                borderWidth=1
+                borderWidth=1,
             ),
-            'rodape': ParagraphStyle(
-                name='BancaRodape',
-                fontName='Helvetica',
+            "rodape": ParagraphStyle(
+                name="BancaRodape",
+                fontName="Helvetica",
                 fontSize=tamanho_corpo - 2,
                 textColor=colors.grey,
                 spaceAfter=0,
                 leading=tamanho_corpo * 1.1,
-                alignment=1  # Center alignment (TA_CENTER)
-            )
+                alignment=1,  # Center alignment (TA_CENTER)
+            ),
         }
 
         return estilos
@@ -308,7 +319,7 @@ class BaseBancaStyle(ABC):
             yaml.YAMLError: If the file is not valid YAML.
         """
         try:
-            with open(caminho_arquivo, 'r', encoding='utf-8') as f:
+            with open(caminho_arquivo, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
             return config
         except FileNotFoundError:
@@ -323,12 +334,12 @@ class BaseBancaStyle(ABC):
         Returns:
             Dict[str, float]: Margins with keys 'superior', 'inferior', 'esquerda', 'direita'.
         """
-        margens_config = self.estilo_visual.get('margens', {})
+        margens_config = self.estilo_visual.get("margens", {})
         return {
-            'superior': margens_config.get('superior_cm', 2.0),
-            'inferior': margens_config.get('inferior_cm', 2.0),
-            'esquerda': margens_config.get('esquerda_cm', 1.5),
-            'direita': margens_config.get('direita_cm', 1.5)
+            "superior": margens_config.get("superior_cm", 2.0),
+            "inferior": margens_config.get("inferior_cm", 2.0),
+            "esquerda": margens_config.get("esquerda_cm", 1.5),
+            "direita": margens_config.get("direita_cm", 1.5),
         }
 
     def obter_margens_pontos(self) -> Dict[str, float]:
@@ -341,8 +352,8 @@ class BaseBancaStyle(ABC):
         """
         margens_cm = self.obter_margens_cm()
         return {
-            'superior': self.cm_para_pontos(margens_cm['superior']),
-            'inferior': self.cm_para_pontos(margens_cm['inferior']),
-            'esquerda': self.cm_para_pontos(margens_cm['esquerda']),
-            'direita': self.cm_para_pontos(margens_cm['direita'])
+            "superior": self.cm_para_pontos(margens_cm["superior"]),
+            "inferior": self.cm_para_pontos(margens_cm["inferior"]),
+            "esquerda": self.cm_para_pontos(margens_cm["esquerda"]),
+            "direita": self.cm_para_pontos(margens_cm["direita"]),
         }

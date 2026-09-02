@@ -10,6 +10,7 @@ isso usamos um perfil dedicado só para o scraper (PERFIL_CHROME abaixo,
 dentro do próprio projeto), populado via login interativo em
 salvar_html_exemplo.py e nunca commitado (ver .gitignore).
 """
+
 import random
 import re
 import sys
@@ -20,8 +21,7 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
 try:
-    from . import db
-    from . import edital
+    from . import db, edital
 except ImportError:
     import db
     import edital
@@ -39,7 +39,7 @@ SELETORES = {
     "enunciado": ".q-question-enunciation",
     "alternativa": "label.q-radio-button",
     "letra_alternativa": ".q-option-item",
-    "info": ".q-question-info",           # linha com Ano/Banca/Órgão/Prova(s)
+    "info": ".q-question-info",  # linha com Ano/Banca/Órgão/Prova(s)
     "breadcrumb": ".q-question-breadcrumb",  # matéria e assunto (links <a>)
     # Texto-base/imagem da questão. Vem no HTML mesmo com o bloco recolhido
     # (Bootstrap collapse esconde só por CSS) — não precisa clicar.
@@ -66,7 +66,7 @@ SELETORES = {
     # calibração anterior — o QC parece ter mais de um componente de aviso de
     # limite; cobrimos ambos os sinais em atingiu_limite).
     "modal_limite": "#js-questions-limit-modal, "
-                     "[data-limit-feedback='resolveQuestionLimit'][data-limit-reached='true']",
+    "[data-limit-feedback='resolveQuestionLimit'][data-limit-reached='true']",
     "modal_nao_confirmado": "#js-account-not-confirm-modal",
 }
 
@@ -96,8 +96,9 @@ def _campos_info(texto):
     return campos
 
 
-def _extrair_cargo_da_prova(prova: str | None, banca: str | None,
-                            ano: str | None, orgao: str | None) -> str | None:
+def _extrair_cargo_da_prova(
+    prova: str | None, banca: str | None, ano: str | None, orgao: str | None
+) -> str | None:
     """Isola o cargo do texto de uma prova ("Banca - Ano - Órgão - Cargo").
 
     Usa banca/ano/órgão já extraídos como prefixo em vez de fazer split por
@@ -110,7 +111,7 @@ def _extrair_cargo_da_prova(prova: str | None, banca: str | None,
     prefixo = f"{banca} - {ano} - {orgao}"
     if not primeira_prova.startswith(prefixo):
         return None
-    resto = primeira_prova[len(prefixo):].strip(" -")
+    resto = primeira_prova[len(prefixo) :].strip(" -")
     return resto or None
 
 
@@ -132,8 +133,10 @@ def extrair_blocos(html):
         campos = _campos_info(_texto(bloco.select_one(SELETORES["info"])))
         ano = re.search(r"\d{4}", campos.get("Ano", ""))
         cargo = _extrair_cargo_da_prova(
-            campos.get("Prova"), campos.get("Banca"),
-            campos.get("Ano"), campos.get("Órgão"),
+            campos.get("Prova"),
+            campos.get("Banca"),
+            campos.get("Ano"),
+            campos.get("Órgão"),
         )
         # A trilha tem tamanho variável: matéria + 1 a 3 níveis de conteúdo.
         # O schema só tem categoria e tema, então um eventual 4º nível (o mais
@@ -147,27 +150,29 @@ def extrair_blocos(html):
         area = bloco.select_one(SELETORES["texto_associado"])
         texto_assoc = _texto(area) if area else ""
         imagens = [i.get("src") for i in area.select("img") if i.get("src")] if area else []
-        questoes.append({
-            "id_qc": id_match.group(0) if id_match else None,
-            "enunciado": _texto(bloco.select_one(SELETORES["enunciado"])),
-            "alternativas": alternativas,
-            "materia_qc": materia_qc,
-            "assunto": assunto or None,
-            "categoria": categoria or None,
-            "tema": tema or None,
-            "ano": int(ano.group(0)) if ano else None,
-            "banca": campos.get("Banca") or None,
-            "orgao": campos.get("Órgão") or None,
-            "cargo": cargo,
-            "prova": campos.get("Prova") or None,
-            "texto_associado": texto_assoc,
-            "imagens": imagens,
-        })
+        questoes.append(
+            {
+                "id_qc": id_match.group(0) if id_match else None,
+                "enunciado": _texto(bloco.select_one(SELETORES["enunciado"])),
+                "alternativas": alternativas,
+                "materia_qc": materia_qc,
+                "assunto": assunto or None,
+                "categoria": categoria or None,
+                "tema": tema or None,
+                "ano": int(ano.group(0)) if ano else None,
+                "banca": campos.get("Banca") or None,
+                "orgao": campos.get("Órgão") or None,
+                "cargo": cargo,
+                "prova": campos.get("Prova") or None,
+                "texto_associado": texto_assoc,
+                "imagens": imagens,
+            }
+        )
     return [q for q in questoes if q["id_qc"] and q["enunciado"] and q["alternativas"]]
 
 
 HEADLESS = False  # o Cloudflare do QC bloqueia navegador invisível ("Um momento…");
-                  # a coleta roda com janela visível — pode minimizar que ela trabalha sozinha
+# a coleta roda com janela visível — pode minimizar que ela trabalha sozinha
 
 PAUSA_MIN, PAUSA_MAX = 3, 6
 MAX_PAGINAS_POR_MATERIA = 40  # limite por sessão diária, por educação
@@ -178,7 +183,8 @@ def abrir_navegador(p, headless=HEADLESS):
 
     Recebe a instância do sync_playwright (use `with sync_playwright() as p:`)."""
     contexto = p.chromium.launch_persistent_context(
-        str(PERFIL_CHROME), channel="chrome", headless=headless)
+        str(PERFIL_CHROME), channel="chrome", headless=headless
+    )
     pagina = contexto.pages[0] if contexto.pages else contexto.new_page()
     return contexto, pagina
 
@@ -192,27 +198,30 @@ def salvar_pagina(html, con, materia):
     """Salva as questões de uma página no banco; retorna quantas eram novas."""
     novas = 0
     for q in extrair_blocos(html):
-        salvou = db.salvar_questao(con, {
-            "id_qc": q["id_qc"],
-            "enunciado": q["enunciado"],
-            "alternativas": q["alternativas"],
-            "gabarito": None,
-            "materia": materia,
-            "assunto": q["assunto"],
-            "categoria": q["categoria"],
-            "tema": q["tema"],
-            "cargo": q["cargo"],
-            "banca": q["banca"],
-            # O órgão é o da prova de origem da questão, extraído da própria
-            # página. Sobrescrever por um valor fixo faria questão de outro
-            # estado se passar por questão do concurso alvo.
-            "orgao": q["orgao"],
-            "ano": q["ano"],
-            "prova": q["prova"],
-            "fonte": "qconcursos",
-            "texto_associado": q["texto_associado"],
-            "imagens": q["imagens"],
-        })
+        salvou = db.salvar_questao(
+            con,
+            {
+                "id_qc": q["id_qc"],
+                "enunciado": q["enunciado"],
+                "alternativas": q["alternativas"],
+                "gabarito": None,
+                "materia": materia,
+                "assunto": q["assunto"],
+                "categoria": q["categoria"],
+                "tema": q["tema"],
+                "cargo": q["cargo"],
+                "banca": q["banca"],
+                # O órgão é o da prova de origem da questão, extraído da própria
+                # página. Sobrescrever por um valor fixo faria questão de outro
+                # estado se passar por questão do concurso alvo.
+                "orgao": q["orgao"],
+                "ano": q["ano"],
+                "prova": q["prova"],
+                "fonte": "qconcursos",
+                "texto_associado": q["texto_associado"],
+                "imagens": q["imagens"],
+            },
+        )
         if salvou:
             novas += 1
         else:
@@ -347,7 +356,9 @@ def coletar_gabaritos(limite_questoes=None):
         if not q["id_qc"]:
             continue
         por_materia.setdefault(q["materia"], set()).add(q["id_qc"][1:])
-    print(f"{sum(len(v) for v in por_materia.values())} questões sem gabarito; usando a cota diária…")
+    print(
+        f"{sum(len(v) for v in por_materia.values())} questões sem gabarito; usando a cota diária…"
+    )
 
     coletadas = 0
     limite_atingido = False
@@ -371,7 +382,9 @@ def coletar_gabaritos(limite_questoes=None):
                     bloqueio = _bloqueio_pagina(html)
                     if bloqueio:
                         if not _aguardar_acao_humana(aba, bloqueio):
-                            print("  Não foi resolvido a tempo — encerrando a fase de gabaritos por hoje.")
+                            print(
+                                "  Não foi resolvido a tempo — encerrando a fase de gabaritos por hoje."
+                            )
                             limite_atingido = True
                             break
                         html = aba.content()
@@ -387,13 +400,19 @@ def coletar_gabaritos(limite_questoes=None):
                             break
                         bloco = blocos[numero]
                         if _botao_bloqueado(bloco):
-                            print("  Botão de responder desabilitado — permissão da conta pode"
-                                  " ter regredido. Confira o QConcursos e rode de novo.")
+                            print(
+                                "  Botão de responder desabilitado — permissão da conta pode"
+                                " ter regredido. Confira o QConcursos e rode de novo."
+                            )
                             limite_atingido = True
                             break
-                        seletor_radio = f'{SELETORES["alternativa_radio"]}[name="answer-question-{numero}"]'
+                        seletor_radio = (
+                            f'{SELETORES["alternativa_radio"]}[name="answer-question-{numero}"]'
+                        )
                         radio = bloco.select_one(seletor_radio)
-                        letra_marcada = (radio.get("value") or "").strip().upper() if radio else None
+                        letra_marcada = (
+                            (radio.get("value") or "").strip().upper() if radio else None
+                        )
                         if not letra_marcada:
                             print(f"  Q{numero}: sem alternativa para marcar — pulando.")
                             faltam.discard(numero)
@@ -411,13 +430,16 @@ def coletar_gabaritos(limite_questoes=None):
                         html_pos = aba.content()
                         faltam.discard(numero)
                         if atingiu_limite(html_pos):
-                            print(f"Limite diário do QC atingido. Coletados {coletadas} gabaritos"
-                                  " hoje; rode de novo amanhã.")
+                            print(
+                                f"Limite diário do QC atingido. Coletados {coletadas} gabaritos"
+                                " hoje; rode de novo amanhã."
+                            )
                             limite_atingido = True
                             break
                         bloco_pos = _mapa_blocos(html_pos).get(numero)
                         gabarito, comentario = extrair_resposta_do_bloco(
-                            str(bloco_pos) if bloco_pos is not None else html_pos, letra_marcada)
+                            str(bloco_pos) if bloco_pos is not None else html_pos, letra_marcada
+                        )
                         if gabarito:
                             db.atualizar_gabarito(con, f"Q{numero}", gabarito, comentario)
                             coletadas += 1

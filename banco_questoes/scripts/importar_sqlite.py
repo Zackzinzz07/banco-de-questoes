@@ -8,6 +8,7 @@ nulas, coerente com a regra de nunca inventar metadado que a fonte não trouxe.
 O dedupe por `content_hash` do `db.salvar_questao` torna a importação
 idempotente: rodar de novo não duplica nada.
 """
+
 import json
 import sqlite3
 import sys
@@ -21,9 +22,22 @@ except ImportError:  # rodando de fora da pasta do projeto
 
 PADRAO_SQLITE = Path(__file__).resolve().parent.parent / "banco_de_questoes.db"
 
-_CAMPOS = ("id_qc", "enunciado", "alternativas", "gabarito", "comentario",
-           "materia", "assunto", "banca", "orgao", "ano", "prova", "fonte",
-           "texto_associado", "imagens")
+_CAMPOS = (
+    "id_qc",
+    "enunciado",
+    "alternativas",
+    "gabarito",
+    "comentario",
+    "materia",
+    "assunto",
+    "banca",
+    "orgao",
+    "ano",
+    "prova",
+    "fonte",
+    "texto_associado",
+    "imagens",
+)
 
 
 def _json_ou_padrao(texto: str | None, padrao: Any) -> Any:
@@ -46,8 +60,7 @@ def ler_questoes(caminho: Path | str) -> list[dict[str, Any]]:
     con = sqlite3.connect(f"file:{caminho}?mode=ro", uri=True)
     con.row_factory = sqlite3.Row
     try:
-        linhas = con.execute(
-            f"SELECT {', '.join(_CAMPOS)} FROM questoes").fetchall()
+        linhas = con.execute(f"SELECT {', '.join(_CAMPOS)} FROM questoes").fetchall()
     finally:
         con.close()
 
@@ -57,22 +70,24 @@ def ler_questoes(caminho: Path | str) -> list[dict[str, Any]]:
         alternativas = _json_ou_padrao(linha["alternativas"], {})
         if not enunciado or not alternativas:
             continue
-        questoes.append({
-            "id_qc": linha["id_qc"],
-            "enunciado": enunciado,
-            "alternativas": alternativas,
-            "gabarito": linha["gabarito"],
-            "comentario": linha["comentario"],
-            "materia": linha["materia"],
-            "assunto": linha["assunto"],
-            "banca": linha["banca"],
-            "orgao": linha["orgao"],
-            "ano": linha["ano"],
-            "prova": linha["prova"],
-            "fonte": linha["fonte"],
-            "texto_associado": linha["texto_associado"],
-            "imagens": _json_ou_padrao(linha["imagens"], []),
-        })
+        questoes.append(
+            {
+                "id_qc": linha["id_qc"],
+                "enunciado": enunciado,
+                "alternativas": alternativas,
+                "gabarito": linha["gabarito"],
+                "comentario": linha["comentario"],
+                "materia": linha["materia"],
+                "assunto": linha["assunto"],
+                "banca": linha["banca"],
+                "orgao": linha["orgao"],
+                "ano": linha["ano"],
+                "prova": linha["prova"],
+                "fonte": linha["fonte"],
+                "texto_associado": linha["texto_associado"],
+                "imagens": _json_ou_padrao(linha["imagens"], []),
+            }
+        )
     return questoes
 
 

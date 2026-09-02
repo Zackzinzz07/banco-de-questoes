@@ -2,6 +2,7 @@
 
 Usado por todos os scrapers (PCI e futuras bancas: VUNESP, CESGRANRIO etc.).
 """
+
 import random
 import time
 

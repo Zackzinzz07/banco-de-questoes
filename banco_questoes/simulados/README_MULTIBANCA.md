@@ -36,16 +36,14 @@ from banco_questoes.simulados.estilos import EstiloCebraspe, IadesStyle
 
 # Instanciar o gerador com estilo Cebraspe
 config_cebraspe = {
-    'banca': 'cebraspe',
-    'quantidade': 120,
-    'disciplinas': ['Direito', 'Português', 'Constitucional']
+    "banca": "cebraspe",
+    "quantidade": 120,
+    "disciplinas": ["Direito", "Português", "Constitucional"],
 }
 
 # Gerar PDF
 pdf_path = gerar_multibanca(
-    config=config_cebraspe,
-    estilo_classe=EstiloCebraspe,
-    output_file='simulado_cebraspe.pdf'
+    config=config_cebraspe, estilo_classe=EstiloCebraspe, output_file="simulado_cebraspe.pdf"
 )
 
 print(f"Simulado gerado: {pdf_path}")
@@ -164,33 +162,42 @@ from typing import Dict, Any
 from reportlab.pdfgen.canvas import Canvas
 from .base import BaseBancaStyle
 
+
 class NovaStyle(BaseBancaStyle):
     """Estilo customizado para Nova Banca."""
-    
+
     def __init__(self, config: Dict[str, Any]) -> None:
         super().__init__(config)
-    
-    def desenhar_cabecalho(self, canvas_obj: Canvas, pagina_numero: int, 
-                          largura: float, altura: float) -> float:
+
+    def desenhar_cabecalho(
+        self, canvas_obj: Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """Implementar renderização do cabeçalho específico da banca."""
         # Seu código aqui
         return altura_usada
-    
-    def desenhar_rodape(self, canvas_obj: Canvas, pagina_numero: int,
-                       largura: float, altura: float) -> float:
+
+    def desenhar_rodape(
+        self, canvas_obj: Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """Implementar renderização do rodapé específico da banca."""
         # Seu código aqui
         return altura_usada
-    
-    def desenhar_questao(self, canvas_obj: Canvas, questao_data: Dict[str, Any],
-                        posicao_x: float, posicao_y: float, 
-                        largura_disponivel: float) -> float:
+
+    def desenhar_questao(
+        self,
+        canvas_obj: Canvas,
+        questao_data: Dict[str, Any],
+        posicao_x: float,
+        posicao_y: float,
+        largura_disponivel: float,
+    ) -> float:
         """Implementar renderização de uma questão."""
         # Seu código aqui
         return altura_usada
-    
-    def calcular_altura_questao(self, questao_data: Dict[str, Any],
-                               largura_disponivel: float) -> float:
+
+    def calcular_altura_questao(
+        self, questao_data: Dict[str, Any], largura_disponivel: float
+    ) -> float:
         """Calcular altura necessária para questão sem desenhar."""
         # Seu código aqui
         return altura_calculada
@@ -206,9 +213,9 @@ from .cebraspe import EstiloCebraspe
 from .nova_banca import NovaStyle  # <- Adicionar
 
 __all__ = [
-    'BaseBancaStyle',
-    'EstiloCebraspe',
-    'NovaStyle',  # <- Adicionar
+    "BaseBancaStyle",
+    "EstiloCebraspe",
+    "NovaStyle",  # <- Adicionar
 ]
 ```
 
@@ -298,9 +305,7 @@ from banco_questoes.simulados.gerar_simulado import gerar
 
 # Simulado de Direito Constitucional (20 questões)
 pdf_path = gerar(
-    materia="Direito Constitucional",
-    quantidade=20,
-    arquivo_saida="simulado_direito_const.pdf"
+    materia="Direito Constitucional", quantidade=20, arquivo_saida="simulado_direito_const.pdf"
 )
 ```
 
@@ -310,10 +315,7 @@ pdf_path = gerar(
 from banco_questoes.simulados.gerar_simulado import gerar_completo
 
 # Simulado completo com distribuição por pesos (edital.PESOS)
-pdf_path = gerar_completo(
-    quantidade=100,
-    arquivo_saida="simulado_completo_100q.pdf"
-)
+pdf_path = gerar_completo(quantidade=100, arquivo_saida="simulado_completo_100q.pdf")
 ```
 
 ### Instanciar estilo e usar diretamente
@@ -329,7 +331,7 @@ with open(config_path) as f:
     config = yaml.safe_load(f)
 
 # Instanciar estilo
-estilo = EstiloCebraspe(config['cebraspe'])
+estilo = EstiloCebraspe(config["cebraspe"])
 
 # Acessar informações
 margens = estilo.obter_margens_cm()

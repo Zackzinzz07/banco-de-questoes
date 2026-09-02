@@ -4,6 +4,7 @@ Todas as funções aqui recebem HTML já baixado e devolvem estruturas de dados
 simples, para poderem ser testadas com fixtures salvas em disco, sem precisar
 de rede nem de banco de dados.
 """
+
 import json
 import re
 
@@ -168,8 +169,7 @@ def _extrair_texto_associado(bloco):
     container da questão.
     """
     area = bloco.select_one(
-        "div.sim-texto, div.sim-texto-base, div[class*='texto-associado'], "
-        "div[class*='texto-base']"
+        "div.sim-texto, div.sim-texto-base, div[class*='texto-associado'], div[class*='texto-base']"
     )
     if not area:
         return "", []
@@ -209,8 +209,7 @@ def _extrair_todas_imagens(bloco):
     return list(urls)
 
 
-_PADRAO_GABARITOS = re.compile(
-    r'(?:var|const|let)\s+simGabaritos\s*=\s*(\{.*?\})\s*;', re.S)
+_PADRAO_GABARITOS = re.compile(r"(?:var|const|let)\s+simGabaritos\s*=\s*(\{.*?\})\s*;", re.S)
 
 
 def extrair_gabaritos(html: str) -> dict[str, str]:
@@ -234,8 +233,11 @@ def extrair_gabaritos(html: str) -> dict[str, str]:
         return {}
     if not isinstance(mapa, dict):
         return {}
-    return {str(k): str(v).strip().upper() for k, v in mapa.items()
-            if str(v).strip().upper() in {"A", "B", "C", "D", "E"}}
+    return {
+        str(k): str(v).strip().upper()
+        for k, v in mapa.items()
+        if str(v).strip().upper() in {"A", "B", "C", "D", "E"}
+    }
 
 
 def extrair_questoes_pagina(html):
@@ -296,18 +298,20 @@ def extrair_questoes_pagina(html):
         # Extrair TODAS as imagens (incluindo enunciado + alternativas + texto associado)
         todas_imagens = _extrair_todas_imagens(bloco)
 
-        questoes.append({
-            "id_pci": sid,
-            "enunciado": enunciado,
-            "alternativas": alternativas,
-            "gabarito": gabaritos.get(sid),
-            "texto_associado": texto_associado,
-            "imagens": imagens,  # Mantém para compatibilidade
-            "imagens_urls": todas_imagens,  # Nova: todas as imagens de uma vez
-            "banca": banca,
-            "orgao": orgao,
-            "ano": ano,
-            "prova": origem or None,
-        })
+        questoes.append(
+            {
+                "id_pci": sid,
+                "enunciado": enunciado,
+                "alternativas": alternativas,
+                "gabarito": gabaritos.get(sid),
+                "texto_associado": texto_associado,
+                "imagens": imagens,  # Mantém para compatibilidade
+                "imagens_urls": todas_imagens,  # Nova: todas as imagens de uma vez
+                "banca": banca,
+                "orgao": orgao,
+                "ano": ano,
+                "prova": origem or None,
+            }
+        )
 
     return questoes

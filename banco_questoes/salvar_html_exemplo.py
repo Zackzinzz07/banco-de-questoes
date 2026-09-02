@@ -12,6 +12,7 @@ Atenção: a lista pública do QC já mostra questões para quem NÃO está loga
 Por isso a espera é pelo sinal de login (some o link /conta/entrar), nunca pela
 simples presença de questões na página.
 """
+
 import re
 import sys
 import time
@@ -66,7 +67,9 @@ def aguardar_login(pagina: Page, tentativas: int = 120, intervalo: int = 5) -> b
         if esta_logado(html) and tem_questoes(html):
             return True
         if tentativa and tentativa % 12 == 0:
-            print(f"  ainda deslogado ({tentativa * intervalo}s)… faça o login na janela do Chrome.")
+            print(
+                f"  ainda deslogado ({tentativa * intervalo}s)… faça o login na janela do Chrome."
+            )
         time.sleep(intervalo)
     return False
 
@@ -95,7 +98,8 @@ def main() -> None:
 
     with sync_playwright() as p:
         contexto = p.chromium.launch_persistent_context(
-            str(PERFIL), channel="chrome", headless=False)
+            str(PERFIL), channel="chrome", headless=False
+        )
         try:
             pagina = contexto.pages[0] if contexto.pages else contexto.new_page()
             pagina.goto(URL, timeout=60000)

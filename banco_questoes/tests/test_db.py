@@ -1,4 +1,5 @@
 import pytest
+
 import db
 
 
@@ -89,7 +90,10 @@ def test_zerar_usadas():
     q = db.sortear_questoes(con, "Língua Portuguesa", 1)
     db.marcar_usadas(con, [q[0]["id"]])
     db.zerar_usadas(con)
-    assert con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()["c"] == 0
+    assert (
+        con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()["c"]
+        == 0
+    )
 
 
 def test_progresso():
@@ -102,8 +106,7 @@ def test_progresso():
 
 def test_salva_e_le_texto_associado():
     con = db.conectar()
-    q = questao_exemplo(texto_associado="Poema base da questão.",
-                        imagens=["https://x/a.png"])
+    q = questao_exemplo(texto_associado="Poema base da questão.", imagens=["https://x/a.png"])
     db.salvar_questao(con, q)
     lida = db.sortear_questoes(con, "Língua Portuguesa", 1)[0]
     assert lida["texto_associado"] == "Poema base da questão."
@@ -135,13 +138,11 @@ def test_estatisticas():
     con = db.conectar()
     db.salvar_questao(con, questao_exemplo(id_qc="QA", enunciado="Um?"))
     db.salvar_questao(con, questao_exemplo(id_qc="QB", enunciado="Dois?", gabarito=None))
-    db.salvar_questao(con, questao_exemplo(id_qc="QC1", enunciado="Três?",
-                                           materia="SUAS"))
+    db.salvar_questao(con, questao_exemplo(id_qc="QC1", enunciado="Três?", materia="SUAS"))
     usada = db.sortear_questoes(con, "SUAS", 1)
     db.marcar_usadas(con, [usada[0]["id"]])
     est = db.estatisticas(con)
-    assert est["Língua Portuguesa"] == {"total": 2, "ineditas": 2, "usadas": 0,
-                                        "sem_gabarito": 1}
+    assert est["Língua Portuguesa"] == {"total": 2, "ineditas": 2, "usadas": 0, "sem_gabarito": 1}
     assert est["SUAS"] == {"total": 1, "ineditas": 0, "usadas": 1, "sem_gabarito": 0}
 
 
@@ -149,17 +150,14 @@ def test_salvar_questao_com_cargo():
     """Test saving question with cargo field."""
     con = db.conectar()
     q = questao_exemplo(
-        id_qc="QCARGO1",
-        enunciado="Teste com cargo",
-        cargo="Policial Rodoviário Federal"
+        id_qc="QCARGO1", enunciado="Teste com cargo", cargo="Policial Rodoviário Federal"
     )
     resultado = db.salvar_questao(con, q)
     assert resultado is True
 
     # Verify cargo was saved
     linhas = con.execute(
-        "SELECT cargo FROM questoes WHERE enunciado=%s",
-        ("Teste com cargo",)
+        "SELECT cargo FROM questoes WHERE enunciado=%s", ("Teste com cargo",)
     ).fetchall()
     assert len(linhas) == 1
     assert linhas[0]["cargo"] == "Policial Rodoviário Federal"
@@ -175,7 +173,7 @@ def test_sortear_questoes_com_cargo():
         materia="Direito Constitucional",
         cargo="Policial Rodoviário Federal",
         orgao="PRF",
-        banca="Cebraspe"
+        banca="Cebraspe",
     )
     q2 = questao_exemplo(
         id_qc="QBACEN1",
@@ -183,7 +181,7 @@ def test_sortear_questoes_com_cargo():
         materia="Direito Constitucional",
         cargo="Técnico",
         orgao="Banco Central",
-        banca="Cebraspe"
+        banca="Cebraspe",
     )
     db.salvar_questao(con, q1)
     db.salvar_questao(con, q2)
@@ -199,11 +197,7 @@ def test_sortear_questoes_com_cargo():
 def test_sortear_questoes_sem_cargo_filter():
     """Test that sorting still works without cargo filter (backward compat)."""
     con = db.conectar()
-    q = questao_exemplo(
-        id_qc="QSEMCARGO",
-        enunciado="Q sem cargo",
-        materia="Português"
-    )
+    q = questao_exemplo(id_qc="QSEMCARGO", enunciado="Q sem cargo", materia="Português")
     db.salvar_questao(con, q)
 
     # Should work without cargo parameter
@@ -221,18 +215,13 @@ def test_sortear_questoes_com_multiplos_filtros():
         materia="Matemática",
         cargo="Técnico",
         orgao="BACEN",
-        banca="Cebraspe"
+        banca="Cebraspe",
     )
     db.salvar_questao(con, q)
 
     # Combined filter
     resultados = db.sortear_questoes(
-        con,
-        "Matemática",
-        1,
-        banca="Cebraspe",
-        orgao="BACEN",
-        cargo="Técnico"
+        con, "Matemática", 1, banca="Cebraspe", orgao="BACEN", cargo="Técnico"
     )
     assert len(resultados) >= 1
     assert "filtros múltiplos" in resultados[0]["enunciado"]
@@ -243,10 +232,10 @@ def test_salvar_questao_normaliza_gabarito_vazio_para_null():
     O SQLite legado trazia 367 questões assim; guardá-las como '' as torna
     invisíveis para a fase de coleta de gabaritos."""
     con = db.conectar()
-    db.salvar_questao(con, questao_exemplo(
-        id_qc="QVAZIO1", enunciado="Gabarito vazio?", gabarito=""))
-    linha = con.execute(
-        "SELECT gabarito FROM questoes WHERE id_qc='QVAZIO1'").fetchone()
+    db.salvar_questao(
+        con, questao_exemplo(id_qc="QVAZIO1", enunciado="Gabarito vazio?", gabarito="")
+    )
+    linha = con.execute("SELECT gabarito FROM questoes WHERE id_qc='QVAZIO1'").fetchone()
     assert linha["gabarito"] is None
     con.close()
 
@@ -258,7 +247,8 @@ def test_sem_gabarito_encontra_gabarito_string_vazia():
         "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash,"
         " alternativas, gabarito, materia, fonte)"
         " VALUES ('QVAZIO2','Enunciado vazio?','h_vazio2','c_vazio2','{}','',"
-        " 'SUAS','qconcursos')")
+        " 'SUAS','qconcursos')"
+    )
     pendentes = db.sem_gabarito(con)
     assert "QVAZIO2" in [p["id_qc"] for p in pendentes]
     con.close()
@@ -270,7 +260,8 @@ def test_estatisticas_conta_gabarito_vazio_como_sem_gabarito():
         "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash,"
         " alternativas, gabarito, materia, fonte)"
         " VALUES ('QVAZIO3','Outro vazio?','h_vazio3','c_vazio3','{}','',"
-        " 'SUAS','qconcursos')")
+        " 'SUAS','qconcursos')"
+    )
     assert db.estatisticas(con)["SUAS"]["sem_gabarito"] == 1
     con.close()
 
@@ -279,12 +270,15 @@ def test_salvar_questao_persiste_banca_e_orgao():
     """banca/orgao são usados como filtro em sortear_questoes mas nenhum
     teste checava a coluna direto — cobrindo o mesmo bug do cargo."""
     con = db.conectar()
-    db.salvar_questao(con, questao_exemplo(
-        id_qc="QBANCAORGAO1",
-        enunciado="Teste banca e orgao",
-        banca="Cebraspe",
-        orgao="PRF",
-    ))
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QBANCAORGAO1",
+            enunciado="Teste banca e orgao",
+            banca="Cebraspe",
+            orgao="PRF",
+        ),
+    )
     linha = con.execute(
         "SELECT banca, orgao FROM questoes WHERE enunciado=%s",
         ("Teste banca e orgao",),
@@ -299,6 +293,7 @@ def test_conectar_liga_autocommit_para_nao_prender_transacao_aberta():
     até alguém commitar/fechar — isso é o que trava a suíte inteira quando
     vários testes abrem conexão e não fecham."""
     import psycopg2.extensions as ext
+
     con = db.conectar()
     con.execute("SELECT 1")
     assert con._con.get_transaction_status() == ext.TRANSACTION_STATUS_IDLE
@@ -310,6 +305,7 @@ def test_migracoes_rodam_uma_unica_vez_por_processo(monkeypatch):
     IF NOT EXISTS. Rodar isso em toda chamada de conectar() é o que causa a
     fila de locks quando o processo tem várias conexões vivas ao mesmo tempo."""
     import migrations.migration_002 as m2
+
     chamadas = []
     monkeypatch.setattr(m2, "aplicar", lambda con: chamadas.append(1))
     monkeypatch.setattr(db, "_MIGRACOES_APLICADAS", False)
@@ -330,12 +326,10 @@ def test_sortear_questoes_cargo_nao_encontra_quando_diferente():
         enunciado="Q com cargo PRF",
         materia="Direito",
         cargo="Policial Rodoviário Federal",
-        orgao="PRF"
+        orgao="PRF",
     )
     db.salvar_questao(con, q)
 
     # Filter by different cargo - should return empty
-    resultados = db.sortear_questoes(
-        con, "Direito", 1, cargo="Técnico Administrativo"
-    )
+    resultados = db.sortear_questoes(con, "Direito", 1, cargo="Técnico Administrativo")
     assert len(resultados) == 0

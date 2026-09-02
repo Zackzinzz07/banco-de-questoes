@@ -8,10 +8,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import psycopg2
 
+
 def verificar_schema_pci():
     """Ensure PCI hierarchy columns exist."""
     try:
-        con = psycopg2.connect('dbname=banco_questoes user=postgres host=localhost password=postgres')
+        con = psycopg2.connect(
+            "dbname=banco_questoes user=postgres host=localhost password=postgres"
+        )
         cur = con.cursor()
 
         print("Verificando schema PCI...")
@@ -25,7 +28,7 @@ def verificar_schema_pci():
         """)
         existing = {row[0] for row in cur.fetchall()}
 
-        needed = {'categoria', 'subcategoria', 'tema', 'imagens_urls'}
+        needed = {"categoria", "subcategoria", "tema", "imagens_urls"}
         missing = needed - existing
 
         if not missing:
@@ -36,7 +39,7 @@ def verificar_schema_pci():
         print(f"Adicionando {len(missing)} colunas...")
 
         for col in sorted(missing):
-            if col == 'imagens_urls':
+            if col == "imagens_urls":
                 print(f"  - Adicionando {col} (JSONB)...")
                 cur.execute(f"ALTER TABLE questoes ADD COLUMN {col} JSONB DEFAULT '[]'::jsonb")
             else:
@@ -53,6 +56,7 @@ def verificar_schema_pci():
     except Exception as e:
         print(f"❌ Erro: {e}")
         raise
+
 
 if __name__ == "__main__":
     verificar_schema_pci()

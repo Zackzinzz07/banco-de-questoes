@@ -3,8 +3,9 @@
 Funciona para TODOS os concursos (PCI, QConcursos, etc).
 """
 
-import yaml
 from pathlib import Path
+
+import yaml
 
 # Carregar mapeamento
 MAPEAMENTO_PATH = Path(__file__).resolve().parent / "mapeamento_conteudos.yaml"

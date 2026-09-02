@@ -9,9 +9,11 @@ Classes:
     EstiloAOCP: Concrete implementation of BaseBancaStyle for AOCP exams.
 """
 
-from typing import Dict, Any, List
-from reportlab.pdfgen import canvas
+from typing import Any, Dict, List
+
 from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+
 from .base import BaseBancaStyle
 
 
@@ -63,8 +65,9 @@ class EstiloAOCP(BaseBancaStyle):
         """
         super().__init__(config)
 
-    def desenhar_cabecalho(self, canvas_obj: canvas.Canvas, pagina_numero: int,
-                          largura: float, altura: float) -> float:
+    def desenhar_cabecalho(
+        self, canvas_obj: canvas.Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """
         Draw the AOCP header with logos and clean design.
 
@@ -86,12 +89,12 @@ class EstiloAOCP(BaseBancaStyle):
         altura_cabecalho_pt = self.cm_para_pontos(self.ALTURA_CABECALHO_CM)
 
         # Calculate header coordinates
-        x_inicio = margens['esquerda']
-        y_base = altura - margens['superior'] - altura_cabecalho_pt
-        largura_cabecalho = largura - margens['esquerda'] - margens['direita']
+        x_inicio = margens["esquerda"]
+        y_base = altura - margens["superior"] - altura_cabecalho_pt
+        largura_cabecalho = largura - margens["esquerda"] - margens["direita"]
 
         # Draw AOCP logo placeholder (left side)
-        canvas_obj.setFont('Helvetica-Bold', 10)
+        canvas_obj.setFont("Helvetica-Bold", 10)
         canvas_obj.setFillColor(colors.black)
         canvas_obj.drawString(x_inicio, y_base + altura_cabecalho_pt / 2, "AOCP")
 
@@ -105,8 +108,9 @@ class EstiloAOCP(BaseBancaStyle):
 
         return altura_cabecalho_pt
 
-    def desenhar_rodape(self, canvas_obj: canvas.Canvas, pagina_numero: int,
-                       largura: float, altura: float) -> float:
+    def desenhar_rodape(
+        self, canvas_obj: canvas.Canvas, pagina_numero: int, largura: float, altura: float
+    ) -> float:
         """
         Draw the AOCP footer with proof code and page number.
 
@@ -127,18 +131,24 @@ class EstiloAOCP(BaseBancaStyle):
 
         # Calculate footer coordinates (centered at bottom)
         x_centro = largura / 2
-        y_rodape = margens['inferior'] + self.MARGEM_INTERNA_PT
+        y_rodape = margens["inferior"] + self.MARGEM_INTERNA_PT
 
         # Draw proof code and page number
-        canvas_obj.setFont('Helvetica', 9)
+        canvas_obj.setFont("Helvetica", 9)
         canvas_obj.setFillColor(colors.black)
         footer_text = f"Prova {self.CODIGO_PROVA_PADRAO} - Página {pagina_numero}"
         canvas_obj.drawCentredString(x_centro, y_rodape, footer_text)
 
         return altura_rodape_pt
 
-    def desenhar_questao(self, canvas_obj: canvas.Canvas, questao_data: Dict[str, Any],
-                        posicao_x: float, posicao_y: float, largura_disponivel: float) -> float:
+    def desenhar_questao(
+        self,
+        canvas_obj: canvas.Canvas,
+        questao_data: Dict[str, Any],
+        posicao_x: float,
+        posicao_y: float,
+        largura_disponivel: float,
+    ) -> float:
         """
         Draw a single AOCP multiple choice question with gray numbered box.
 
@@ -161,8 +171,8 @@ class EstiloAOCP(BaseBancaStyle):
         Returns:
             float: Height occupied by the question in points.
         """
-        numero_questao = questao_data.get('numero', 0)
-        enunciado = questao_data.get('enunciado', '')
+        numero_questao = questao_data.get("numero", 0)
+        enunciado = questao_data.get("enunciado", "")
 
         # Draw gray box for question number
         tamanho_box = self.TAMANHO_BOX_NUMERO_PT
@@ -170,11 +180,13 @@ class EstiloAOCP(BaseBancaStyle):
         y_box = posicao_y - tamanho_box / 2
 
         # Draw gray rectangle background
-        canvas_obj.setFillColor(colors.HexColor('#CCCCCC'))  # Light gray
-        canvas_obj.rect(x_box, y_box - tamanho_box, tamanho_box, tamanho_box, fill=True, stroke=True)
+        canvas_obj.setFillColor(colors.HexColor("#CCCCCC"))  # Light gray
+        canvas_obj.rect(
+            x_box, y_box - tamanho_box, tamanho_box, tamanho_box, fill=True, stroke=True
+        )
 
         # Draw question number inside gray box
-        canvas_obj.setFont('Helvetica-Bold', 11)
+        canvas_obj.setFont("Helvetica-Bold", 11)
         canvas_obj.setFillColor(colors.black)
         x_numero = x_box + tamanho_box / 2
         y_numero = y_box - tamanho_box / 2 - 4  # Vertical center adjustment
@@ -185,7 +197,7 @@ class EstiloAOCP(BaseBancaStyle):
         y_enunciado = posicao_y
 
         # Draw question text (enunciado)
-        canvas_obj.setFont('Helvetica', 10)
+        canvas_obj.setFont("Helvetica", 10)
         altura_usada = self._desenhar_texto_quebrado(
             canvas_obj,
             enunciado,
@@ -193,14 +205,14 @@ class EstiloAOCP(BaseBancaStyle):
             y_enunciado,
             largura_disponivel - (x_enunciado - posicao_x),
             tamanho_fonte=10,
-            fonte='Helvetica'
+            fonte="Helvetica",
         )
 
         # Calculate position for answer options
         y_opcoes = y_enunciado - altura_usada - self.MARGEM_INTERNA_PT
 
         # Draw response options: (A) (B) (C) (D) (E)
-        canvas_obj.setFont('Helvetica', 10)
+        canvas_obj.setFont("Helvetica", 10)
         opcoes_texto = "( ) A    ( ) B    ( ) C    ( ) D    ( ) E"
         canvas_obj.drawString(x_enunciado, y_opcoes, opcoes_texto)
 
@@ -209,8 +221,9 @@ class EstiloAOCP(BaseBancaStyle):
 
         return altura_total
 
-    def calcular_altura_questao(self, questao_data: Dict[str, Any],
-                               largura_disponivel: float) -> float:
+    def calcular_altura_questao(
+        self, questao_data: Dict[str, Any], largura_disponivel: float
+    ) -> float:
         """
         Calculate the height needed to render an AOCP question.
 
@@ -227,10 +240,10 @@ class EstiloAOCP(BaseBancaStyle):
         Returns:
             float: Calculated height needed in points.
         """
-        enunciado = questao_data.get('enunciado', '')
+        enunciado = questao_data.get("enunciado", "")
 
         # Get baseline height from configuration
-        altura_media_cm = self.caracteristicas_prova.get('altura_media_questao_cm', 7.5)
+        altura_media_cm = self.caracteristicas_prova.get("altura_media_questao_cm", 7.5)
         altura_base_pt = self.cm_para_pontos(altura_media_cm)
 
         # Calculate number of lines based on text length
@@ -247,8 +260,9 @@ class EstiloAOCP(BaseBancaStyle):
 
         return altura_total
 
-    def _quebrar_texto(self, texto: str, largura_maxima_pt: float,
-                      tamanho_fonte: int = 10) -> List[str]:
+    def _quebrar_texto(
+        self, texto: str, largura_maxima_pt: float, tamanho_fonte: int = 10
+    ) -> List[str]:
         """
         Break text into multiple lines to fit within a maximum width.
 
@@ -301,10 +315,16 @@ class EstiloAOCP(BaseBancaStyle):
 
         return linhas if linhas else [""]
 
-    def _desenhar_texto_quebrado(self, canvas_obj: canvas.Canvas, texto: str,
-                                 x: float, y: float, largura_maxima_pt: float,
-                                 tamanho_fonte: int = 10,
-                                 fonte: str = 'Helvetica') -> float:
+    def _desenhar_texto_quebrado(
+        self,
+        canvas_obj: canvas.Canvas,
+        texto: str,
+        x: float,
+        y: float,
+        largura_maxima_pt: float,
+        tamanho_fonte: int = 10,
+        fonte: str = "Helvetica",
+    ) -> float:
         """
         Helper method to draw text with automatic line wrapping.
 

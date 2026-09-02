@@ -1,13 +1,14 @@
 """Coletor QConcursos: Extrai questões dos 6 exames federais + SEDES DF."""
 
-import sys
 import re
+import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import yaml
 from banco_questoes import db
 from banco_questoes.scrapers import http_utils
-import yaml
 
 BASE_URL = "https://www.qconcursos.com/questoes-de-concursos"
 MAX_PAGINAS_POR_MATERIA = 500
@@ -39,7 +40,7 @@ def extrair_questoes_pagina(html):
     blocos = re.findall(
         r'<div[^>]*class="[^"]*questão[^"]*"[^>]*>.*?(?=<div[^>]*class="[^"]*questão|$)',
         html,
-        re.IGNORECASE | re.DOTALL
+        re.IGNORECASE | re.DOTALL,
     )
 
     if not blocos:
@@ -47,38 +48,32 @@ def extrair_questoes_pagina(html):
         blocos = re.findall(
             r'<div[^>]*class="[^"]*question[^"]*"[^>]*>.*?(?=<div|<section|$)',
             html,
-            re.IGNORECASE | re.DOTALL
+            re.IGNORECASE | re.DOTALL,
         )
 
     for bloco in blocos:
         try:
             # Extrair enunciado
             match_enunciado = re.search(
-                r'<[^>]*(?:class|id)[^>]*enunciado[^>]*>(.+?)</',
-                bloco,
-                re.IGNORECASE | re.DOTALL
+                r"<[^>]*(?:class|id)[^>]*enunciado[^>]*>(.+?)</", bloco, re.IGNORECASE | re.DOTALL
             )
             if not match_enunciado:
-                match_enunciado = re.search(
-                    r'<(?:p|div|span)[^>]*>(.+?)</',
-                    bloco,
-                    re.DOTALL
-                )
+                match_enunciado = re.search(r"<(?:p|div|span)[^>]*>(.+?)</", bloco, re.DOTALL)
 
             if not match_enunciado:
                 continue
 
             enunciado = match_enunciado.group(1)
-            enunciado = re.sub(r'<[^>]+>', '', enunciado).strip()
+            enunciado = re.sub(r"<[^>]+>", "", enunciado).strip()
 
             if len(enunciado) < 10:
                 continue
 
             # Extrair alternativas (A, B, C, D, E)
             alternativas_matches = re.findall(
-                r'[A\(\)\s]*([A-E])\s*[\):\-]\s*(.+?)(?=[A-E]\s*[\):\-]|$)',
+                r"[A\(\)\s]*([A-E])\s*[\):\-]\s*(.+?)(?=[A-E]\s*[\):\-]|$)",
                 bloco,
-                re.IGNORECASE | re.DOTALL
+                re.IGNORECASE | re.DOTALL,
             )
 
             if not alternativas_matches:
@@ -87,8 +82,8 @@ def extrair_questoes_pagina(html):
             alternativas = {}
             for letra, texto in alternativas_matches:
                 letra = letra.upper()
-                if letra in ['A', 'B', 'C', 'D', 'E']:
-                    texto = re.sub(r'<[^>]+>', '', texto).strip()
+                if letra in ["A", "B", "C", "D", "E"]:
+                    texto = re.sub(r"<[^>]+>", "", texto).strip()
                     alternativas[letra] = texto
 
             if len(alternativas) < 2:
@@ -96,35 +91,33 @@ def extrair_questoes_pagina(html):
 
             # Extrair gabarito (se houver)
             gabarito = None
-            match_gab = re.search(r'[Gg]abarito[:\s]+([A-E])', bloco)
+            match_gab = re.search(r"[Gg]abarito[:\s]+([A-E])", bloco)
             if match_gab:
                 gabarito = match_gab.group(1).upper()
 
             # Extrair comentário
             comentario = None
             match_com = re.search(
-                r'[Cc]oment[áa]rio[:\s]+(.+?)(?=<(?:hr|br|div|p)|$)',
-                bloco,
-                re.DOTALL
+                r"[Cc]oment[áa]rio[:\s]+(.+?)(?=<(?:hr|br|div|p)|$)", bloco, re.DOTALL
             )
             if match_com:
-                comentario = re.sub(r'<[^>]+>', '', match_com.group(1)).strip()
+                comentario = re.sub(r"<[^>]+>", "", match_com.group(1)).strip()
 
             # Extrair ano/prova (se houver)
             ano = None
             prova = None
-            match_ano = re.search(r'(\d{4})', enunciado + bloco)
+            match_ano = re.search(r"(\d{4})", enunciado + bloco)
             if match_ano:
                 ano = int(match_ano.group(1))
 
             questao = {
-                'enunciado': enunciado[:500],
-                'alternativas': alternativas,
-                'gabarito': gabarito,
-                'comentario': comentario,
-                'ano': ano,
-                'prova': prova,
-                'banca': 'QConcursos'  # Será sobrescrito por edital
+                "enunciado": enunciado[:500],
+                "alternativas": alternativas,
+                "gabarito": gabarito,
+                "comentario": comentario,
+                "ano": ano,
+                "prova": prova,
+                "banca": "QConcursos",  # Será sobrescrito por edital
             }
 
             questoes.append(questao)
@@ -138,11 +131,11 @@ def extrair_questoes_pagina(html):
 def coletar_exame(sessao, exame_nome, exame_config, con):
     """Coleta questões de um exame federal específico."""
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"[EXAME] {exame_nome} ({exame_config['banca']})")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
-    cargos = exame_config.get('cargos', {})
+    cargos = exame_config.get("cargos", {})
     if not cargos:
         print(f"  [SKIP] Nenhum cargo configurado")
         return 0
@@ -150,7 +143,7 @@ def coletar_exame(sessao, exame_nome, exame_config, con):
     # Pegar primeiro cargo
     cargo_nome = list(cargos.keys())[0]
     cargo_config = cargos[cargo_nome]
-    materias = cargo_config.get('materias', {})
+    materias = cargo_config.get("materias", {})
 
     total_questoes = 0
 
@@ -169,10 +162,7 @@ def coletar_exame(sessao, exame_nome, exame_config, con):
             url = f"{BASE_URL}"
 
             # Parâmetros de busca
-            params = {
-                'q': materia,
-                'page': pagina
-            }
+            params = {"q": materia, "page": pagina}
 
             try:
                 resp = sessao.get(url, params=params, timeout=sessao.timeout)
@@ -190,12 +180,12 @@ def coletar_exame(sessao, exame_nome, exame_config, con):
 
                 # Salvar questões com metadados do edital
                 for q in questoes_pagina:
-                    q['fonte'] = 'qconcursos'
-                    q['banca'] = exame_config.get('banca', 'QConcursos')
-                    q['orgao'] = exame_config.get('orgao', exame_nome)
-                    q['cargo'] = cargo_nome
-                    q['materia'] = materia
-                    q['assunto'] = materia  # Por enquanto materia = assunto
+                    q["fonte"] = "qconcursos"
+                    q["banca"] = exame_config.get("banca", "QConcursos")
+                    q["orgao"] = exame_config.get("orgao", exame_nome)
+                    q["cargo"] = cargo_nome
+                    q["materia"] = materia
+                    q["assunto"] = materia  # Por enquanto materia = assunto
 
                     db.salvar_questao(con, q)
                     questoes_materia += 1
@@ -203,7 +193,9 @@ def coletar_exame(sessao, exame_nome, exame_config, con):
                 # Atualizar progresso
                 db.salvar_progresso(con, "qconcursos", chave_progresso, pagina)
 
-                print(f"    [page {pagina}] +{len(questoes_pagina)} questoes (total: {questoes_materia})")
+                print(
+                    f"    [page {pagina}] +{len(questoes_pagina)} questoes (total: {questoes_materia})"
+                )
 
                 http_utils.aguardar(1)  # Rate limit
 
@@ -220,9 +212,9 @@ def coletar_exame(sessao, exame_nome, exame_config, con):
 def main():
     """Coleta questões de todos os exames federais."""
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("QConcursos Coletor - Exames Federais")
-    print("="*60)
+    print("=" * 60)
 
     con = db.conectar()
     sessao = http_utils.criar_sessao()
@@ -232,7 +224,7 @@ def main():
         total_global = 0
 
         # Ordem de coleta
-        ordem = ['sedes_df', 'prf', 'bacen', 'receita_federal', 'inss', 'correios', 'banco_brasil']
+        ordem = ["sedes_df", "prf", "bacen", "receita_federal", "inss", "correios", "banco_brasil"]
 
         for exame_key in ordem:
             if exame_key not in editais:
@@ -242,9 +234,9 @@ def main():
             total = coletar_exame(sessao, exame_key, exame_config, con)
             total_global += total
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"[FINAL] Total coletado: {total_global} questoes")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
     finally:
         con.close()

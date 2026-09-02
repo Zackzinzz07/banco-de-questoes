@@ -1,7 +1,9 @@
 """Matérias e assuntos do Edital nº 1/2026 SEDES/DF (cargo 202, itens 20.2.2/20.2.3)."""
 
-_BASE_QC = ("https://www.qconcursos.com/questoes-de-concursos/questoes"
-            "?exclude_nullified=true&exclude_outdated=true")
+_BASE_QC = (
+    "https://www.qconcursos.com/questoes-de-concursos/questoes"
+    "?exclude_nullified=true&exclude_outdated=true"
+)
 
 MATERIAS = {
     "Língua Portuguesa": {
@@ -30,8 +32,12 @@ MATERIAS = {
             "Lei Distrital nº 7.484/2024",
             "Noções de primeiros socorros",
         ],
-        "titulos_pdf": ["CONHECIMENTOS SOBRE O DISTRITO FEDERAL", "REALIDADE DO DF",
-                        "CONHECIMENTOS GERAIS DO DF", "LEGISLAÇÃO APLICADA"],
+        "titulos_pdf": [
+            "CONHECIMENTOS SOBRE O DISTRITO FEDERAL",
+            "REALIDADE DO DF",
+            "CONHECIMENTOS GERAIS DO DF",
+            "LEGISLAÇÃO APLICADA",
+        ],
         "url_qc": _BASE_QC + "&discipline_ids%5B%5D=61",
     },
     "SUAS": {
@@ -83,9 +89,14 @@ MATERIAS = {
             "Métodos de arquivamento",
             "Digitalização e gestão de documentos",
         ],
-        "titulos_pdf": ["ARQUIVOLOGIA", "ROTINAS ADMINISTRATIVAS", "ATENDIMENTO AO PÚBLICO",
-                        "NOÇÕES DE ARQUIVOLOGIA"],
-        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=20&discipline_ids%5B%5D=187&discipline_ids%5B%5D=174",
+        "titulos_pdf": [
+            "ARQUIVOLOGIA",
+            "ROTINAS ADMINISTRATIVAS",
+            "ATENDIMENTO AO PÚBLICO",
+            "NOÇÕES DE ARQUIVOLOGIA",
+        ],
+        "url_qc": _BASE_QC
+        + "&discipline_ids%5B%5D=20&discipline_ids%5B%5D=187&discipline_ids%5B%5D=174",
     },
     "Recursos Materiais, Patrimônio e Compras": {
         "assuntos": [

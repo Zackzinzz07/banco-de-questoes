@@ -12,73 +12,63 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+    from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+    from playwright.sync_api import sync_playwright
 except ImportError:
     print("[ERROR] Playwright nao instalado")
     sys.exit(1)
 
-from banco_questoes import db
-from banco_questoes.scrapers import http_utils
 import re
 import time
 
+from banco_questoes import db
+from banco_questoes.scrapers import http_utils
+
 # Mapeamento de exames e suas matérias no QConcursos
 EXAMES = {
-    'PRF': {
-        'nome': 'Policial Rodoviário Federal',
-        'materias': [
-            'Legislação de Trânsito',
-            'Direito Administrativo',
-            'Direito Penal',
-            'Português',
-            'Conhecimentos Gerais',
-            'Ética e Responsabilidade Profissional',
-            'Segurança Pública',
-            'Atendimento de Emergência'
-        ]
+    "PRF": {
+        "nome": "Policial Rodoviário Federal",
+        "materias": [
+            "Legislação de Trânsito",
+            "Direito Administrativo",
+            "Direito Penal",
+            "Português",
+            "Conhecimentos Gerais",
+            "Ética e Responsabilidade Profissional",
+            "Segurança Pública",
+            "Atendimento de Emergência",
+        ],
     },
-    'BACEN': {
-        'nome': 'Banco Central do Brasil',
-        'materias': [
-            'Direito Administrativo',
-            'Economia',
-            'Contabilidade',
-            'Legislação Financeira'
-        ]
+    "BACEN": {
+        "nome": "Banco Central do Brasil",
+        "materias": [
+            "Direito Administrativo",
+            "Economia",
+            "Contabilidade",
+            "Legislação Financeira",
+        ],
     },
-    'Receita Federal': {
-        'nome': 'Receita Federal',
-        'materias': [
-            'Direito Tributário',
-            'Contabilidade',
-            'Administração Financeira',
-            'Direito Administrativo'
-        ]
+    "Receita Federal": {
+        "nome": "Receita Federal",
+        "materias": [
+            "Direito Tributário",
+            "Contabilidade",
+            "Administração Financeira",
+            "Direito Administrativo",
+        ],
     },
-    'INSS': {
-        'nome': 'INSS',
-        'materias': [
-            'Direito Previdenciário',
-            'Administração Pública',
-            'Legislação Social'
-        ]
+    "INSS": {
+        "nome": "INSS",
+        "materias": ["Direito Previdenciário", "Administração Pública", "Legislação Social"],
     },
-    'Correios': {
-        'nome': 'Correios',
-        'materias': [
-            'Administração de Empresas',
-            'Direito Administrativo',
-            'Português'
-        ]
+    "Correios": {
+        "nome": "Correios",
+        "materias": ["Administração de Empresas", "Direito Administrativo", "Português"],
     },
-    'Banco do Brasil': {
-        'nome': 'Banco do Brasil',
-        'materias': [
-            'Conhecimentos Bancários',
-            'Matemática Financeira',
-            'Português'
-        ]
-    }
+    "Banco do Brasil": {
+        "nome": "Banco do Brasil",
+        "materias": ["Conhecimentos Bancários", "Matemática Financeira", "Português"],
+    },
 }
 
 
@@ -89,26 +79,24 @@ def extrair_questoes_html(html):
     # Procurar por padrões de questões no HTML
     # QConcursos estrutura: <div class="question"> ou similar
     blocos = re.findall(
-        r'<(?:div|article|section)[^>]*>.*?(?=<(?:div|article|section)[^>]*>(?:class|id).*?(?:question|questão)|$)',
+        r"<(?:div|article|section)[^>]*>.*?(?=<(?:div|article|section)[^>]*>(?:class|id).*?(?:question|questão)|$)",
         html[:100000],  # Limitar scan
-        re.IGNORECASE | re.DOTALL
+        re.IGNORECASE | re.DOTALL,
     )
 
     # Simpler approach: procurar por números seguidos de ponto (1. 2. 3. etc)
     # Indicador comum de questões em QConcursos
-    linhas = html.split('\n')
+    linhas = html.split("\n")
 
     for i, linha in enumerate(linhas):
         # Procurar por enunciado (começa com número + ponto)
-        if re.match(r'\s*\d+[\.\)]\s+', linha):
+        if re.match(r"\s*\d+[\.\)]\s+", linha):
             try:
-                enunciado = re.sub(r'<[^>]+>', '', linha).strip()
-                if len(enunciado) > 15 and not enunciado.startswith('['):
-                    questoes.append({
-                        'enunciado': enunciado[:200],
-                        'alternativas': {},
-                        'gabarito': None
-                    })
+                enunciado = re.sub(r"<[^>]+>", "", linha).strip()
+                if len(enunciado) > 15 and not enunciado.startswith("["):
+                    questoes.append(
+                        {"enunciado": enunciado[:200], "alternativas": {}, "gabarito": None}
+                    )
             except:
                 pass
 
@@ -123,8 +111,8 @@ def coletar_exame_prf(browser_context, exame_key, exame_config, con):
     total = 0
 
     try:
-        for materia in exame_config['materias']:
-            print(f"    [{materia}]", end=' ', flush=True)
+        for materia in exame_config["materias"]:
+            print(f"    [{materia}]", end=" ", flush=True)
 
             try:
                 # URL de busca
@@ -142,9 +130,9 @@ def coletar_exame_prf(browser_context, exame_key, exame_config, con):
 
                 if questoes:
                     for q in questoes:
-                        q['fonte'] = 'qconcursos'
-                        q['orgao'] = exame_key
-                        q['materia'] = materia
+                        q["fonte"] = "qconcursos"
+                        q["orgao"] = exame_key
+                        q["materia"] = materia
                         db.salvar_questao(con, q)
                         total += 1
 
@@ -171,9 +159,9 @@ def coletar_exame_prf(browser_context, exame_key, exame_config, con):
 def main():
     """Coleta PRF e outros 6 exames federais."""
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("PRF + Exames Federais Scraper (Playwright)")
-    print("="*60)
+    print("=" * 60)
 
     con = db.conectar()
 
@@ -194,16 +182,23 @@ def main():
 
             # Coletar cada exame
             total_global = 0
-            for exame_key in ['PRF', 'BACEN', 'Receita Federal', 'INSS', 'Correios', 'Banco do Brasil']:
+            for exame_key in [
+                "PRF",
+                "BACEN",
+                "Receita Federal",
+                "INSS",
+                "Correios",
+                "Banco do Brasil",
+            ]:
                 if exame_key in EXAMES:
                     total = coletar_exame_prf(browser, exame_key, EXAMES[exame_key], con)
                     total_global += total
 
             browser.close()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"[FINAL] Total coletado: {total_global} questões")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
     finally:
         con.close()

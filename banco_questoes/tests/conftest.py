@@ -4,15 +4,17 @@ Pytest configuration for banco_questoes tests.
 This module provides pytest fixtures for testing both database-dependent
 and database-independent tests.
 """
+
+from pathlib import Path
+from typing import Any, Dict
+
 import pytest
 import yaml
-from pathlib import Path
-from typing import Dict, Any
-
 
 # ============================================================================
 # Database Fixture (from parent conftest)
 # ============================================================================
+
 
 @pytest.fixture(autouse=True)
 def banco_de_teste(monkeypatch):
@@ -48,6 +50,7 @@ def banco_de_teste(monkeypatch):
 # Multi-banca Test Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def config_paths() -> Dict[str, Path]:
     """
@@ -77,7 +80,7 @@ def configs(config_paths: Dict[str, Path]) -> Dict[str, Dict[str, Any]]:
     """
     configs = {}
     for banca_name, config_path in config_paths.items():
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             configs[banca_name] = yaml.safe_load(f)
     return configs
 
@@ -90,6 +93,7 @@ def questao_fake():
     Returns:
         callable: Function that creates questao dicts for testing.
     """
+
     def _questao_fake(i: int, materia: str = "Língua Portuguesa") -> Dict[str, Any]:
         """Create a fake questao for testing."""
         return {
@@ -100,7 +104,7 @@ def questao_fake():
                 "B": "Opção B",
                 "C": "Opção C",
                 "D": "Opção D",
-                "E": "Opção E"
+                "E": "Opção E",
             },
             "gabarito": "B" if i % 2 else None,
             "comentario": "Comentário da questão." if i == 1 else None,
@@ -112,4 +116,5 @@ def questao_fake():
             "prova": None,
             "fonte": "qconcursos",
         }
+
     return _questao_fake

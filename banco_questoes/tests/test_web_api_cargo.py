@@ -1,10 +1,13 @@
 """Tests for cargo-based endpoints in web_api.py"""
+
+from urllib.parse import quote
+
+from fastapi.testclient import TestClient
+
 import config
 import db
-import web_api
 import edital_loader
-from fastapi.testclient import TestClient
-from urllib.parse import quote
+import web_api
 
 
 def cliente_com_banco(tmp_path, monkeypatch):
@@ -57,7 +60,7 @@ def test_listar_materias_cargo(tmp_path, monkeypatch):
 
     cargo = cargos[0]
     # URL encode the cargo name
-    cargo_encoded = quote(cargo, safe='')
+    cargo_encoded = quote(cargo, safe="")
 
     response = cliente.get(f"/api/materias/sedes_df/{cargo_encoded}")
     assert response.status_code == 200
@@ -87,16 +90,19 @@ def test_stats_cargo(tmp_path, monkeypatch):
 
     # Save some test questions with cargo info
     for i in range(3):
-        db.salvar_questao(con, {
-            "id_qc": f"QW_cargo_{i}",
-            "enunciado": f"Enunciado cargo {i}?",
-            "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-            "gabarito": "A",
-            "materia": "SUAS",
-            "cargo": "Técnico de Atendimento Direto ao Cidadão",
-            "orgao": "sedes_df",
-            "fonte": "qconcursos"
-        })
+        db.salvar_questao(
+            con,
+            {
+                "id_qc": f"QW_cargo_{i}",
+                "enunciado": f"Enunciado cargo {i}?",
+                "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+                "gabarito": "A",
+                "materia": "SUAS",
+                "cargo": "Técnico de Atendimento Direto ao Cidadão",
+                "orgao": "sedes_df",
+                "fonte": "qconcursos",
+            },
+        )
     con.close()
 
     response = cliente.get(
@@ -125,24 +131,24 @@ def test_gerar_simulado_cargo(tmp_path, monkeypatch):
     if materias:
         for materia in materias.keys():
             for i in range(10):  # Save 10 questions per materia
-                db.salvar_questao(con, {
-                    "id_qc": f"QW_sim_{materia}_{i}",
-                    "enunciado": f"Enunciado {materia} {i}?",
-                    "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-                    "gabarito": "A",
-                    "materia": materia,
-                    "cargo": cargo_nome,
-                    "orgao": "sedes_df",
-                    "fonte": "qconcursos"
-                })
+                db.salvar_questao(
+                    con,
+                    {
+                        "id_qc": f"QW_sim_{materia}_{i}",
+                        "enunciado": f"Enunciado {materia} {i}?",
+                        "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+                        "gabarito": "A",
+                        "materia": materia,
+                        "cargo": cargo_nome,
+                        "orgao": "sedes_df",
+                        "fonte": "qconcursos",
+                    },
+                )
     con.close()
 
-    cargo_encoded = quote(cargo_nome, safe='')
+    cargo_encoded = quote(cargo_nome, safe="")
     payload = {"quantidade": 20}
-    response = cliente.post(
-        f"/api/simulado/cargo/sedes_df/{cargo_encoded}",
-        json=payload
-    )
+    response = cliente.post(f"/api/simulado/cargo/sedes_df/{cargo_encoded}", json=payload)
     # Should succeed if we have questions, or 404 if not
     assert response.status_code in (200, 404)
     if response.status_code == 200:
@@ -164,25 +170,25 @@ def test_gerar_simulado_cargo_com_banca(tmp_path, monkeypatch):
     if materias:
         for materia in materias.keys():
             for i in range(5):
-                db.salvar_questao(con, {
-                    "id_qc": f"QW_banca_{materia}_{i}",
-                    "enunciado": f"Enunciado banca {materia} {i}?",
-                    "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-                    "gabarito": "A",
-                    "materia": materia,
-                    "cargo": cargo_nome,
-                    "orgao": "sedes_df",
-                    "banca": "Instituto Quadrix",
-                    "fonte": "qconcursos"
-                })
+                db.salvar_questao(
+                    con,
+                    {
+                        "id_qc": f"QW_banca_{materia}_{i}",
+                        "enunciado": f"Enunciado banca {materia} {i}?",
+                        "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+                        "gabarito": "A",
+                        "materia": materia,
+                        "cargo": cargo_nome,
+                        "orgao": "sedes_df",
+                        "banca": "Instituto Quadrix",
+                        "fonte": "qconcursos",
+                    },
+                )
     con.close()
 
-    cargo_encoded = quote(cargo_nome, safe='')
+    cargo_encoded = quote(cargo_nome, safe="")
     payload = {"quantidade": 10, "banca": "Instituto Quadrix"}
-    response = cliente.post(
-        f"/api/simulado/cargo/sedes_df/{cargo_encoded}",
-        json=payload
-    )
+    response = cliente.post(f"/api/simulado/cargo/sedes_df/{cargo_encoded}", json=payload)
     assert response.status_code in (200, 404)
     if response.status_code == 200:
         data = response.json()
@@ -216,14 +222,17 @@ def test_backward_compat_simulado_completo(tmp_path, monkeypatch):
     con = db.conectar()
 
     # Save a question
-    db.salvar_questao(con, {
-        "id_qc": "QW_compat",
-        "enunciado": "Teste compat?",
-        "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-        "gabarito": "A",
-        "materia": "SUAS",
-        "fonte": "qconcursos"
-    })
+    db.salvar_questao(
+        con,
+        {
+            "id_qc": "QW_compat",
+            "enunciado": "Teste compat?",
+            "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+            "gabarito": "A",
+            "materia": "SUAS",
+            "fonte": "qconcursos",
+        },
+    )
     con.close()
 
     response = cliente.post("/api/simulado/completo", json={"quantidade": 10})
@@ -236,18 +245,18 @@ def test_backward_compat_simulado_materia(tmp_path, monkeypatch):
     cliente = cliente_com_banco(tmp_path, monkeypatch)
     con = db.conectar()
 
-    db.salvar_questao(con, {
-        "id_qc": "QW_mat",
-        "enunciado": "Teste materia?",
-        "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-        "gabarito": "A",
-        "materia": "SUAS",
-        "fonte": "qconcursos"
-    })
+    db.salvar_questao(
+        con,
+        {
+            "id_qc": "QW_mat",
+            "enunciado": "Teste materia?",
+            "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+            "gabarito": "A",
+            "materia": "SUAS",
+            "fonte": "qconcursos",
+        },
+    )
     con.close()
 
-    response = cliente.post(
-        "/api/simulado/materia",
-        json={"materia": "SUAS", "quantidade": 10}
-    )
+    response = cliente.post("/api/simulado/materia", json={"materia": "SUAS", "quantidade": 10})
     assert response.status_code in (200, 404)

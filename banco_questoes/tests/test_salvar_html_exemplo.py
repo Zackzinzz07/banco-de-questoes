@@ -1,4 +1,5 @@
 """Testes do ajudante de login/captura de fixture do QConcursos."""
+
 import salvar_html_exemplo as ajudante
 
 
@@ -29,9 +30,11 @@ class _PaginaNavegando:
 
     def content(self):
         from playwright.sync_api import Error as ErroPlaywright
+
         raise ErroPlaywright(
             "Page.content: Unable to retrieve content because the page is"
-            " navigating and changing the content.")
+            " navigating and changing the content."
+        )
 
 
 class _PaginaOk:
@@ -52,8 +55,7 @@ def test_conteudo_seguro_devolve_html_quando_pagina_estavel():
 def test_aguardar_login_nao_quebra_com_pagina_navegando():
     """A espera precisa sobreviver à navegação: devolve False no fim do tempo,
     nunca uma exceção."""
-    assert ajudante.aguardar_login(
-        _PaginaNavegando(), tentativas=2, intervalo=0) is False
+    assert ajudante.aguardar_login(_PaginaNavegando(), tentativas=2, intervalo=0) is False
 
 
 def test_tem_questoes_reconhece_id_do_qc():

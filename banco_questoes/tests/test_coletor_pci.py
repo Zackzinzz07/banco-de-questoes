@@ -4,6 +4,7 @@ Usa uma sessão falsa que devolve a fixture salva em disco — sem rede. A
 conexão e a sessão já são injetadas na função, então dá pra testar o caminho
 de gravação inteiro sem tocar no PCI.
 """
+
 from pathlib import Path
 
 import pytest
@@ -49,12 +50,11 @@ def html():
 
 def test_coletor_grava_gabarito_vindo_da_pagina(html):
     con = db.conectar()
-    coletor_v2.coletar_tema_v2(
-        _SessaoFalsa(html), "portugues", "ortografia", "Ortografia", "", con)
+    coletor_v2.coletar_tema_v2(_SessaoFalsa(html), "portugues", "ortografia", "Ortografia", "", con)
 
     linha = con.execute(
-        "SELECT COUNT(*) AS total, COUNT(gabarito) AS com_gabarito"
-        " FROM questoes WHERE fonte='pci'").fetchone()
+        "SELECT COUNT(*) AS total, COUNT(gabarito) AS com_gabarito FROM questoes WHERE fonte='pci'"
+    ).fetchone()
     assert linha["total"] > 0
     assert linha["com_gabarito"] > 0, "gabarito do simGabaritos não chegou ao banco"
     con.close()
@@ -62,12 +62,12 @@ def test_coletor_grava_gabarito_vindo_da_pagina(html):
 
 def test_coletor_grava_banca_e_orgao_da_questao(html):
     con = db.conectar()
-    coletor_v2.coletar_tema_v2(
-        _SessaoFalsa(html), "portugues", "ortografia", "Ortografia", "", con)
+    coletor_v2.coletar_tema_v2(_SessaoFalsa(html), "portugues", "ortografia", "Ortografia", "", con)
 
     linha = con.execute(
         "SELECT COUNT(banca) AS com_banca, COUNT(orgao) AS com_orgao"
-        " FROM questoes WHERE fonte='pci'").fetchone()
+        " FROM questoes WHERE fonte='pci'"
+    ).fetchone()
     assert linha["com_banca"] > 0, "banca extraída pelo parser foi descartada"
     assert linha["com_orgao"] > 0, "órgão extraído pelo parser foi descartado"
     con.close()

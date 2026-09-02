@@ -32,43 +32,40 @@ from simulados.gerador_multibanca import GeradorSimuladoMultiBanca
 
 @click.command()
 @click.option(
-    '--banca',
-    type=click.Choice(['cebraspe', 'iades', 'fgv', 'aocp'], case_sensitive=False),
+    "--banca",
+    type=click.Choice(["cebraspe", "iades", "fgv", "aocp"], case_sensitive=False),
     required=True,
-    help='Código da banca (cebraspe, iades, fgv, aocp)'
+    help="Código da banca (cebraspe, iades, fgv, aocp)",
 )
 @click.option(
-    '--quantidade',
-    type=int,
-    default=60,
-    help='Número de questões no simulado (padrão: 60)'
+    "--quantidade", type=int, default=60, help="Número de questões no simulado (padrão: 60)"
 )
 @click.option(
-    '--nome',
+    "--nome",
     type=str,
     default=None,
-    help='Nome do arquivo de saída (padrão: simulado_{banca}_{quantidade}q.pdf)'
+    help="Nome do arquivo de saída (padrão: simulado_{banca}_{quantidade}q.pdf)",
 )
 @click.option(
-    '--banca-concurso',
+    "--banca-concurso",
     type=str,
     default=None,
     help='Nome da banca examinadora para filtro (ex: "Instituto Quadrix"). '
-         'Se fornecido, prioriza questões dessa banca.'
+    "Se fornecido, prioriza questões dessa banca.",
 )
 @click.option(
-    '--orgao',
+    "--orgao",
     type=str,
     default=None,
     help='Órgão/concurso para filtro (ex: "SEDES/DF"). '
-         'Se fornecido, prioriza questões desse órgão.'
+    "Se fornecido, prioriza questões desse órgão.",
 )
 def gerar_simulado(
     banca: str,
     quantidade: int,
     nome: Optional[str],
     banca_concurso: Optional[str],
-    orgao: Optional[str]
+    orgao: Optional[str],
 ):
     """Gera um documento de prova multi-banca (simulado).
 
@@ -100,12 +97,10 @@ def gerar_simulado(
             click.echo(f"  Filtro de órgão: {orgao}", err=False)
 
         # Cria gerador e gera PDF
-        gerador = GeradorSimuladoMultiBanca(
-            banca,
-            banca_concurso=banca_concurso,
-            orgao=orgao
+        gerador = GeradorSimuladoMultiBanca(banca, banca_concurso=banca_concurso, orgao=orgao)
+        output_path = gerador.gerar(
+            quantidade, nome or f"Simulado_{banca.capitalize()}_{quantidade}q"
         )
-        output_path = gerador.gerar(quantidade, nome or f"Simulado_{banca.capitalize()}_{quantidade}q")
 
         # Mensagem de sucesso
         click.echo(f"[OK] Simulado gerado com sucesso: {output_path}", err=False)
@@ -129,5 +124,5 @@ def gerar_simulado(
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     gerar_simulado()

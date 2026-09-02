@@ -4,18 +4,17 @@
 import requests
 from bs4 import BeautifulSoup
 
+
 def inspecionar_pagina_simulados():
     """Inspecciona a página principal de simulados para descobrir estrutura."""
     url = "https://www.pciconcursos.com.br/simulados/"
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🔍 INSPECIONANDO: https://www.pciconcursos.com.br/simulados/")
-    print("="*80)
+    print("=" * 80)
 
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         resp = requests.get(url, headers=headers, timeout=30)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
@@ -26,12 +25,20 @@ def inspecionar_pagina_simulados():
         print("\n✅ HTML salvo em: pci_simulados_full.html")
 
         # Procurar por padrões comuns
-        print("\n" + "-"*80)
+        print("\n" + "-" * 80)
         print("ANÁLISE DE ESTRUTURA:")
-        print("-"*80)
+        print("-" * 80)
 
         # Buscar divs com "categoria", "simulado", "subject", etc
-        for classe in ["categoria", "simulado", "subject", "subject-item", "quiz", "bloco", "section"]:
+        for classe in [
+            "categoria",
+            "simulado",
+            "subject",
+            "subject-item",
+            "quiz",
+            "bloco",
+            "section",
+        ]:
             elementos = soup.find_all(class_=classe)
             if elementos:
                 print(f"\n✓ Encontrado: .{classe} ({len(elementos)} elementos)")
@@ -39,18 +46,18 @@ def inspecionar_pagina_simulados():
                     print(f"  [{i}] {str(el)[:150]}...")
 
         # Procurar por IDs
-        print("\n" + "-"*80)
+        print("\n" + "-" * 80)
         print("IDs ENCONTRADOS:")
-        print("-"*80)
+        print("-" * 80)
         todos_com_id = soup.find_all(id=True)
         ids_unicos = set(el.get("id") for el in todos_com_id)
         for id_val in sorted(ids_unicos)[:20]:
             print(f"  - #{id_val}")
 
         # Procurar por estrutura de listas aninhadas
-        print("\n" + "-"*80)
+        print("\n" + "-" * 80)
         print("ESTRUTURA DE LISTAS:")
-        print("-"*80)
+        print("-" * 80)
 
         listas = soup.find_all(["ul", "ol"])
         print(f"Encontradas {len(listas)} listas (<ul> ou <ol>)")
@@ -63,9 +70,9 @@ def inspecionar_pagina_simulados():
                 print(f"    [{j}] {txt}...")
 
         # Procurar por links com padrão de categoria/tema
-        print("\n" + "-"*80)
+        print("\n" + "-" * 80)
         print("LINKS COM PADRÃO /simulados/xxx:")
-        print("-"*80)
+        print("-" * 80)
 
         links = soup.find_all("a", href=True)
         simulado_links = [
@@ -93,21 +100,22 @@ def inspecionar_pagina_simulados():
                 print(f"        partes: {partes}")
 
         # Procurar por números (contagem de questões)
-        print("\n" + "-"*80)
+        print("\n" + "-" * 80)
         print("ANÁLISE DE NÚMEROS (contagem de questões):")
-        print("-"*80)
+        print("-" * 80)
 
         import re
+
         todos_textos = soup.get_text()
-        numeros = re.findall(r'\d+\s*questões?', todos_textos)
+        numeros = re.findall(r"\d+\s*questões?", todos_textos)
         print(f"\nEncontradas {len(set(numeros))} contagens únicas de questões:")
         for num in sorted(set(numeros))[:10]:
             print(f"  - {num}")
 
         # Procurar padrão específico (categoria com subcategorias)
-        print("\n" + "-"*80)
+        print("\n" + "-" * 80)
         print("PROCURANDO PADRÃO: Categoria → Subcategoria:")
-        print("-"*80)
+        print("-" * 80)
 
         # Tentar encontrar h2/h3/h4 que possam ser categorias
         headers = soup.find_all(["h2", "h3", "h4"])
@@ -127,14 +135,16 @@ def inspecionar_pagina_simulados():
                         item_texto = item.get_text(strip=True)[:60]
                         print(f"      └─ {item_texto}")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("✅ Análise completa! Verifique pci_simulados_full.html para mais detalhes")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     inspecionar_pagina_simulados()

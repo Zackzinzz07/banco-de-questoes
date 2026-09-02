@@ -5,6 +5,7 @@ O PCI embute o gabarito da página inteira num JSON no próprio HTML
 coleta evita a fase separada de gabaritos (que no QConcursos depende de login
 e de cota diária).
 """
+
 from pathlib import Path
 
 import pytest

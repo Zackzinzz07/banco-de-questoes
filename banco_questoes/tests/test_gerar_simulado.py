@@ -6,12 +6,22 @@ def questao_fake(i):
     return {
         "id_qc": f"Q{i}",
         "enunciado": f"Enunciado de teste número {i}: assinale a alternativa correta. Texto com < & > para escapar.",
-        "alternativas": {"A": "Opção A", "B": "Opção B", "C": "Opção C", "D": "Opção D", "E": "Opção E"},
+        "alternativas": {
+            "A": "Opção A",
+            "B": "Opção B",
+            "C": "Opção C",
+            "D": "Opção D",
+            "E": "Opção E",
+        },
         "gabarito": "B" if i % 2 else None,
         "comentario": "Comentário da questão." if i == 1 else None,
         "materia": "Língua Portuguesa",
-        "assunto": None, "banca": "Instituto Quadrix", "orgao": "SEDES/DF",
-        "ano": 2026, "prova": None, "fonte": "qconcursos",
+        "assunto": None,
+        "banca": "Instituto Quadrix",
+        "orgao": "SEDES/DF",
+        "ano": 2026,
+        "prova": None,
+        "fonte": "qconcursos",
     }
 
 
@@ -24,7 +34,9 @@ def test_gera_pdf_e_marca_usadas(tmp_path):
     assert caminho == saida
     assert saida.exists() and saida.stat().st_size > 1000
     assert saida.read_bytes()[:5] == b"%PDF-"
-    usadas = con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()["c"]
+    usadas = con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()[
+        "c"
+    ]
     assert usadas == 3
 
 
@@ -43,6 +55,7 @@ def test_pdf_inclui_texto_associado(tmp_path, monkeypatch):
     saida = tmp_path / "s.pdf"
     gerar_simulado.gerar("Língua Portuguesa", 1, saida, con=con)
     import pdfplumber
+
     with pdfplumber.open(saida) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
     assert "TEXTOBASEEXCLUSIVO" in texto
@@ -58,6 +71,7 @@ def test_pdf_em_duas_colunas(tmp_path):
     saida = tmp_path / "prova.pdf"
     gerar_simulado.gerar("Língua Portuguesa", 8, saida, con=con)
     import pdfplumber
+
     with pdfplumber.open(saida) as pdf:
         pagina = pdf.pages[0]
         largura = pagina.width
@@ -73,10 +87,11 @@ def test_questao_numerada_inline_e_avisos(tmp_path):
     saida = tmp_path / "p.pdf"
     gerar_simulado.gerar("Língua Portuguesa", 1, saida, con=con)
     import pdfplumber
+
     with pdfplumber.open(saida) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
-    assert "QUESTÃO 1." in texto            # rótulo com ponto, estilo prova
-    assert "NÃO OFICIAL" in texto           # aviso do cabeçalho
+    assert "QUESTÃO 1." in texto  # rótulo com ponto, estilo prova
+    assert "NÃO OFICIAL" in texto  # aviso do cabeçalho
     assert "LEIA AS INSTRUÇÕES" in texto
     assert "GABARITO COMENTADO" in texto
 
@@ -90,6 +105,7 @@ def test_texto_base_anunciado(tmp_path, monkeypatch):
     saida = tmp_path / "p.pdf"
     gerar_simulado.gerar("Língua Portuguesa", 1, saida, con=con)
     import pdfplumber
+
     with pdfplumber.open(saida) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
     assert "Texto para a questão 1." in texto
@@ -102,12 +118,17 @@ def test_gerar_completo(tmp_path):
     n = 0
     for m in materias:
         for i in range(4):
-            q = questao_fake(n); q["materia"] = m; q["id_qc"] = f"QG{n}"
-            db.salvar_questao(con, q); n += 1
+            q = questao_fake(n)
+            q["materia"] = m
+            q["id_qc"] = f"QG{n}"
+            db.salvar_questao(con, q)
+            n += 1
     saida = tmp_path / "geral.pdf"
     caminho = gerar_simulado.gerar_completo(12, saida, con=con)
     assert caminho == saida and saida.read_bytes()[:5] == b"%PDF-"
-    usadas = con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()["c"]
+    usadas = con.execute("SELECT COUNT(*) c FROM questoes WHERE usada_em_simulado=1").fetchone()[
+        "c"
+    ]
     assert usadas > 0
 
 

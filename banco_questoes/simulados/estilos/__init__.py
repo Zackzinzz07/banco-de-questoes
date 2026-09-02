@@ -19,16 +19,16 @@ Example:
     >>> # style = CebraspeStyle(config)  # Task 3-4
 """
 
+from .aocp import EstiloAOCP
 from .base import BaseBancaStyle
 from .cebraspe import EstiloCebraspe
-from .iades import EstiloIADES
 from .fgv import EstiloFGV
-from .aocp import EstiloAOCP
+from .iades import EstiloIADES
 
 __all__ = [
-    'BaseBancaStyle',
-    'EstiloCebraspe',
-    'EstiloIADES',
-    'EstiloFGV',
-    'EstiloAOCP',
+    "BaseBancaStyle",
+    "EstiloCebraspe",
+    "EstiloIADES",
+    "EstiloFGV",
+    "EstiloAOCP",
 ]

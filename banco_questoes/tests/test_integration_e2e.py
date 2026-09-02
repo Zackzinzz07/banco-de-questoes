@@ -1,10 +1,12 @@
 """End-to-end integration tests: complete flow from selection to PDF generation."""
+
 from urllib.parse import quote
 
-import db
-import config
-import web_api
 from fastapi.testclient import TestClient
+
+import config
+import db
+import web_api
 
 
 def cliente_com_banco(tmp_path, monkeypatch):
@@ -35,7 +37,7 @@ class TestFluxoCompletoORGAO:
             cargo = cargos[0]
 
             # 3. Get materias and pesos for cargo
-            cargo_encoded = quote(cargo, safe='')
+            cargo_encoded = quote(cargo, safe="")
             response = client.get(f"/api/materias/prf/{cargo_encoded}")
             assert response.status_code == 200
             data = response.json()
@@ -85,12 +87,16 @@ class TestFluxoCompletoORGAO:
             # Find TI cargo
             ti_cargo = None
             for cargo in cargos:
-                if "tecnologia" in cargo.lower() or "informação" in cargo.lower() or "ti" in cargo.lower():
+                if (
+                    "tecnologia" in cargo.lower()
+                    or "informação" in cargo.lower()
+                    or "ti" in cargo.lower()
+                ):
                     ti_cargo = cargo
                     break
 
             if ti_cargo:
-                cargo_encoded = quote(ti_cargo, safe='')
+                cargo_encoded = quote(ti_cargo, safe="")
                 response = client.get(f"/api/materias/bacen/{cargo_encoded}")
                 assert response.status_code == 200
                 data = response.json()
@@ -109,7 +115,7 @@ class TestFluxoCompletoORGAO:
         assert len(cargos) >= 1
 
         cargo = cargos[0]
-        cargo_encoded = quote(cargo, safe='')
+        cargo_encoded = quote(cargo, safe="")
 
         # Get materias
         response = client.get(f"/api/materias/sedes_df/{cargo_encoded}")
@@ -182,10 +188,7 @@ class TestCargoFiltering:
 
             # Query with all three filters
             questoes = db.sortear_questoes(
-                con, "Matemática", 1,
-                cargo="Técnico",
-                banca="Cebraspe",
-                orgao="BACEN"
+                con, "Matemática", 1, cargo="Técnico", banca="Cebraspe", orgao="BACEN"
             )
             assert len(questoes) >= 1
             assert questoes[0]["cargo"] == "Técnico"
@@ -242,12 +245,9 @@ class TestAPIErrorHandling:
             cargos = response.json()["cargos"]
             if cargos:
                 cargo = cargos[0]
-                cargo_encoded = quote(cargo, safe='')
+                cargo_encoded = quote(cargo, safe="")
                 payload = {"quantidade": 10}
-                response = client.post(
-                    f"/api/simulado/cargo/prf/{cargo_encoded}",
-                    json=payload
-                )
+                response = client.post(f"/api/simulado/cargo/prf/{cargo_encoded}", json=payload)
                 # Should return 404 when no questions found
                 assert response.status_code == 404
 
@@ -279,21 +279,21 @@ class TestBackwardCompatibility:
         con = db.conectar()
 
         try:
-            db.salvar_questao(con, {
-                "id_qc": "QW_bcompat_1",
-                "enunciado": "Teste backward compat?",
-                "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-                "gabarito": "A",
-                "materia": "SUAS",
-                "fonte": "qconcursos"
-            })
+            db.salvar_questao(
+                con,
+                {
+                    "id_qc": "QW_bcompat_1",
+                    "enunciado": "Teste backward compat?",
+                    "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+                    "gabarito": "A",
+                    "materia": "SUAS",
+                    "fonte": "qconcursos",
+                },
+            )
         finally:
             con.close()
 
-        response = client.post(
-            "/api/simulado/materia",
-            json={"materia": "SUAS", "quantidade": 5}
-        )
+        response = client.post("/api/simulado/materia", json={"materia": "SUAS", "quantidade": 5})
         # Should work or return 404 if no questions
         assert response.status_code in (200, 404)
 
@@ -303,14 +303,17 @@ class TestBackwardCompatibility:
         con = db.conectar()
 
         try:
-            db.salvar_questao(con, {
-                "id_qc": "QW_bcompat_completo",
-                "enunciado": "Teste backward compat completo?",
-                "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
-                "gabarito": "A",
-                "materia": "SUAS",
-                "fonte": "qconcursos"
-            })
+            db.salvar_questao(
+                con,
+                {
+                    "id_qc": "QW_bcompat_completo",
+                    "enunciado": "Teste backward compat completo?",
+                    "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d", "E": "e"},
+                    "gabarito": "A",
+                    "materia": "SUAS",
+                    "fonte": "qconcursos",
+                },
+            )
         finally:
             con.close()
 

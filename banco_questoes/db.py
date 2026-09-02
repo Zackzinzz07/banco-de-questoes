@@ -1,4 +1,5 @@
 """Banco PostgreSQL de questões: conexão, criação de tabelas, salvar com dedupe."""
+
 import hashlib
 import json
 import re
@@ -110,6 +111,7 @@ def conectar(caminho=None):
     if not _MIGRACOES_APLICADAS:
         try:
             from migrations import migration_001, migration_002
+
             migration_001.aplicar(con)
             migration_002.aplicar(con)
             _MIGRACOES_APLICADAS = True
@@ -129,7 +131,11 @@ def hash_enunciado(texto):
 
 def content_hash(enunciado, alternativas):
     """MD5 de enunciado + alternativas serializadas para dedupe rápido."""
-    content = normalizar_enunciado(enunciado) + "|" + json.dumps(alternativas, sort_keys=True, ensure_ascii=False)
+    content = (
+        normalizar_enunciado(enunciado)
+        + "|"
+        + json.dumps(alternativas, sort_keys=True, ensure_ascii=False)
+    )
     return hashlib.md5(content.encode("utf-8")).hexdigest()
 
 
@@ -223,7 +229,9 @@ def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=Non
         f" WHERE {where_clause} AND content_hash IS NOT NULL"
         f" ORDER BY content_hash,"
         f"   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-        f"   RANDOM() LIMIT %s", tuple(params)).fetchall()
+        f"   RANDOM() LIMIT %s",
+        tuple(params),
+    ).fetchall()
     questoes = [dict(l) for l in linhas]
     faltam = quantidade - len(questoes)
     if faltam > 0:
@@ -246,10 +254,14 @@ def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=Non
             f" WHERE {where_clause_rep}"
             f" ORDER BY content_hash,"
             f"   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-            f"   RANDOM() LIMIT %s", tuple(params_rep)).fetchall()
+            f"   RANDOM() LIMIT %s",
+            tuple(params_rep),
+        ).fetchall()
         if repetidas:
-            print(f"Aviso: só {len(questoes)} questões inéditas de {materia};"
-                  f" completando com {len(repetidas)} repetidas.")
+            print(
+                f"Aviso: só {len(questoes)} questões inéditas de {materia};"
+                f" completando com {len(repetidas)} repetidas."
+            )
         questoes += [dict(l) for l in repetidas]
     for q in questoes:
         q["alternativas"] = json.loads(q["alternativas"])
@@ -258,8 +270,7 @@ def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=Non
 
 
 def marcar_usadas(con, ids):
-    con.executemany("UPDATE questoes SET usada_em_simulado=1 WHERE id=%s",
-                    [(i,) for i in ids])
+    con.executemany("UPDATE questoes SET usada_em_simulado=1 WHERE id=%s", [(i,) for i in ids])
     con.commit()
 
 
@@ -270,8 +281,8 @@ def zerar_usadas(con):
 
 def obter_progresso(con, fonte, chave):
     linha = con.execute(
-        "SELECT ultima_pagina FROM progresso_scraper WHERE fonte=%s AND chave=%s",
-        (fonte, chave)).fetchone()
+        "SELECT ultima_pagina FROM progresso_scraper WHERE fonte=%s AND chave=%s", (fonte, chave)
+    ).fetchone()
     return linha["ultima_pagina"] if linha else 0
 
 
@@ -279,20 +290,23 @@ def salvar_progresso(con, fonte, chave, pagina):
     con.execute(
         "INSERT INTO progresso_scraper (fonte, chave, ultima_pagina) VALUES (%s,%s,%s)"
         " ON CONFLICT (fonte, chave) DO UPDATE SET ultima_pagina=excluded.ultima_pagina",
-        (fonte, chave, pagina))
+        (fonte, chave, pagina),
+    )
     con.commit()
 
 
 def sem_gabarito(con):
     linhas = con.execute(
-        "SELECT * FROM questoes WHERE (gabarito IS NULL OR gabarito = '')"
-        " AND id_qc IS NOT NULL").fetchall()
+        "SELECT * FROM questoes WHERE (gabarito IS NULL OR gabarito = '') AND id_qc IS NOT NULL"
+    ).fetchall()
     return [dict(l) for l in linhas]
 
 
 def atualizar_gabarito(con, id_qc, gabarito, comentario=None):
-    con.execute("UPDATE questoes SET gabarito=%s, comentario=%s WHERE id_qc=%s",
-                (gabarito, comentario, id_qc))
+    con.execute(
+        "UPDATE questoes SET gabarito=%s, comentario=%s WHERE id_qc=%s",
+        (gabarito, comentario, id_qc),
+    )
     con.commit()
 
 
@@ -304,8 +318,8 @@ def completar_texto_associado(con, id_qc, texto, imagens):
         "UPDATE questoes SET texto_associado=%s, imagens=%s WHERE id_qc=%s"
         " AND (texto_associado IS NULL OR texto_associado='')"
         " AND (imagens IS NULL OR imagens='')",
-        (texto or None, json.dumps(imagens, ensure_ascii=False) if imagens else None,
-         id_qc))
+        (texto or None, json.dumps(imagens, ensure_ascii=False) if imagens else None, id_qc),
+    )
     con.commit()
     return cur.rowcount > 0
 
@@ -317,7 +331,14 @@ def estatisticas(con):
         " SUM(CASE WHEN usada_em_simulado=0 THEN 1 ELSE 0 END) ineditas,"
         " SUM(usada_em_simulado) usadas,"
         " SUM(CASE WHEN gabarito IS NULL OR gabarito = '' THEN 1 ELSE 0 END) sem_gabarito"
-        " FROM questoes GROUP BY materia ORDER BY materia").fetchall()
-    return {l["materia"]: {"total": l["total"], "ineditas": l["ineditas"],
-                           "usadas": l["usadas"], "sem_gabarito": l["sem_gabarito"]}
-            for l in linhas}
+        " FROM questoes GROUP BY materia ORDER BY materia"
+    ).fetchall()
+    return {
+        l["materia"]: {
+            "total": l["total"],
+            "ineditas": l["ineditas"],
+            "usadas": l["usadas"],
+            "sem_gabarito": l["sem_gabarito"],
+        }
+        for l in linhas
+    }
