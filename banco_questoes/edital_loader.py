@@ -1,6 +1,5 @@
 """Dynamic edital loader with YAML support and fallback to hardcoded configs."""
 
-import os
 from pathlib import Path
 from typing import Optional, Dict, List
 import yaml
@@ -64,6 +63,8 @@ def listar_concursos() -> List[str]:
     esperados = {
         "sedes_df",
         "prf",
+        "pmdf",
+        "pcdf",
         "bacen",
         "receita_federal",
         "inss",

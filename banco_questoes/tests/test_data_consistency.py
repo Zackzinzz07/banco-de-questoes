@@ -1,7 +1,4 @@
 """Data consistency tests: verify data integrity across all layers."""
-import pytest
-import yaml
-from pathlib import Path
 
 import edital_loader
 import config

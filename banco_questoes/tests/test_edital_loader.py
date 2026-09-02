@@ -1,6 +1,5 @@
 """Tests for dynamic edital loader with YAML support and fallback."""
 
-import pytest
 try:
     from edital_loader import (
         listar_concursos,

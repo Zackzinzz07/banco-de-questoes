@@ -9,7 +9,6 @@ from banco_questoes import conteudo_mapper
 from banco_questoes.scrapers import http_utils
 import requests
 import re
-import json
 
 BASE_URL = "https://www.qconcursos.com/questoes-de-concursos"
 TIMEOUT = 30

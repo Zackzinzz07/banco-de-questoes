@@ -13,7 +13,6 @@ Classes:
 from typing import Dict, Any, List
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from reportlab.lib.units import cm
 from .base import BaseBancaStyle
 
 

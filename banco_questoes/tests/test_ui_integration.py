@@ -6,8 +6,6 @@ Install with: pip install pytest-playwright
 Run with: pytest test_ui_integration.py --browser chromium
 """
 import pytest
-from pathlib import Path
-from urllib.parse import quote
 
 # Try to import Playwright, skip tests if not available
 playwright_available = False

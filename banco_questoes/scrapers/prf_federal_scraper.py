@@ -19,7 +19,6 @@ except ImportError:
 
 from banco_questoes import db
 from banco_questoes.scrapers import http_utils
-import yaml
 import re
 import time
 

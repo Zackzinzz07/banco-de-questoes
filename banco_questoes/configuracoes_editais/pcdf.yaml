@@ -1,0 +1,54 @@
+pcdf:
+  nome: "Concurso PCDF - Carreiras Policiais (Perito, Papiloscopista, Custódia)"
+  banca: "Cebraspe"
+  ano: 2026
+  orgao: "Polícia Civil do Distrito Federal"
+  formato: "Certo_Errado"
+  # total_questoes/tempo_minutos abaixo são apenas descritivos (não usados na geração,
+  # que soma os pesos de "materias" de cada cargo). Usando os valores do Perito Criminal
+  # (maior total: 135 itens) como referência; cada cargo tem seu total real em materias.
+  total_questoes: 135
+  tempo_minutos: 300
+
+  cargos:
+    # Nota: edital de Delegado de Polícia removido temporariamente (fora de escopo por ora).
+
+    # Os 4 cargos abaixo (Perito Criminal, Perito Médico-Legista, Papiloscopista Policial,
+    # Agente Policial de Custódia) foram AUTORIZADOS mas o edital AINDA NÃO FOI PUBLICADO.
+    # Os números de itens são projeção (fonte trazia faixas; usou-se o meio de cada faixa
+    # quando aplicável), não dados oficiais de edital. Por isso usamos apenas os 2 blocos
+    # "Conhecimentos Básicos" / "Conhecimentos Específicos" em vez de detalhamento por matéria.
+    # `vagas` foi omitido: a fonte só informa o total do pacote (315 vagas para as 4 carreiras
+    # juntas), sem abertura por carreira, e nenhum código do projeto lê cargo["vagas"]
+    # (confirmado via grep -rn "vagas" *.py) — inventar uma divisão seria menos honesto que omitir.
+
+    "Perito Criminal":
+      nivel: "superior"
+      # total 135 itens (fonte: "120 a 150 itens: 50 Básicos / 70 a 100 Específicos",
+      # usado o meio da faixa dos Específicos: 85)
+      materias:
+        "Conhecimentos Básicos": 50
+        "Conhecimentos Específicos": 85
+
+    "Perito Médico-Legista":
+      nivel: "superior"
+      # total 120 itens (fonte: "120 itens: 40 a 50 Básicos / 70 a 80 Específicos",
+      # usado o meio de cada faixa: 45 / 75)
+      materias:
+        "Conhecimentos Básicos": 45
+        "Conhecimentos Específicos": 75
+
+    "Papiloscopista Policial":
+      nivel: "médio"
+      # total 120 itens (fonte: mesma faixa do Médico-Legista: 40 a 50 Básicos / 70 a 80
+      # Específicos, meio de cada faixa: 45 / 75)
+      materias:
+        "Conhecimentos Básicos": 45
+        "Conhecimentos Específicos": 75
+
+    "Agente Policial de Custódia":
+      nivel: "médio"
+      # total 120 itens (fonte: valor exato, sem faixa: 50 Básicos / 70 Específicos)
+      materias:
+        "Conhecimentos Básicos": 50
+        "Conhecimentos Específicos": 70

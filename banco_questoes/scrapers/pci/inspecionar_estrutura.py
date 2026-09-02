@@ -3,7 +3,6 @@
 
 import requests
 from bs4 import BeautifulSoup
-import json
 
 def inspecionar_pagina_simulados():
     """Inspecciona a página principal de simulados para descobrir estrutura."""

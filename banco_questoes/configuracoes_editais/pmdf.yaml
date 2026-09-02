@@ -1,0 +1,39 @@
+pmdf:
+  nome: "Concurso PMDF 2026 - Oficial (CFO) e Soldado (QPPMC)"
+  banca: "Cebraspe"
+  ano: 2026
+  orgao: "Polícia Militar do Distrito Federal"
+  formato: "Certo_Errado"
+  total_questoes: 150
+  tempo_minutos: 300
+
+  cargos:
+    "Oficial da Polícia Militar - 2º Tenente":
+      nivel: "superior"
+      vagas: 147
+      materias:
+        "Língua Portuguesa": 15
+        "Língua Inglesa": 5
+        "Raciocínio Lógico e Matemático": 10
+        "Legislação Aplicada à PMDF e Normas Distritais": 10
+        "Realidade do Distrito Federal e Região Integrada": 10
+        "Direito Constitucional e Direitos Humanos": 20
+        "Direito Administrativo": 15
+        "Direito Penal e Direito Penal Militar": 25
+        "Direito Processual Penal e Processual Penal Militar": 25
+        "Criminologia Aplicada": 15
+
+    "Soldado Policial Militar":
+      nivel: "médio"
+      vagas: 2100
+      materias:
+        "Língua Portuguesa": 15
+        "Matemática e Raciocínio Lógico": 8
+        "Língua Inglesa": 5
+        "Noções de Informática Operacional": 6
+        "Legislação Específica da PMDF e RIDE": 16
+        "Noções de Direito Constitucional": 14
+        "Noções de Direito Administrativo": 12
+        "Direito Penal e Processual Penal": 20
+        "Noções de Direito Penal Militar": 14
+        "Direitos Humanos e Criminologia": 10

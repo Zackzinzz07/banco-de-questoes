@@ -1,11 +1,7 @@
 """End-to-end integration tests: complete flow from selection to PDF generation."""
-import pytest
-from pathlib import Path
 from urllib.parse import quote
-import time
 
 import db
-import edital_loader
 import config
 import web_api
 from fastapi.testclient import TestClient

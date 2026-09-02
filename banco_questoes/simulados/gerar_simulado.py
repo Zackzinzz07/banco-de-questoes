@@ -14,7 +14,7 @@ from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (BaseDocTemplate, Frame, FrameBreak, Image,
                                 NextPageTemplate, PageBreak, PageTemplate,
-                                Paragraph, SimpleDocTemplate, Spacer)
+                                Paragraph, Spacer)
 
 try:
     import db

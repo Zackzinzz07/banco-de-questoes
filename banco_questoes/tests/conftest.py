@@ -15,33 +15,31 @@ from typing import Dict, Any
 # ============================================================================
 
 @pytest.fixture(autouse=True)
-def banco_de_teste_skip_multibanca(request, monkeypatch):
-    """
-    Monkeypatch DATABASE_URL to test DB and truncate before each test.
+def banco_de_teste(monkeypatch):
+    """Redireciona TODO teste para o banco de teste e limpa antes de cada um.
 
-    This fixture is skipped for test_gerador_multibanca.py tests since they
-    don't require PostgreSQL connectivity.
+    Sem exceções por arquivo: `test_gerador_multibanca` já foi isento daqui
+    (por ser todo mockado) e, ao virar teste de integração de verdade, passou
+    a gravar questões falsas no banco de PRODUÇÃO.
+
+    O redirecionamento acontece fora do try: se ficasse dentro, uma falha de
+    conexão deixaria os testes apontando para produção silenciosamente.
     """
-    # Skip this fixture for multi-banca tests
-    if "test_gerador_multibanca" in request.node.nodeid:
-        yield
+    import config
+    import db
+
+    monkeypatch.setattr(db, "DATABASE_URL", config.TEST_DATABASE_URL)
+
+    try:
+        con = db.conectar()
+    except Exception:
+        yield  # Postgres indisponível: testes que não usam banco seguem
         return
 
-    # For other tests, try to connect to PostgreSQL
     try:
-        import db
-        import config
-
-        monkeypatch.setattr(db, "DATABASE_URL", config.TEST_DATABASE_URL)
-        con = db.conectar()
-        try:
-            con.execute("TRUNCATE questoes, progresso_scraper RESTART IDENTITY CASCADE")
-            con.commit()
-        finally:
-            con.close()
-    except Exception:
-        # If PostgreSQL is not available, just yield without setup
-        pass
+        con.execute("TRUNCATE questoes, progresso_scraper RESTART IDENTITY CASCADE")
+    finally:
+        con.close()
 
     yield
 

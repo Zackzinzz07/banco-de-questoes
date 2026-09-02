@@ -3,12 +3,19 @@ import pytest
 import yaml
 from pathlib import Path
 from typing import Dict, Any
-from unittest.mock import Mock, MagicMock, patch, call
 
 import db
 from simulados import gerar_simulado
 from simulados.estilos.base import BaseBancaStyle
 from simulados.estilos.cebraspe import EstiloCebraspe
+
+
+def test_teste_nunca_aponta_para_o_banco_de_producao():
+    """Guarda contra vazamento: este arquivo era isento do redirecionamento
+    pro banco de teste, e ao virar teste de integração passou a gravar
+    questões falsas na produção."""
+    import config
+    assert db.DATABASE_URL == config.TEST_DATABASE_URL
 
 
 def questao_fake(i, materia="Língua Portuguesa"):

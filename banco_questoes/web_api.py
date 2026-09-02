@@ -7,7 +7,6 @@ Rodar (acessível também pelo tablet, na mesma Wi-Fi):
     python -m uvicorn web_api:app --reload --host 0.0.0.0 --port 8000
 """
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -22,10 +21,10 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 try:
-    from . import db
-    from . import edital
-    from . import edital_loader
-    from .simulados import gerar_simulado
+    import db
+    import edital
+    import edital_loader
+    from simulados import gerar_simulado
 except ImportError:
     from banco_questoes import db
     from banco_questoes import edital
@@ -282,7 +281,6 @@ def listar_materias_por_cargo(orgao: str, cargo: str):
 def gerar_simulado_cargo(orgao: str, cargo: str, pedido: PedidoCargoSimulado):
     """Generate simulado for specific cargo with optional banca filter."""
     from datetime import date
-    from pathlib import Path
     from reportlab.platypus import NextPageTemplate, FrameBreak, Paragraph, PageBreak
 
     try:
