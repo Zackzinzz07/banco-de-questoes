@@ -238,6 +238,34 @@ def test_sortear_questoes_com_multiplos_filtros():
     assert "filtros múltiplos" in resultados[0]["enunciado"]
 
 
+def test_conectar_liga_autocommit_para_nao_prender_transacao_aberta():
+    """Sem autocommit, um SELECT sozinho deixa a conexão 'idle in transaction'
+    até alguém commitar/fechar — isso é o que trava a suíte inteira quando
+    vários testes abrem conexão e não fecham."""
+    import psycopg2.extensions as ext
+    con = db.conectar()
+    con.execute("SELECT 1")
+    assert con._con.get_transaction_status() == ext.TRANSACTION_STATUS_IDLE
+    con.close()
+
+
+def test_migracoes_rodam_uma_unica_vez_por_processo(monkeypatch):
+    """ALTER TABLE (dentro das migrations) pede AccessExclusiveLock mesmo com
+    IF NOT EXISTS. Rodar isso em toda chamada de conectar() é o que causa a
+    fila de locks quando o processo tem várias conexões vivas ao mesmo tempo."""
+    import migrations.migration_002 as m2
+    chamadas = []
+    monkeypatch.setattr(m2, "aplicar", lambda con: chamadas.append(1))
+    monkeypatch.setattr(db, "_MIGRACOES_APLICADAS", False)
+
+    con1 = db.conectar()
+    con2 = db.conectar()
+
+    assert len(chamadas) == 1
+    con1.close()
+    con2.close()
+
+
 def test_sortear_questoes_cargo_nao_encontra_quando_diferente():
     """Test that filtering by different cargo returns no results."""
     con = db.conectar()

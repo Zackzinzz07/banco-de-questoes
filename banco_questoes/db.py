@@ -16,6 +16,12 @@ DATABASE_URL = config.DATABASE_URL
 
 FONTES_VALIDAS = {"qconcursos", "quadrix_pdf", "pci"}
 
+# As migrations usam ALTER TABLE, que pede AccessExclusiveLock na tabela
+# inteira mesmo com IF NOT EXISTS. Reaplicar isso a cada conectar() enfileira
+# locks quando o processo tem mais de uma conexão viva (era o que travava a
+# suíte de testes). Rodam uma vez por processo.
+_MIGRACOES_APLICADAS = False
+
 SQL_CRIAR = """
 CREATE TABLE IF NOT EXISTS questoes (
     id SERIAL PRIMARY KEY,
@@ -92,17 +98,23 @@ def conectar(caminho=None):
     compatibilidade retroativa com chamadas existentes; é ignorado — a
     conexão sempre usa `DATABASE_URL` (de config.py).
     """
-    con = _Conexao(psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor))
-    con.execute(SQL_CRIAR)
-    con.commit()
+    global _MIGRACOES_APLICADAS
 
-    # Apply migrations
-    try:
-        from migrations import migration_001, migration_002
-        migration_001.aplicar(con)
-        migration_002.aplicar(con)
-    except ImportError:
-        pass  # Migrations not available (should not happen in normal use)
+    con = _Conexao(psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor))
+    # Sem autocommit, um SELECT solto deixa a transação aberta até alguém
+    # commitar/fechar; conexão esquecida assim segura lock e trava o próximo
+    # ALTER TABLE/TRUNCATE indefinidamente.
+    con._con.autocommit = True
+    con.execute(SQL_CRIAR)
+
+    if not _MIGRACOES_APLICADAS:
+        try:
+            from migrations import migration_001, migration_002
+            migration_001.aplicar(con)
+            migration_002.aplicar(con)
+            _MIGRACOES_APLICADAS = True
+        except ImportError:
+            pass  # Migrations not available (should not happen in normal use)
 
     return con
 
