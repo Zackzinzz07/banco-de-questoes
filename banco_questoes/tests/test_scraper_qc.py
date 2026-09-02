@@ -27,6 +27,26 @@ def test_extrai_blocos_da_pagina_real(html):
     assert primeiro["ano"] is None or isinstance(primeiro["ano"], int)
 
 
+def test_extrai_cargo_da_prova(html):
+    blocos = scraper_qc.extrair_blocos(html)
+    assert blocos[0]["cargo"] == "Contador"
+
+
+def test_extrair_cargo_da_prova_isolada():
+    # Órgão com hífen no nome — a extração não pode confundir com o
+    # separador entre banca/ano/orgao/cargo.
+    cargo = scraper_qc._extrair_cargo_da_prova(
+        prova="IAN - 2026 - Câmara de Jardim - MS - Contador",
+        banca="IAN", ano="2026", orgao="Câmara de Jardim - MS",
+    )
+    assert cargo == "Contador"
+
+
+def test_extrair_cargo_da_prova_sem_dados_retorna_none():
+    assert scraper_qc._extrair_cargo_da_prova(None, "IAN", "2026", "X") is None
+    assert scraper_qc._extrair_cargo_da_prova("qualquer coisa", None, "2026", "X") is None
+
+
 def test_url_pagina():
     assert scraper_qc.url_pagina("https://x.com/q?a=1", 3) == "https://x.com/q?a=1&page=3"
     assert scraper_qc.url_pagina("https://x.com/q", 2) == "https://x.com/q?page=2"

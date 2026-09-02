@@ -96,6 +96,24 @@ def _campos_info(texto):
     return campos
 
 
+def _extrair_cargo_da_prova(prova: str | None, banca: str | None,
+                            ano: str | None, orgao: str | None) -> str | None:
+    """Isola o cargo do texto de uma prova ("Banca - Ano - Órgão - Cargo").
+
+    Usa banca/ano/órgão já extraídos como prefixo em vez de fazer split por
+    " - ", porque o nome do órgão pode ter hífen (ex.: "Câmara de Jardim - MS").
+    Só considera a 1ª prova quando há mais de uma (campo "Provas:" com "|").
+    """
+    if not prova or not banca or not ano or not orgao:
+        return None
+    primeira_prova = prova.split("|")[0].strip()
+    prefixo = f"{banca} - {ano} - {orgao}"
+    if not primeira_prova.startswith(prefixo):
+        return None
+    resto = primeira_prova[len(prefixo):].strip(" -")
+    return resto or None
+
+
 def extrair_blocos(html):
     """Extrai todas as questões de uma página de busca do QC."""
     sopa = BeautifulSoup(html, "html.parser")
@@ -113,6 +131,10 @@ def extrair_blocos(html):
             alternativas[letra] = texto_alt
         campos = _campos_info(_texto(bloco.select_one(SELETORES["info"])))
         ano = re.search(r"\d{4}", campos.get("Ano", ""))
+        cargo = _extrair_cargo_da_prova(
+            campos.get("Prova"), campos.get("Banca"),
+            campos.get("Ano"), campos.get("Órgão"),
+        )
         links_trilha = bloco.select(f"{SELETORES['breadcrumb']} a")
         materia_qc = _texto(links_trilha[0]) if links_trilha else None
         assunto = _texto(links_trilha[1]).rstrip(" ,") if len(links_trilha) > 1 else None
@@ -128,6 +150,7 @@ def extrair_blocos(html):
             "ano": int(ano.group(0)) if ano else None,
             "banca": campos.get("Banca") or None,
             "orgao": campos.get("Órgão") or None,
+            "cargo": cargo,
             "prova": campos.get("Prova") or None,
             "texto_associado": texto_assoc,
             "imagens": imagens,
