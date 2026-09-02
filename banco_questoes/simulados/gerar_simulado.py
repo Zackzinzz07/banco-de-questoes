@@ -16,7 +16,10 @@ from reportlab.platypus import (BaseDocTemplate, Frame, FrameBreak, Image,
                                 NextPageTemplate, PageBreak, PageTemplate,
                                 Paragraph, SimpleDocTemplate, Spacer)
 
-from banco_questoes import db
+try:
+    import db
+except ImportError:  # rodando de fora da pasta do projeto
+    from banco_questoes import db
 
 PASTA_IMAGENS = Path(__file__).resolve().parent.parent / "imagens_cache"
 

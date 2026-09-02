@@ -1,15 +1,26 @@
 """Tests for dynamic edital loader with YAML support and fallback."""
 
 import pytest
-from banco_questoes.edital_loader import (
-    listar_concursos,
-    carregar_edital,
-    listar_cargos,
-    obter_materias,
-    obter_pesos,
-    distribuir_por_peso,
-    obter_assuntos,
-)
+try:
+    from edital_loader import (
+        listar_concursos,
+        carregar_edital,
+        listar_cargos,
+        obter_materias,
+        obter_pesos,
+        distribuir_por_peso,
+        obter_assuntos,
+    )
+except ImportError:  # rodando de fora da pasta do projeto
+    from banco_questoes.edital_loader import (
+        listar_concursos,
+        carregar_edital,
+        listar_cargos,
+        obter_materias,
+        obter_pesos,
+        distribuir_por_peso,
+        obter_assuntos,
+    )
 
 
 class TestListarConcursos:
