@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulado de Concursos - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Simulado de Concursos Públicos</h1>
+            <p>Sistema de Geração de Simulados Multi-Concurso</p>
+        </header>
+
+        <main>
+            <!-- Painel de Estatísticas Gerais -->
+            <section class="card" id="painel-geral">
+                <h2>📊 Banco de Questões</h2>
+                <div id="stats-painel">
+                    <p style="font-size: 1.5em; font-weight: bold; color: #2c3e50;">
+                        Total: <span id="total-questoes">--</span> questões
+                    </p>
+                    <div id="materias-container" style="margin-top: 20px;"></div>
+                    <div id="orgaos-container" style="margin-top: 20px;"></div>
+                </div>
+            </section>
+
+            <!-- Dashboard Hierarquico PCI -->
+            <section class="card" id="pci-dashboard">
+                <h2>PCI Concursos - Coleta Hierarquica</h2>
+                <div id="pci-content">
+                    <p style="text-align: center; color: #666;">Carregando dados do PCI...</p>
+                </div>
+            </section>
+
+            <!-- Seleção de Órgão/Cargo -->
+            <section class="card">
+                <h2>🎯 Selecionar Concurso</h2>
+
+                <div class="form-group">
+                    <label for="orgao">Órgão/Concurso:</label>
+                    <select id="orgao" name="orgao">
+                        <option value="">-- Escolha um órgão --</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="cargo-group" style="display: none;">
+                    <label for="cargo">Cargo:</label>
+                    <select id="cargo" name="cargo">
+                        <option value="">-- Escolha um cargo --</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="banca-group" style="display: none;">
+                    <label for="banca">Banca Examinadora (opcional):</label>
+                    <select id="banca" name="banca">
+                        <option value="">-- Qualquer banca --</option>
+                        <option value="Cebraspe">Cebraspe</option>
+                        <option value="FGV">FGV</option>
+                        <option value="IBFC">IBFC</option>
+                        <option value="Cesgranrio">Cesgranrio</option>
+                        <option value="IADES">IADES</option>
+                        <option value="Instituto Quadrix">Instituto Quadrix</option>
+                        <option value="AOCP">AOCP</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Rastreamento de Coleta (Cargo Stats) -->
+            <section class="card" id="stats-section" style="display: none;">
+                <h2>📊 Rastreamento de Coleta</h2>
+                <div class="stats-container">
+                    <div class="stats-header">
+                        <h3 id="stats-title"></h3>
+                        <div class="overall-progress">
+                            <div class="progress-bar">
+                                <div id="progress-fill" class="progress-fill"></div>
+                            </div>
+                            <span id="progress-text"></span>
+                        </div>
+                    </div>
+                    <div id="stats-list"></div>
+                </div>
+            </section>
+
+            <!-- Geração de Simulado -->
+            <section class="card" id="geracao-section" style="display: none;">
+                <h2>🎲 Gerar Simulado</h2>
+
+                <div class="form-group">
+                    <label for="quantidade">Número de Questões:</label>
+                    <input type="number" id="quantidade" name="quantidade" value="60" min="10" max="500">
+                </div>
+
+                <button id="btn-gerar" class="btn-primary">Gerar Simulado PDF</button>
+                <div id="status-geracao"></div>
+            </section>
+
+            <!-- Estatísticas Gerais (TODAS as Questões) - Removido por enquanto -->
+            <!-- <section class="card" id="stats-geral-section" style="display: block !important;">
+                <h2>📈 Estatísticas Gerais - TODAS as Questões</h2>
+                <div id="stats-geral">Carregando...</div>
+            </section> -->
+        </main>
+
+        <footer>
+            <p>Desenvolvido para preparação de concursos públicos brasileiros</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

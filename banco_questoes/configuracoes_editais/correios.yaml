@@ -1,0 +1,30 @@
+correios:
+  nome: "Concurso Correios"
+  banca: "IBFC"
+  ano: 2023
+  orgao: "Empresa Brasileira de Correios e Telégrafos (ECT)"
+  formato: "Multipla_Escolha"
+  total_questoes: 50
+  tempo_minutos: 120
+
+  cargos:
+    "Carteiro":
+      nivel: "médio"
+      vagas: 3000
+      materias:
+        "Português": 12
+        "Raciocínio Lógico": 10
+        "Noções de Legislação": 8
+        "Conhecimentos Gerais": 10
+        "Atendimento ao Público": 10
+
+    "Analista de Sistemas":
+      nivel: "superior"
+      vagas: 150
+      materias:
+        "Programação": 12
+        "Banco de Dados": 10
+        "Redes de Computadores": 8
+        "Segurança da Informação": 8
+        "Legislação": 4
+        "Português": 8

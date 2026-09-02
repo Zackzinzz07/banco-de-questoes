@@ -1,0 +1,36 @@
+iades:
+  nome_oficial: "Instituto Americano de Desenvolvimento"
+  estilo_visual:
+    fonte_titulo: "Calibri / Arial Bold, 11pt-12pt"
+    fonte_corpo: "Calibri / Arial, 10pt"
+    layout_colunas: 2
+    divisor_colunas: "Nenhum (espaçamento medianiz de 0.8cm)"
+    cores_dominantes: ["Preto", "Cinza Claro em caixas de secao"]
+    elementos_graficos:
+      cabecalho: "Logo IADES a esquerda e Logo do Orgao a direita"
+      rodape: "Identificação do cargo e formato 'Página X de Y'"
+    margens:
+      superior_cm: 1.5
+      inferior_cm: 1.5
+      esquerda_cm: 1.5
+      direita_cm: 1.5
+    caixa_instrucoes: "Box centralizado na capa com avisos de tempo e conduta"
+  caracteristicas_prova:
+    tipo_predominante: "Múltipla Escolha (5 alternativas: A, B, C, D, E)"
+    total_questoes_padrao: 60
+    frase_antifraude_exemplo: "Esforços desafiam as impossibilidades"
+    altura_media_questao_cm: 6.5
+    densidade_texto: "Média; questões diretas focadas na aplicação prática"
+  estrutura_disciplinas_padrao:
+    - ordem: 1
+      nome: "Língua Portuguesa"
+      quantidade_questoes: 10
+    - ordem: 2
+      nome: "Raciocínio Lógico e Matemático"
+      quantidade_questoes: 5
+    - ordem: 3
+      nome: "Tópicos de RIDE e Legislação do DF"
+      quantidade_questoes: 5
+    - ordem: 4
+      nome: "Conhecimentos Específicos do Cargo"
+      quantidade_questoes: 40

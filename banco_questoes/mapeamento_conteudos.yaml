@@ -1,0 +1,194 @@
+# Mapeamento unificado: Materia -> Categorias -> Temas
+# Valido para TODOS os concursos (PCI, QConcursos, etc)
+
+Portugu~es:
+  ortografia:
+    - acentuacao
+    - pontuacao
+    - crase
+  morfologia:
+    - verbos
+    - adjetivos
+    - substantivos
+  sintaxe:
+    - oracao
+    - periodo
+    - colocacao-pronominal
+
+Matematica:
+  aritmetica:
+    - operacoes-basicas
+    - fracoes
+    - percentual
+  algebra:
+    - equacoes
+    - funcoes
+    - logaritmos
+  geometria:
+    - trigonometria
+    - plana
+    - espacial
+  estatistica:
+    - media-moda-mediana
+    - probabilidade
+    - distribuicao
+
+Direito Administrativo:
+  atos-administrativos:
+    - conceito
+    - classificacao
+    - nulidade
+  poder-discricionario:
+    - conceito
+    - limites
+    - controle
+  servidores-publicos:
+    - regime-juridico
+    - direitos-deveres
+    - responsabilidade
+  licitacao:
+    - modalidades
+    - procedimento
+    - contratos
+  bens-publicos:
+    - classificacao
+    - dominio
+    - protecao
+
+Direito Constitucional:
+  constituicao:
+    - conceito
+    - classificacao
+    - supremacia
+  direitos-fundamentais:
+    - direitos-sociais
+    - direitos-politicos
+    - liberdades
+  poder-executivo:
+    - presidente
+    - ministros
+    - atribuicoes
+  poder-legislativo:
+    - camara
+    - senado
+    - processo-legislativo
+  poder-judiciario:
+    - supremo-tribunal
+    - tribunal-superior
+    - tribunais
+
+Direito Penal:
+  crimes-contra-pessoa:
+    - homicidio
+    - lesao-corporal
+    - crimes-sexuais
+  crimes-contra-patrimonio:
+    - furto
+    - roubo
+    - estelionato
+  crimes-contra-administracao:
+    - peculato
+    - concussao
+    - corrupcao
+  penas:
+    - prisao
+    - multa
+    - suspensao
+
+Conhecimentos Gerais:
+  historia-brasil:
+    - periodo-colonial
+    - imperio
+    - republica
+  historia-mundial:
+    - antiguidade
+    - idade-media
+    - idade-moderna
+  geografia:
+    - climas
+    - hidrografia
+    - relevo
+  politica:
+    - governo
+    - legislacao
+    - direitos
+
+Administracao Publica:
+  organizacao:
+    - estrutura
+    - hierarquia
+    - competencia
+  gestao-publica:
+    - planejamento
+    - orcamento
+    - eficiencia
+  lideranca:
+    - motivacao
+    - comunicacao
+    - decisao
+
+Contabilidade:
+  contabilidade-geral:
+    - patrimonio
+    - escrituracao
+    - demonstracoes
+  contabilidade-publica:
+    - orcamento
+    - execucao
+    - balanco
+  custos:
+    - custeio
+    - analise-custo-volume
+    - preco
+
+Economia:
+  macroeconomia:
+    - inflacao
+    - desemprego
+    - crescimento
+  microeconomia:
+    - oferta-demanda
+    - elasticidade
+    - concorrencia
+  economia-brasileira:
+    - estrutura
+    - desenvolvimento
+    - investimento
+
+Legislacao:
+  lei-geral:
+    - conceito
+    - hierarquia
+    - vigencia
+  lei-especifica:
+    - tributaria
+    - trabalhista
+    - ambiental
+
+Etica:
+  etica-profissional:
+    - codigos
+    - deveres
+    - responsabilidade
+  etica-publica:
+    - transparencia
+    - moralidade
+    - impessoalidade
+
+Conhecimentos de Informatica:
+  hardware:
+    - processador
+    - memoria
+    - perifericos
+  software:
+    - sistemas-operacionais
+    - aplicativos
+    - utilitarios
+  internet:
+    - navegacao
+    - email
+    - seguranca
+  office:
+    - word
+    - excel
+    - powerpoint

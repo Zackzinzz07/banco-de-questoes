@@ -1,0 +1,30 @@
+cebraspe:
+  nome_oficial: "Centro Brasileiro de Pesquisa em Avaliação e Seleção e de Promoção de Eventos"
+  estilo_visual:
+    fonte_titulo: "Helvetica / Arial Bold, 12pt-14pt"
+    fonte_corpo: "Times New Roman / Helvetica, 9.5pt-10pt"
+    layout_colunas: 2
+    divisor_colunas: "Linha vertical continua (0.5pt)"
+    cores_dominantes: ["Preto", "Branco", "Escala de Cinza"]
+    elementos_graficos:
+      cabecalho: "Brasão do Brasil ou GDF centralizado com nome do concurso"
+      rodape: "Numero de pagina hifenizado (ex: - 3 -) e código da prova"
+    margens:
+      superior_cm: 2.0
+      inferior_cm: 2.0
+      esquerda_cm: 1.5
+      direita_cm: 1.5
+    caixa_instrucoes: "Retângulo com borda preta sólida na primeira página"
+  caracteristicas_prova:
+    tipo_predominante: "Certo / Errado (C/E) com penalização por erro"
+    total_questoes_padrao: 120
+    frase_antifraude_exemplo: "Atitude é o que faz a diferença"
+    altura_media_questao_cm: 3.5
+    densidade_texto: "Alta complexidade; textos-base longos para blocos de itens"
+  estrutura_disciplinas_padrao:
+    - ordem: 1
+      nome: "Conhecimentos Básicos (Língua Portuguesa, RLM, Informática, Legislação DF)"
+      quantidade_questoes: 50
+    - ordem: 2
+      nome: "Conhecimentos Específicos (Direito, Controle, Contabilidade ou Área Técnica)"
+      quantidade_questoes: 70

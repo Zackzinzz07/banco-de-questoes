@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+banco_questoes/banco_de_questoes.db
+banco_questoes/provas_pdf/
+banco_questoes/relatorio_extracao.txt
+banco_questoes/simulados/*.pdf
+banco_questoes/perfil_chrome_scraper/
+banco_questoes/imagens_cache/
+banco_questoes/estudo_autonomo/
+banco_questoes/questoes.db
+estudos/estudos/db.sqlite3
+
+# Projetos irmãos nesta pasta, sem relação com o banco de questões
+/carreiro autopeças/
+/raqueltorquato/
+/Assembling_luxury_jewelry_in_studio_202608281228.mp4

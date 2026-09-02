@@ -1,0 +1,36 @@
+instituto_aocp:
+  nome_oficial: "Instituto AOCP"
+  estilo_visual:
+    fonte_titulo: "Open Sans / Arial Bold, 11pt"
+    fonte_corpo: "Open Sans / Arial, 10pt"
+    layout_colunas: 2
+    divisor_colunas: "Nenhum (espaçamento entre colunas de 1.0cm)"
+    cores_dominantes: ["Preto", "Cinza Sombreado"]
+    elementos_graficos:
+      cabecalho: "Logo Instituto AOCP a esquerda e Brasão do Contratante a direita"
+      rodape: "Código da prova e numeração sequencial de página"
+    margens:
+      superior_cm: 1.5
+      inferior_cm: 1.5
+      esquerda_cm: 1.5
+      direita_cm: 1.5
+    caixa_instrucoes: "Caixa destacada com instruções gerais na capa"
+  caracteristicas_prova:
+    tipo_predominante: "Múltipla Escolha (5 alternativas: A, B, C, D, E)"
+    total_questoes_padrao: 80
+    frase_antifraude_exemplo: "Frase de transcrição caligráfica no cartão de respostas"
+    altura_media_questao_cm: 7.5
+    densidade_texto: "Média; enunciados objetivos com tabelas e itens analíticos"
+  estrutura_disciplinas_padrao:
+    - ordem: 1
+      nome: "Língua Portuguesa"
+      quantidade_questoes: 10
+    - ordem: 2
+      nome: "Língua Inglesa / RLM"
+      quantidade_questoes: 10
+    - ordem: 3
+      nome: "Legislação Aplicada e Atualidades / RIDE DF"
+      quantidade_questoes: 10
+    - ordem: 4
+      nome: "Conhecimentos Específicos (Direito Penal, Processual, Criminologia ou Área Técnica)"
+      quantidade_questoes: 50

@@ -1,0 +1,22 @@
+prf:
+  nome: "Concurso PRF - Policial Rodoviário Federal"
+  banca: "Cebraspe"
+  ano: 2024
+  orgao: "Polícia Rodoviária Federal"
+  formato: "Certo_Errado"
+  total_questoes: 120
+  tempo_minutos: 210
+
+  cargos:
+    "Policial Rodoviário Federal":
+      nivel: "superior"
+      vagas: 500
+      materias:
+        "Legislação de Trânsito": 30
+        "Direito Administrativo": 20
+        "Direito Penal": 15
+        "Português": 15
+        "Conhecimentos Gerais": 10
+        "Ética e Responsabilidade Profissional": 10
+        "Segurança Pública": 10
+        "Atendimento de Emergência": 10

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCI Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: white; text-align: center; margin-bottom: 30px; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat h3 { color: #667eea; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px; }
+        .stat .value { font-size: 2.5em; font-weight: bold; color: #333; }
+
+        .categorias {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .categorias h2 { color: #333; margin-bottom: 15px; }
+
+        .cat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cat-name { font-weight: 500; color: #333; }
+        .cat-count { background: #667eea; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; }
+
+        .loading { text-align: center; color: white; font-size: 1.2em; margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PCI Concursos - Dashboard Hierarquico</h1>
+
+        <div class="stats">
+            <div class="stat">
+                <h3>Total de Questoes</h3>
+                <div class="value" id="total">-</div>
+            </div>
+            <div class="stat">
+                <h3>Com Categoria</h3>
+                <div class="value" id="com-cat">-</div>
+            </div>
+            <div class="stat">
+                <h3>Categorias</h3>
+                <div class="value" id="num-cats">-</div>
+            </div>
+        </div>
+
+        <div class="categorias">
+            <h2>Principais Categorias</h2>
+            <div id="cats-list" class="loading">Carregando...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+
+                // Contar PCI
+                const pci_total = Object.values(data).reduce((sum, cat) => sum + (cat.total || 0), 0);
+
+                document.getElementById('total').textContent = pci_total.toLocaleString('pt-BR');
+                document.getElementById('com-cat').textContent = pci_total.toLocaleString('pt-BR');
+                document.getElementById('num-cats').textContent = Object.keys(data).length;
+
+                // Listar categorias (PCI)
+                const cats = Object.entries(data)
+                    .map(([nome, stats]) => ({nome, total: stats.total}))
+                    .sort((a, b) => b.total - a.total)
+                    .slice(0, 15);
+
+                const catsList = document.getElementById('cats-list');
+                catsList.innerHTML = '';
+                cats.forEach(cat => {
+                    const html = `
+                        <div class="cat-item">
+                            <span class="cat-name">${cat.nome}</span>
+                            <span class="cat-count">${cat.total.toLocaleString('pt-BR')}</span>
+                        </div>
+                    `;
+                    catsList.innerHTML += html;
+                });
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('cats-list').innerHTML = 'Erro ao carregar dados';
+            }
+        }
+
+        loadDashboard();
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>

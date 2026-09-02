@@ -1,0 +1,39 @@
+receita_federal:
+  nome: "Concurso RFB - Receita Federal"
+  banca: "FGV"
+  ano: 2024
+  orgao: "Secretaria da Receita Federal"
+  formato: "Multipla_Escolha"
+  total_questoes: 140
+  tempo_minutos: 300
+
+  cargos:
+    "Auditor-Fiscal da Receita Federal":
+      nivel: "superior"
+      vagas: 300
+      materias:
+        "Direito Tributário": 25
+        "Legislação Tributária": 20
+        "Contabilidade Pública": 20
+        "Auditoria": 15
+        "Administração Pública": 12
+        "Português": 12
+        "Inglês": 8
+        "Noções de Informática": 8
+        "Ética Profissional": 10
+        "Legislação Aduaneira": 10
+        "Direito Constitucional": 4
+
+    "Analista-Tributário da Receita Federal":
+      nivel: "superior"
+      vagas: 200
+      materias:
+        "Direito Tributário": 15
+        "Legislação Tributária": 15
+        "Sistema Tributário Nacional": 12
+        "Arrecadação e Administração": 12
+        "Direito Administrativo": 10
+        "Português": 10
+        "Inglês": 8
+        "Noções de Informática": 8
+        "Legislação Aduaneira": 10
