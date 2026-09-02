@@ -1,0 +1,6 @@
+# Configuracao do ruff (formatador + linter). Ver CLAUDE.md secao 3.
+line-length = 100
+
+[lint]
+# E = estilo, F = bugs obvios (var/import nao usado), I = ordenacao de imports
+select = ["E", "F", "I"]
