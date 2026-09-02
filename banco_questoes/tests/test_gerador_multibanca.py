@@ -121,29 +121,12 @@ def test_gerar_simulado_completo_todas_bancas(tmp_path, monkeypatch):
     """
     import db
 
-    # Mock db module to avoid PostgreSQL requirement
-    mock_con = MagicMock()
-    mock_con.execute.return_value.fetchone.return_value = {"c": 20}
-
-    def mock_conectar(path=None):
-        """Mock conectar that returns a mock connection."""
-        return mock_con
-
-    def mock_salvar_questao(con, q):
-        """Mock salvar_questao that does nothing."""
-        pass
-
-    monkeypatch.setattr(db, "conectar", mock_conectar)
-    monkeypatch.setattr(db, "salvar_questao", mock_salvar_questao)
-
-    # 5 exam boards (bancas)
+    # Integração de verdade: mockar salvar_questao deixava o banco vazio e o
+    # teste passava a medir o mock, não a geração do PDF.
     bancas = ["cebraspe", "iades", "quadrix", "fgv", "aocp"]
 
-    # Create database connection (mocked)
-    con = db.conectar(tmp_path / "simulados.db")
-
-    # Add 20 questoes to database (mocked)
-    for i in range(20):
+    con = db.conectar()
+    for i in range(25):
         db.salvar_questao(con, questao_fake(i))
 
     # Generate simulado for each banca
