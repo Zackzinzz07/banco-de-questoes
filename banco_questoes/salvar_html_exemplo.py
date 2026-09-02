@@ -17,6 +17,7 @@ import sys
 import time
 from pathlib import Path
 
+from playwright.sync_api import Error as ErroPlaywright
 from playwright.sync_api import Page, sync_playwright
 
 PERFIL = Path(__file__).resolve().parent / "perfil_chrome_scraper"
@@ -42,13 +43,26 @@ def tem_questoes(html: str) -> bool:
     return bool(html) and bool(_PADRAO_QUESTAO.search(html))
 
 
+def conteudo_seguro(pagina: Page) -> str:
+    """HTML atual da página; devolve "" se ela estiver navegando neste instante.
+
+    Durante o login a página troca de URL várias vezes, e `content()` levanta
+    erro no meio de uma navegação. Isso é estado normal da espera, não falha:
+    tratado aqui para não derrubar a automação inteira.
+    """
+    try:
+        return pagina.content()
+    except ErroPlaywright:
+        return ""
+
+
 def aguardar_login(pagina: Page, tentativas: int = 120, intervalo: int = 5) -> bool:
     """Espera o login acontecer na janela aberta. Devolve True se logou.
 
     Recebe a página já aberta — quem abre e fecha o navegador é o `main`.
     """
     for tentativa in range(tentativas):
-        html = pagina.content()
+        html = conteudo_seguro(pagina)
         if esta_logado(html) and tem_questoes(html):
             return True
         if tentativa and tentativa % 12 == 0:
@@ -57,10 +71,20 @@ def aguardar_login(pagina: Page, tentativas: int = 120, intervalo: int = 5) -> b
     return False
 
 
-def capturar(pagina: Page, destino: Path) -> Path:
-    """Salva o HTML atual da página no destino. Devolve o caminho gravado."""
+def capturar(pagina: Page, destino: Path, tentativas: int = 5) -> Path:
+    """Salva o HTML atual da página no destino. Devolve o caminho gravado.
+
+    Reexecuta a leitura se a página estiver navegando, para nunca gravar um
+    arquivo vazio.
+    """
+    html = ""
+    for _ in range(tentativas):
+        html = conteudo_seguro(pagina)
+        if html:
+            break
+        time.sleep(1)
     destino.parent.mkdir(parents=True, exist_ok=True)
-    destino.write_text(pagina.content(), encoding="utf-8")
+    destino.write_text(html, encoding="utf-8")
     return destino
 
 
