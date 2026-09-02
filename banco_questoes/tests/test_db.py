@@ -238,6 +238,25 @@ def test_sortear_questoes_com_multiplos_filtros():
     assert "filtros múltiplos" in resultados[0]["enunciado"]
 
 
+def test_salvar_questao_persiste_banca_e_orgao():
+    """banca/orgao são usados como filtro em sortear_questoes mas nenhum
+    teste checava a coluna direto — cobrindo o mesmo bug do cargo."""
+    con = db.conectar()
+    db.salvar_questao(con, questao_exemplo(
+        id_qc="QBANCAORGAO1",
+        enunciado="Teste banca e orgao",
+        banca="Cebraspe",
+        orgao="PRF",
+    ))
+    linha = con.execute(
+        "SELECT banca, orgao FROM questoes WHERE enunciado=%s",
+        ("Teste banca e orgao",),
+    ).fetchone()
+    assert linha["banca"] == "Cebraspe"
+    assert linha["orgao"] == "PRF"
+    con.close()
+
+
 def test_conectar_liga_autocommit_para_nao_prender_transacao_aberta():
     """Sem autocommit, um SELECT sozinho deixa a conexão 'idle in transaction'
     até alguém commitar/fechar — isso é o que trava a suíte inteira quando

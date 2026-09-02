@@ -154,8 +154,9 @@ def salvar_questao(con, q):
         con.execute(
             "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash, alternativas,"
             " gabarito, comentario, materia, assunto, ano, prova, fonte,"
-            " texto_associado, imagens, categoria, tema, imagens_urls)"
-            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " texto_associado, imagens, categoria, tema, imagens_urls,"
+            " banca, orgao, cargo)"
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 q.get("id_qc"),
                 q["enunciado"],
@@ -174,6 +175,9 @@ def salvar_questao(con, q):
                 q.get("categoria"),
                 q.get("tema"),
                 json.dumps(q.get("imagens_urls", []), ensure_ascii=False),
+                q.get("banca"),
+                q.get("orgao"),
+                q.get("cargo"),
             ),
         )
         con.commit()
