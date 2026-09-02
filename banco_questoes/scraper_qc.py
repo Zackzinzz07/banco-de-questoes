@@ -135,9 +135,15 @@ def extrair_blocos(html):
             campos.get("Prova"), campos.get("Banca"),
             campos.get("Ano"), campos.get("Órgão"),
         )
+        # A trilha tem tamanho variável: matéria + 1 a 3 níveis de conteúdo.
+        # O schema só tem categoria e tema, então um eventual 4º nível (o mais
+        # granular) é descartado.
         links_trilha = bloco.select(f"{SELETORES['breadcrumb']} a")
-        materia_qc = _texto(links_trilha[0]) if links_trilha else None
-        assunto = _texto(links_trilha[1]).rstrip(" ,") if len(links_trilha) > 1 else None
+        textos_trilha = [_texto(l).rstrip(" ,") for l in links_trilha]
+        materia_qc = textos_trilha[0] if textos_trilha else None
+        assunto = textos_trilha[1] if len(textos_trilha) > 1 else None
+        categoria = textos_trilha[1] if len(textos_trilha) > 1 else None
+        tema = textos_trilha[2] if len(textos_trilha) > 2 else None
         area = bloco.select_one(SELETORES["texto_associado"])
         texto_assoc = _texto(area) if area else ""
         imagens = [i.get("src") for i in area.select("img") if i.get("src")] if area else []
@@ -147,6 +153,8 @@ def extrair_blocos(html):
             "alternativas": alternativas,
             "materia_qc": materia_qc,
             "assunto": assunto or None,
+            "categoria": categoria or None,
+            "tema": tema or None,
             "ano": int(ano.group(0)) if ano else None,
             "banca": campos.get("Banca") or None,
             "orgao": campos.get("Órgão") or None,

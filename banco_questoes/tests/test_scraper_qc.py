@@ -32,6 +32,12 @@ def test_extrai_cargo_da_prova(html):
     assert blocos[0]["cargo"] == "Contador"
 
 
+def test_extrai_categoria_e_tema_do_breadcrumb(html):
+    blocos = scraper_qc.extrair_blocos(html)
+    assert blocos[0]["categoria"] == "Legislação de Contabilidade"
+    assert blocos[0]["tema"] == "Normas Brasileiras de Contabilidade - NBC"
+
+
 def test_extrair_cargo_da_prova_isolada():
     # Órgão com hífen no nome — a extração não pode confundir com o
     # separador entre banca/ano/orgao/cargo.
