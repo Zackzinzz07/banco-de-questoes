@@ -64,10 +64,14 @@ def coletar_tema_v2(sessao, categoria, tema_slug, tema_nome, tema_url, con):
                 "id_qc": q.get("id_pci"),
                 "enunciado": q.get("enunciado"),
                 "alternativas": q.get("alternativas", {}),
-                "gabarito": None,
+                # O PCI publica o gabarito da página inteira num JSON no HTML
+                # (simGabaritos), então a resposta vem junto do enunciado.
+                "gabarito": q.get("gabarito"),
                 "comentario": None,
                 "materia": materia,
                 "assunto": None,
+                "banca": q.get("banca"),
+                "orgao": q.get("orgao"),
                 "ano": q.get("ano"),
                 "prova": q.get("prova"),
                 "fonte": "pci",

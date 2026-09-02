@@ -4,6 +4,7 @@ Todas as funções aqui recebem HTML já baixado e devolvem estruturas de dados
 simples, para poderem ser testadas com fixtures salvas em disco, sem precisar
 de rede nem de banco de dados.
 """
+import json
 import re
 
 from bs4 import BeautifulSoup
@@ -208,6 +209,35 @@ def _extrair_todas_imagens(bloco):
     return list(urls)
 
 
+_PADRAO_GABARITOS = re.compile(
+    r'(?:var|const|let)\s+simGabaritos\s*=\s*(\{.*?\})\s*;', re.S)
+
+
+def extrair_gabaritos(html: str) -> dict[str, str]:
+    """Extrai o mapa {id_da_questão: letra} embutido no JS da página do PCI.
+
+    O PCI publica o gabarito de todas as questões da página numa variável
+    JavaScript `simGabaritos` (JSON puro), então dá pra capturar a resposta
+    junto com o enunciado, sem responder questão por questão.
+
+    Devolve dict vazio se a variável não existir ou o JSON estiver corrompido —
+    layout quebrado não pode derrubar a coleta inteira.
+    """
+    if not html:
+        return {}
+    achado = _PADRAO_GABARITOS.search(html)
+    if not achado:
+        return {}
+    try:
+        mapa = json.loads(achado.group(1))
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    if not isinstance(mapa, dict):
+        return {}
+    return {str(k): str(v).strip().upper() for k, v in mapa.items()
+            if str(v).strip().upper() in {"A", "B", "C", "D", "E"}}
+
+
 def extrair_questoes_pagina(html):
     """Extrai as questões de uma página de simulado do PCI Concursos.
 
@@ -233,6 +263,7 @@ def extrair_questoes_pagina(html):
 
     soup = BeautifulSoup(html, "html.parser")
     questoes = []
+    gabaritos = extrair_gabaritos(html)
 
     for bloco in soup.find_all("div", class_="sim-questao"):
         sid = bloco.get("data-sid", "")
@@ -269,6 +300,7 @@ def extrair_questoes_pagina(html):
             "id_pci": sid,
             "enunciado": enunciado,
             "alternativas": alternativas,
+            "gabarito": gabaritos.get(sid),
             "texto_associado": texto_associado,
             "imagens": imagens,  # Mantém para compatibilidade
             "imagens_urls": todas_imagens,  # Nova: todas as imagens de uma vez
