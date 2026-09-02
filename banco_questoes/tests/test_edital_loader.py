@@ -26,10 +26,10 @@ except ImportError:  # rodando de fora da pasta do projeto
 class TestListarConcursos:
     """Test listing available concursos."""
 
-    def test_lista_sete_concursos(self):
-        """Should list exactly 7 concursos."""
+    def test_lista_nove_concursos(self):
+        """Should list exactly 9 concursos (PCDF e PMDF entraram depois)."""
         concursos = listar_concursos()
-        assert len(concursos) == 7
+        assert len(concursos) == 9
 
     def test_contem_todos_concursos(self):
         """Should contain all expected concursos."""
@@ -37,6 +37,8 @@ class TestListarConcursos:
         esperados = {
             "sedes_df",
             "prf",
+            "pcdf",
+            "pmdf",
             "bacen",
             "receita_federal",
             "inss",
@@ -166,8 +168,9 @@ class TestObterMaterias:
         """PRF Policial should have Legislação de Trânsito."""
         materias = obter_materias("prf", "Policial Rodoviário Federal")
         assert materias is not None
-        assert "Legislação de Trânsito" in materias
-        assert materias["Legislação de Trânsito"]["pesos"] == 30
+        assert "Legislação Especial de Trânsito - CTB e CONTRAN (Bloco II)" in materias
+        assert materias[
+            "Legislação Especial de Trânsito - CTB e CONTRAN (Bloco II)"]["pesos"] == 30
 
     def test_materias_bacen_ti(self):
         """BACEN TI area should have Ciência de Dados."""
@@ -224,7 +227,8 @@ class TestObterPesos:
         """PRF pesos should sum to 120."""
         pesos = obter_pesos("prf", "Policial Rodoviário Federal")
         assert sum(pesos.values()) == 120
-        assert pesos["Legislação de Trânsito"] == 30
+        # Bloco II da prova real (itens 56-85) é só legislação de trânsito.
+        assert pesos["Legislação Especial de Trânsito - CTB e CONTRAN (Bloco II)"] == 30
 
     def test_pesos_bacen_ti(self):
         """BACEN TI pesos should sum correctly."""
