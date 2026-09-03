@@ -50,7 +50,7 @@ def html():
 
 def test_coletor_grava_gabarito_vindo_da_pagina(html):
     con = db.conectar()
-    coletor_v2.coletar_tema_v2(_SessaoFalsa(html), "portugues", "ortografia", "Ortografia", "", con)
+    coletor_v2.coletar_tema_v2(_SessaoFalsa(html), "portugues", "ortografia", con)
 
     linha = con.execute(
         "SELECT COUNT(*) AS total, COUNT(gabarito) AS com_gabarito FROM questoes WHERE fonte='pci'"
@@ -62,7 +62,7 @@ def test_coletor_grava_gabarito_vindo_da_pagina(html):
 
 def test_coletor_grava_banca_e_orgao_da_questao(html):
     con = db.conectar()
-    coletor_v2.coletar_tema_v2(_SessaoFalsa(html), "portugues", "ortografia", "Ortografia", "", con)
+    coletor_v2.coletar_tema_v2(_SessaoFalsa(html), "portugues", "ortografia", con)
 
     linha = con.execute(
         "SELECT COUNT(banca) AS com_banca, COUNT(orgao) AS com_orgao"

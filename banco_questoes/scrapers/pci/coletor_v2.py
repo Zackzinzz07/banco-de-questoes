@@ -31,7 +31,7 @@ def _url_pagina(categoria, tema_slug, pagina):
     return f"{BASE_URL}/{categoria}/{tema_slug}/{pagina}"
 
 
-def coletar_tema_v2(sessao, categoria, tema_slug, tema_nome, tema_url, con):
+def coletar_tema_v2(sessao, categoria, tema_slug, con):
     """Coleta todas as questões de um tema com hierarquia completa.
 
     Nota: PCI tem estrutura /simulados/categoria/tema (sem subcategoria)
@@ -115,11 +115,9 @@ def coletar_categoria_v2(sessao, categoria, con):
     print(f"\n[CATEGORY] {categoria}: {len(subcategorias)} temas descobertos")
 
     total_novas = 0
-    for tema_slug, tema_data in subcategorias.items():
+    for tema_slug in subcategorias:
         print(f"  [TEMA] {tema_slug}...")
-        total_novas += coletar_tema_v2(
-            sessao, categoria, tema_slug, tema_data["nome"], tema_data["url"], con
-        )
+        total_novas += coletar_tema_v2(sessao, categoria, tema_slug, con)
         http_utils.aguardar()
 
     print(f"\n[SUCCESS] {categoria}: {total_novas} questoes novas no total\n")

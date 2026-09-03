@@ -278,8 +278,8 @@ def listar_materias_por_cargo(orgao: str, cargo: str):
             "pesos": pesos,
             "total_questoes": sum(pesos.values()),
         }
-    except (FileNotFoundError, ValueError) as e:
-        raise HTTPException(status_code=404, detail=f"Cargo não encontrado: {cargo}")
+    except (FileNotFoundError, ValueError) as erro:
+        raise HTTPException(status_code=404, detail=f"Cargo não encontrado: {cargo}") from erro
 
 
 @app.post("/api/simulado/cargo/{orgao}/{cargo}")
