@@ -14,14 +14,17 @@
 - **Automação** — `scraper_qc.py` e `scrapers/pci/coletor*.py`: apenas Playwright ou HTTP
   (navegação, cliques, waits, obtenção de HTML). Proibido BeautifulSoup. Proibido acessar
   banco de dados.
-- **Parsing** — `scrapers/pci/parser.py` e qualquer `**/parser.py`: apenas extração e tratamento
-  com BeautifulSoup (recebe string HTML, devolve modelos tipados). Funções 100% puras, sem I/O
-  de rede ou banco.
+- **Parsing** — `scrapers/qc/parser.py`, `scrapers/pci/parser.py` e qualquer `**/parser.py`:
+  apenas extração e tratamento com BeautifulSoup (recebe string HTML, devolve modelos
+  tipados). Funções 100% puras, sem I/O de rede ou banco.
 - **Modelos** — dataclasses ou Pydantic representando a Questão (enunciado, alternativas,
   gabarito, banca, órgão, ano).
 - **Persistência** — `db.py`, `scripts/importar_sqlite.py`, `migrations/**`: funções de
   persistência e queries. Proibido conter parsing de HTML ou seletores de DOM.
-- **Orquestração** — `main.py` e CLIs: linear e limpo, apenas coordena as etapas.
+- **Orquestração** — `coletar_qc.py`, `main.py` e CLIs: linear e limpo, apenas coordena as
+  etapas. É a única camada que pode falar com mais de uma das outras: abre navegador e
+  conexão, passa o HTML da automação para o parser e o resultado do parser para a
+  persistência, e fecha tudo em `try/finally`.
 
 ## 2. Gestão Crítica de Conexões e Ciclo de Vida
 - Injeção de Dependência Obrigatória:
