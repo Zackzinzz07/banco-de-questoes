@@ -1,0 +1,445 @@
+<title>Anatomia do Banco de Questões</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root{
+    --paper:#F4F6F7; --surface:#FFFFFF; --surface-2:#EDF1F3;
+    --ink:#131A1F; --ink-soft:#566169; --ink-faint:#7C888F;
+    --line:#DCE3E7; --line-soft:#E9EEF0;
+    --accent:#1B5A72; --accent-soft:#E3EDF2;
+    --alive:#2E7050; --alive-bg:#E4EFE9;
+    --dead:#9E3B36;  --dead-bg:#F6E5E4;
+    --warn:#A86A1F;  --warn-bg:#F7EDDD;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1418; --surface:#151D23; --surface-2:#1B252C;
+      --ink:#E4E9EC; --ink-soft:#96A3AB; --ink-faint:#71808A;
+      --line:#26333B; --line-soft:#1F2A31;
+      --accent:#6BAECB; --accent-soft:#18313D;
+      --alive:#6FB08C; --alive-bg:#172C22;
+      --dead:#D08A86;  --dead-bg:#2E1B1A;
+      --warn:#D9A961;  --warn-bg:#2C2415;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1418; --surface:#151D23; --surface-2:#1B252C;
+    --ink:#E4E9EC; --ink-soft:#96A3AB; --ink-faint:#71808A;
+    --line:#26333B; --line-soft:#1F2A31;
+    --accent:#6BAECB; --accent-soft:#18313D;
+    --alive:#6FB08C; --alive-bg:#172C22;
+    --dead:#D08A86;  --dead-bg:#2E1B1A;
+    --warn:#D9A961;  --warn-bg:#2C2415;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:var(--serif);
+       line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:56px 28px 96px}
+
+  h1,h2,h3,.ui{font-family:var(--sans)}
+  h1{font-size:clamp(30px,4.4vw,44px);font-weight:700;line-height:1.1;
+     letter-spacing:-.022em;margin:0;text-wrap:balance}
+  h2{font-size:22px;font-weight:600;letter-spacing:-.012em;margin:0;text-wrap:balance}
+  h3{font-size:14px;font-weight:600;margin:0}
+  p{margin:0;max-width:66ch}
+  code,.mono{font-family:var(--mono);font-size:.875em}
+
+  .eyebrow{font-family:var(--sans);font-size:11px;font-weight:600;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  .lede{font-size:17px;color:var(--ink-soft);margin-top:16px;max-width:64ch}
+
+  header{border-bottom:2px solid var(--ink);padding-bottom:28px;margin-bottom:8px}
+
+  /* ---- resumo ---- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:1px;background:var(--line);border:1px solid var(--line);margin:28px 0 0}
+  .stat{background:var(--surface);padding:16px 18px;display:flex;
+    flex-direction:column;gap:3px}
+  .stat b{font-family:var(--mono);font-size:26px;font-weight:600;
+    font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
+  .stat span{font-family:var(--sans);font-size:11.5px;color:var(--ink-soft);
+    letter-spacing:.02em}
+  .stat.is-dead b{color:var(--dead)} .stat.is-warn b{color:var(--warn)}
+
+  section{margin-top:52px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;
+    border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:22px}
+  .sec-head .n{font-family:var(--mono);font-size:12px;color:var(--ink-faint);
+    font-weight:500}
+  .sec-note{font-size:15px;color:var(--ink-soft);margin-bottom:22px;max-width:66ch}
+
+  /* ---- fluxo ---- */
+  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .step{background:var(--surface);border:1px solid var(--line);padding:16px 18px;
+    display:flex;flex-direction:column;gap:7px}
+  .step .k{font-family:var(--sans);font-size:11px;font-weight:600;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+  .step .t{font-family:var(--mono);font-size:12.5px;color:var(--ink);
+    word-break:break-word}
+  .step .d{font-size:13.5px;color:var(--ink-soft);line-height:1.5}
+
+  /* ---- pastas ---- */
+  .folder{border:1px solid var(--line);background:var(--surface);margin-bottom:16px}
+  .folder > .fh{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;
+    padding:13px 18px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+  .fh .path{font-family:var(--mono);font-size:13.5px;font-weight:600;color:var(--ink)}
+  .fh .role{font-size:13.5px;color:var(--ink-soft);flex:1;min-width:180px}
+  .rows{display:flex;flex-direction:column}
+  .row{display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(240px,2fr) 88px 62px;
+    gap:14px;align-items:baseline;padding:11px 18px;border-bottom:1px solid var(--line-soft)}
+  .row:last-child{border-bottom:0}
+  .row .f{font-family:var(--mono);font-size:12.5px;word-break:break-word}
+  .row .w{font-size:13.5px;color:var(--ink-soft);line-height:1.5}
+  .row .ln{font-family:var(--mono);font-size:12px;text-align:right;
+    font-variant-numeric:tabular-nums;color:var(--ink-faint)}
+  .row .ln.over{color:var(--warn);font-weight:600}
+  @media(max-width:720px){
+    .row{grid-template-columns:1fr 74px;grid-template-areas:"f ln" "w w" "s s";row-gap:5px}
+    .row .f{grid-area:f} .row .w{grid-area:w} .row .ln{grid-area:ln} .row .chip-cell{grid-area:s}
+  }
+
+  .chip{display:inline-block;font-family:var(--sans);font-size:10.5px;font-weight:600;
+    letter-spacing:.05em;text-transform:uppercase;padding:2.5px 8px;border-radius:2px;
+    white-space:nowrap}
+  .chip.ok{background:var(--alive-bg);color:var(--alive)}
+  .chip.orf{background:var(--dead-bg);color:var(--dead)}
+  .chip.dup{background:var(--warn-bg);color:var(--warn)}
+  .chip.entry{background:var(--accent-soft);color:var(--accent)}
+
+  /* ---- destaques ---- */
+  .callout{border-left:3px solid var(--accent);background:var(--surface);
+    padding:16px 20px;margin:20px 0;display:flex;flex-direction:column;gap:8px}
+  .callout.bad{border-left-color:var(--dead)}
+  .callout h3{font-size:14.5px}
+  .callout p{font-size:14.5px;color:var(--ink-soft)}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  .tscroll{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+  th{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-soft);text-align:left;
+    padding:11px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:11px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;
+    color:var(--ink-soft)}
+  tr:last-child td{border-bottom:0}
+  td.mono{font-family:var(--mono);font-size:12.5px;color:var(--ink);white-space:nowrap}
+  td strong{color:var(--ink);font-weight:500}
+
+  /* ---- proposta ---- */
+  .tree{font-family:var(--mono);font-size:13px;line-height:1.85;background:var(--surface);
+    border:1px solid var(--line);padding:20px 22px;overflow-x:auto;color:var(--ink-soft)}
+  .tree b{color:var(--ink);font-weight:600}
+  .tree i{color:var(--ink-faint);font-style:normal}
+  .tree .add{color:var(--alive)}
+
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);
+    font-family:var(--sans);font-size:12.5px;color:var(--ink-faint)}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Auditoria de código · 2 set 2026 · pós-faxina</p>
+  <h1>Anatomia do Banco de Questões</h1>
+  <p class="lede">O que cada arquivo faz, para que serve cada pasta, e o que sobrou
+  para arrumar depois que o código morto saiu. A limpeza removeu <strong>1.261
+  linhas</strong> sem derrubar nenhum dos 194 testes.</p>
+
+  <div class="stats">
+    <div class="stat"><b>49</b><span>arquivos .py — eram 59</span></div>
+    <div class="stat"><b>9.145</b><span>linhas — eram 10.406</span></div>
+    <div class="stat"><b>0</b><span>órfãos restantes</span></div>
+    <div class="stat is-warn"><b>11</b><span>acima do limite de tamanho</span></div>
+    <div class="stat is-warn"><b>2</b><span>ainda misturam camadas</span></div>
+  </div>
+</header>
+
+<section style="margin-top:34px">
+  <div class="sec-head"><span class="n">00</span><h2>O que saiu na faxina</h2></div>
+  <p class="sec-note">Removido via <code>git rm</code> — recuperável a qualquer momento.
+  A suíte continuou com os mesmos 194 testes passando: nada dependia do que saiu.</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Arquivo</th><th>Por que saiu</th><th>Linhas</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">scrapers/qconcursos_coletor.py<br>scrapers/qconcursos_playwright.py<br>scrapers/qconcursos_materia.py</td><td><strong>Três tentativas do mesmo coletor.</strong> Nenhuma testada, e discordavam entre si sobre o metadado — uma estampava cargo do YAML, outra trazia escrito <em>“não preencher: orgao, cargo, banca”</em>. Ficou o <code>scraper_qc.py</code>, único calibrado contra HTML real e coberto por testes.</td><td class="mono">673</td></tr>
+        <tr><td class="mono">scrapers/prf_federal_scraper.py</td><td>Coletor da PRF que ninguém importava e nenhum teste cobria.</td><td class="mono">213</td></tr>
+        <tr><td class="mono">scrapers/pci/inspecionar_estrutura.py</td><td>Ferramenta de depuração, órfã.</td><td class="mono">140</td></tr>
+        <tr><td class="mono">scrapers/pci/coletor.py</td><td>Versão 1, sem categoria/tema. O <code>coletor_v2.py</code> a substituiu e é quem os testes exercitam.</td><td class="mono">139</td></tr>
+        <tr><td class="mono">scripts/migrate_pci_schema.py</td><td>Migração avulsa fora do sistema <code>migrations/</code>, com senha no código e citando uma coluna <code>subcategoria</code> que não existe no schema.</td><td class="mono">58</td></tr>
+        <tr><td class="mono">backfill_textos.py</td><td>Sem <code>__main__</code> e sem ninguém importando: não havia como executá-lo.</td><td class="mono">32</td></tr>
+        <tr><td class="mono">orgaos/</td><td>Esqueleto que nunca ganhou conteúdo — dois arquivos com uma linha de docstring cada. O papel é cumprido pelos YAMLs de <code>configuracoes_editais/</code>.</td><td class="mono">2</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <h3>O que a faxina custou</h3>
+    <p>Os três coletores apagados tinham uma capacidade que o <code>scraper_qc.py</code>
+    não tem: percorrer as matérias de um concurso específico lido do YAML do edital, em
+    vez das matérias fixas do SEDES. Nenhum deles funcionava — sem Playwright o
+    Cloudflare barra, e a versão com Playwright nunca foi exercitada — mas a ideia é
+    boa e precisa ser reconstruída no coletor que ficou, para coletar PCDF e PMDF.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">01</span><h2>O que o sistema faz</h2></div>
+  <p class="sec-note">Três etapas independentes, ligadas só pelo banco. Cada uma
+  roda sozinha, no seu tempo — é isso que permite coletar hoje e gerar PDF amanhã.</p>
+  <div class="flow">
+    <div class="step">
+      <span class="k">1 · Coleta</span>
+      <span class="t">scraper_qc.py · scrapers/pci/</span>
+      <span class="d">Raspa questões do QConcursos (Playwright, exige login) e do
+      PCI Concursos (HTTP puro, sem login). Guarda progresso por página para
+      poder retomar.</span>
+    </div>
+    <div class="step">
+      <span class="k">2 · Banco</span>
+      <span class="t">db.py → PostgreSQL 18</span>
+      <span class="d">Uma tabela <code>questoes</code>. Deduplica por hash do
+      conteúdo, então rodar o coletor duas vezes não duplica nada.</span>
+    </div>
+    <div class="step">
+      <span class="k">3 · Simulado</span>
+      <span class="t">simulados/gerar_simulado.py</span>
+      <span class="d">Sorteia por matéria segundo os pesos do edital, monta o PDF
+      em duas colunas com gabarito no fim e marca as questões como usadas.</span>
+    </div>
+    <div class="step">
+      <span class="k">Vitrine</span>
+      <span class="t">web_api.py + web/</span>
+      <span class="d">FastAPI servindo estatísticas e o dashboard HTML. É por
+      onde se dispara a geração de PDF pelo navegador.</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">02</span><h2>Inventário por pasta</h2></div>
+  <p class="sec-note">Contagem em laranja passa do limite do arquivo — que agora é
+  escalonado: <strong>250</strong> linhas em <code>scrapers/</code> e
+  <code>simulados/estilos/</code>, <strong>350</strong> nos demais módulos,
+  <strong>60</strong> em CLIs, e <code>tests/</code> isento.
+  <span class="chip entry">entrada</span> roda direto pelo terminal;
+  <span class="chip orf">órfão</span> não é importado por ninguém nem tem ponto de
+  entrada; <span class="chip dup">duplicado</span> refaz o que outro já faz.</p>
+
+  <div class="folder">
+    <div class="fh"><span class="path">raiz/</span>
+      <span class="role">Núcleo: banco, editais e a API. Tudo que é importado por muitos.</span></div>
+    <div class="rows">
+      <div class="row"><span class="f">db.py</span><span class="w">Conexão PostgreSQL, criação do schema, dedupe por hash, sorteio de questões por matéria/banca/órgão/cargo. O módulo mais central: 25 arquivos dependem dele.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln over">323</span></div>
+      <div class="row"><span class="f">web_api.py</span><span class="w">FastAPI: endpoints de estatística, geração de simulado por cargo e por matéria, download de PDF, e serve a pasta <code>web/</code>.</span><span class="chip-cell"><span class="chip entry">entrada</span></span><span class="ln over">514</span></div>
+      <div class="row"><span class="f">scraper_qc.py</span><span class="w">Coletor do QConcursos em duas fases: enunciados e gabaritos (responde as questões no site respeitando a cota diária). Único scraper com testes.</span><span class="chip-cell"><span class="chip entry">entrada</span></span><span class="ln over">474</span></div>
+      <div class="row"><span class="f">edital_loader.py</span><span class="w">Lê os YAMLs de <code>configuracoes_editais/</code> e entrega matérias, pesos e cargos de cada concurso.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln over">205</span></div>
+      <div class="row"><span class="f">edital.py</span><span class="w">Matérias, assuntos e pesos do SEDES/DF escritos em código — a versão anterior ao sistema de YAML, ainda usada pelo simulado geral.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">141</span></div>
+      <div class="row"><span class="f">conteudo_mapper.py</span><span class="w">Hierarquia Matéria → Categoria → Tema a partir de <code>mapeamento_conteudos.yaml</code>, com um palpite por palavra-chave.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">119</span></div>
+      <div class="row"><span class="f">salvar_html_exemplo.py</span><span class="w">Abre o Chrome com perfil dedicado, espera o login no QConcursos e captura o HTML.</span><span class="chip-cell"><span class="chip entry">entrada</span></span><span class="ln">117</span></div>
+      <div class="row"><span class="f">config.py</span><span class="w">Lê <code>DATABASE_URL</code> e <code>TEST_DATABASE_URL</code> do ambiente.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">17</span></div>
+      <div class="row"><span class="f">conftest.py</span><span class="w">Só marca a raiz para o pytest achar os imports. Tinha 34 linhas de fixture duplicada e morta — esvaziado hoje.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">12</span></div>
+    </div>
+  </div>
+
+  <div class="folder">
+    <div class="fh"><span class="path">scrapers/</span>
+      <span class="role">Coletores. Era onde morava toda a duplicação; sobraram só os arquivos em uso.</span></div>
+    <div class="rows">
+      <div class="row"><span class="f">pci/parser.py</span><span class="w">Extrai questões do HTML do PCI com BeautifulSoup. Funções puras, sem rede nem banco — já é o que o <code>CLAUDE.md</code> pede de um parser.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln over">313</span></div>
+      <div class="row"><span class="f">pci/config.py</span><span class="w">Mapa de categorias e temas do PCI para as matérias do projeto.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln over">168</span></div>
+      <div class="row"><span class="f">pci/coletor_v2.py</span><span class="w">Percorre categorias e temas do PCI salvando com hierarquia completa. É o coletor em uso.</span><span class="chip-cell"><span class="chip entry">entrada</span></span><span class="ln over">155</span></div>
+      <div class="row"><span class="f">http_utils.py</span><span class="w">Sessão HTTP com <em>retry</em> e pausa aleatória entre requisições.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">38</span></div>
+    </div>
+  </div>
+
+  <div class="folder">
+    <div class="fh"><span class="path">simulados/</span>
+      <span class="role">Geração dos PDFs. Dois motores concorrentes: um em uso, outro nunca ligado.</span></div>
+    <div class="rows">
+      <div class="row"><span class="f">gerar_simulado.py</span><span class="w">O motor que de fato gera os PDFs: duas colunas, cabeçalho, imagens em cache e gabarito no fim.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln over">334</span></div>
+      <div class="row"><span class="f">estilos/base.py</span><span class="w">Classe base de estilo visual por banca, herdada pelas quatro abaixo.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln over">348</span></div>
+      <div class="row"><span class="f">estilos/{aocp,cebraspe,fgv,iades}.py</span><span class="w">Estilos por banca. Só existem para o motor multibanca, que nada chama em produção.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln over">~330</span></div>
+      <div class="row"><span class="f">gerador_multibanca.py</span><span class="w">Segundo motor de PDF, por banca. Só é usado pelos testes e pela CLI órfã abaixo — nenhum caminho de produção passa por ele.</span><span class="chip-cell"><span class="chip dup">duplicado</span></span><span class="ln over">457</span></div>
+      <div class="row"><span class="f">cli_multibanca.py</span><span class="w">Linha de comando do motor multibanca. Sem <code>__main__</code> e sem ninguém importando: não roda hoje — mas o <code>CLAUDE.md</code> passou a citá-la como orquestrador oficial, com teto de 60 linhas.</span><span class="chip-cell"><span class="chip dup">previsto</span></span><span class="ln over">133</span></div>
+    </div>
+  </div>
+
+  <div class="folder">
+    <div class="fh"><span class="path">migrations/ · scripts/</span>
+      <span class="role">Evolução do schema e utilitários de uma vez só.</span></div>
+    <div class="rows">
+      <div class="row"><span class="f">migrations/migration_001.py<br>migrations/migration_002.py</span><span class="w">Adicionam categoria/tema e banca/órgão/cargo. Aplicadas sozinhas na primeira conexão do processo.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">23 · 27</span></div>
+      <div class="row"><span class="f">scripts/importar_sqlite.py</span><span class="w">Importa o banco SQLite antigo para o PostgreSQL. Escrito hoje; trouxe as 904 questões que existem.</span><span class="chip-cell"><span class="chip entry">entrada</span></span><span class="ln">112</span></div>
+    </div>
+  </div>
+
+  
+  <div class="folder">
+    <div class="fh"><span class="path">dados e interface</span>
+      <span class="role">Pastas sem código Python — configuração, front-end e artefatos.</span></div>
+    <div class="rows">
+      <div class="row"><span class="f">configuracoes_editais/</span><span class="w">Um YAML por concurso (SEDES, PRF, PCDF, PMDF, BACEN, Receita, INSS, Correios, BB) com matérias e pesos. Adicionar concurso é adicionar arquivo, sem tocar em código.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">9</span></div>
+      <div class="row"><span class="f">configuracoes_bancas/</span><span class="w">Estilo visual de cada banca em YAML. Só alimenta o motor multibanca, que não está em uso.</span><span class="chip-cell"><span class="chip dup">duplicado</span></span><span class="ln">4</span></div>
+      <div class="row"><span class="f">web/</span><span class="w">Dashboards em HTML/CSS/JS puro servidos pela API: geral, por matéria, do PCI e o educacional com XP e ofensiva.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">8</span></div>
+      <div class="row"><span class="f">tests/</span><span class="w">194 testes passando. Cobrem banco, scraper do QC, editais, geração de PDF e a API.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">18</span></div>
+      <div class="row"><span class="f">imagens_cache/ · perfil_chrome_scraper/ · estudo_autonomo/</span><span class="w">Cache de imagens, perfil do Chrome com o login salvo e os PDFs gerados. Fora do Git, por conterem sessão e binários.</span><span class="chip-cell"><span class="chip ok">ativo</span></span><span class="ln">—</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">03</span><h2>O problema central</h2></div>
+  <p class="sec-note">Não é excesso de linhas — é o mesmo problema resolvido quatro vezes.</p>
+
+  <div class="callout bad">
+    <h3>Quatro coletores do QConcursos, nenhum acordo entre eles</h3>
+    <p><code>scraper_qc.py</code>, <code>qconcursos_coletor.py</code>,
+    <code>qconcursos_playwright.py</code> e <code>qconcursos_materia.py</code> atacam
+    a mesma fonte com estratégias diferentes. Só o primeiro tem testes e seletores
+    calibrados contra HTML real; os outros três nunca foram exercitados. E eles
+    discordam sobre o dado: um estampa o cargo vindo do YAML, outro tem escrito
+    <em>“não preencher: orgao, cargo, banca”</em>. Quem lê o código não tem como
+    saber qual é o certo.</p>
+  </div>
+
+  <div class="callout bad">
+    <h3>Dois motores de PDF, um deles nunca ligado</h3>
+    <p><code>gerar_simulado.py</code> gera os PDFs de verdade.
+    <code>gerador_multibanca.py</code> tem 457 linhas, quatro arquivos de estilo,
+    quatro YAMLs de banca e uma CLI — e nenhum caminho de produção passa por ele.
+    São ~1.800 linhas mantidas por testes que testam só a si mesmas.</p>
+  </div>
+
+  <div class="callout bad">
+    <h3>Dois arquivos ainda misturam camadas</h3>
+    <p>A faxina levou cinco dos sete infratores. Sobraram os dois que o projeto
+    realmente usa:</p>
+    <div class="tscroll" style="margin-top:6px">
+      <table>
+        <thead><tr><th>Arquivo</th><th>Camada declarada</th><th>O que viola</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">scraper_qc.py</td><td><strong>automação</strong></td><td>6 usos de BeautifulSoup <em>e</em> 3 de banco — infringe as duas proibições da camada</td></tr>
+          <tr><td class="mono">scrapers/pci/coletor_v2.py</td><td><strong>automação</strong></td><td>chama <code>db.salvar_questao</code> dentro do laço de coleta</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Vale registrar o que o hook <em>não</em> faz, porque é fácil supor o contrário:
+    ele inspeciona o <strong>trecho sendo gravado</strong>, não o arquivo. Testado na
+    prática — trocar uma linha inocente do <code>scraper_qc.py</code> passa sem
+    reclamação, apesar das violações que o arquivo já carrega. O hook impede
+    <em>introduzir</em> violação nova; a antiga fica. Isso é coerente com o próprio
+    <code>CLAUDE.md</code>, que fala em travar “o que for editado daqui em diante”.</p>
+  </div>
+
+  <div class="callout bad">
+    <h3>Uma brecha concreta no guarda de camada</h3>
+    <p>Os padrões que ele procura para detectar acesso a banco são
+    <code>psycopg</code>, <code>sqlite3</code>, <code>.execute(</code>,
+    <code>INSERT INTO</code> e <code>SELECT … FROM</code>. Só que o jeito idiomático
+    deste projeto tocar o banco é chamar <code>db.salvar_questao(con, q)</code> — que
+    não casa com nenhum deles. Verificado: essa linha passa pelo guarda no
+    <code>coletor_v2.py</code> sem bloqueio.</p>
+    <p>No outro extremo, o padrão <code>SELECT .* FROM</code> com <code>-i</code> casa
+    prosa: um comentário como <em>“antes fazia SELECT id FROM questoes aqui”</em> é
+    bloqueado. O guarda pega SQL cru que quase não existe no código e deixa passar a
+    chamada real que existe em toda parte.</p>
+  </div>
+
+  <div class="callout">
+    <h3>O que ainda falta, além das camadas</h3>
+    <p>Não existe modelo tipado de Questão em lugar nenhum: ela circula como
+    dicionário solto entre scraper, banco e gerador de PDF, e um campo errado só
+    aparece como questão faltando no PDF. O <code>CLAUDE.md</code> pede dataclass ou
+    Pydantic — é a única camada das cinco que não tem nenhum arquivo hoje.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">04</span><h2>Para onde ir</h2></div>
+  <p class="sec-note">A revisão do <code>CLAUDE.md</code> mudou o destino: não se trata
+  mais de mudar tudo para uma árvore <code>core/</code>+<code>storage/</code>. As
+  camadas agora são <em>atribuídas aos arquivos que já existem</em> — o trabalho é
+  separar o que está misturado, no lugar onde está. Em verde, o que precisa nascer.</p>
+
+  <div class="tree">
+<i>— camada de AUTOMAÇÃO: só Playwright, sem BS4, sem banco —</i>
+<b>scraper_qc.py</b>              <i>fica só com navegação, login, cota e cliques</i>
+<b>scrapers/pci/coletor_v2.py</b>  <i>idem: sai a chamada ao banco</i>
+
+<i>— camada de PARSING: só BeautifulSoup, 100% pura —</i>
+<b>scrapers/pci/parser.py</b>      <i>já é assim; serve de modelo (falta cair p/ 250)</i>
+<span class="add">scrapers/qc/parser.py</span>        <i>recebe o HTML que sai do scraper_qc e devolve</i>
+                        <i>questões: extrair_blocos, _campos_info,</i>
+                        <i>_extrair_cargo_da_prova, atingiu_limite</i>
+
+<i>— camada de MODELOS: a única sem nenhum arquivo hoje —</i>
+<span class="add">models.py</span>                    <i>dataclass Questão: enunciado, alternativas,</i>
+                        <i>gabarito, banca, órgão, cargo, ano</i>
+
+<i>— camada de PERSISTÊNCIA: sem DOM, recebe conexão pronta —</i>
+<b>db.py</b>  <b>scripts/importar_sqlite.py</b>  <b>migrations/</b>   <i>já conformes</i>
+
+<i>— camada de ORQUESTRAÇÃO: linear, abaixo de 60 linhas —</i>
+<span class="add">main.py</span>                      <i>abre navegador e conexão, chama as camadas,</i>
+                        <i>fecha tudo em try/finally</i>
+<b>simulados/cli_multibanca.py</b> <i>hoje 133 linhas, precisa caber em 60</i>
+  </div>
+
+  <div class="tscroll" style="margin-top:22px">
+    <table>
+      <thead><tr><th>Passo</th><th>O que fazer</th><th>Ganho</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1 ✓</td><td><strong>Apagar o que está morto</strong> — <em>feito</em>: — <code>backfill_textos.py</code>, <code>cli_multibanca.py</code>, <code>prf_federal_scraper.py</code>, <code>inspecionar_estrutura.py</code>, <code>migrate_pci_schema.py</code>, <code>orgaos/</code>, <code>pci/coletor.py</code></td><td>−720 linhas, zero risco: nada importa esses arquivos</td></tr>
+        <tr><td class="mono">2 ✓</td><td><strong>Escolher um coletor de QC</strong> — <em>feito</em>: e apagar os outros três, levando para o escolhido a única boa ideia que só eles têm: preencher cargo a partir do YAML do edital</td><td>−670 linhas e uma resposta só para “como se coleta”</td></tr>
+        <tr><td class="mono">3</td><td><strong>Decidir o destino do multibanca</strong> — ligá-lo de verdade na API ou removê-lo com seus estilos e YAMLs</td><td>Resolve ~1.800 linhas hoje em limbo</td></tr>
+        <tr><td class="mono">4</td><td><strong>Destravar o <code>scraper_qc.py</code></strong> — extrair o BeautifulSoup para <code>scrapers/qc/parser.py</code> e tirar a gravação no banco, deixando só Playwright</td><td>Sai de 474 para dentro do limite e destrava edição futura</td></tr>
+        <tr><td class="mono">5</td><td><strong>Criar <code>models.py</code></strong> com a Questão tipada e fazer scraper, banco e PDF falarem por ela</td><td>Erro de campo vira erro de tipo, não questão faltando no PDF</td></tr>
+        <tr><td class="mono">6</td><td><strong>Fatiar o resto acima do teto</strong> — <code>web_api.py</code> (514/350), os 5 arquivos de <code>simulados/estilos/</code> (~330/250), <code>pci/parser.py</code> (313/250)</td><td>Zera a dívida de tamanho que o hook registra</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <h3>A ordem importa mais agora</h3>
+    <p>Os passos 1 a 3 só apagam código — reversíveis pelo Git, nada que a suíte
+    cobre. E limpar antes tem um efeito concreto sob as regras novas: dos sete
+    arquivos travados pelo hook de camada, <strong>cinco desaparecem na limpeza</strong>
+    (os três coletores QC duplicados, o <code>prf_federal_scraper.py</code> órfão e o
+    <code>pci/coletor.py</code> v1). Sobram dois para consertar de verdade — o
+    <code>scraper_qc.py</code> e o <code>coletor_v2.py</code> — em vez de sete.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="n">05</span><h2>Os hooks que passaram a vigiar</h2></div>
+  <p class="sec-note">Três scripts em <code>.claude/hooks/</code> ligados pelo
+  <code>settings.json</code>. Deixam de ser regra escrita e viram regra executada.</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Hook</th><th>Quando</th><th>O que faz</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">guarda_camada.sh</td><td><strong>antes</strong> de Edit/Write</td><td>Lê o conteúdo que seria gravado e recusa (exit 2) se a camada de automação trouxer BeautifulSoup ou banco, se um <code>parser.py</code> trouxer rede ou banco, ou se a persistência trouxer seletores de DOM. Ignora <code>tests/</code>.</td></tr>
+        <tr><td class="mono">tamanho.sh</td><td><strong>depois</strong> de Edit/Write</td><td>Conta as linhas do arquivo salvo e avisa se passou do teto da pasta — 250, 350 ou 60 conforme o caso.</td></tr>
+        <tr><td class="mono">formatar.sh</td><td><strong>depois</strong> de Edit/Write</td><td>Aplica <code>ruff</code>. Já rodou nesta sessão: reformatou boa parte dos módulos assim que foram tocados.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <h3>Por que isso muda o plano</h3>
+    <p>Antes, exceder o tamanho ou misturar camada era dívida a pagar algum dia.
+    Agora é bloqueio na hora de editar — e recai primeiro sobre o
+    <code>scraper_qc.py</code>, o coletor de que o projeto mais depende. Por isso
+    destravá-lo subiu de "faxina eventual" para pré-requisito de qualquer manutenção
+    no QConcursos.</p>
+  </div>
+</section>
+
+<footer>
+  Levantado com <code>ruff</code>, <code>vulture</code>, leitura dos hooks em
+  <code>.claude/</code> e análise do grafo de imports. Estado na revisão:
+  194 testes passando, 1.098 questões no banco, 11 arquivos acima do teto.
+</footer>
+
+</div>
