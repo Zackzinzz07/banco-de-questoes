@@ -71,3 +71,28 @@ def test_coletor_grava_banca_e_orgao_da_questao(html):
     assert linha["com_banca"] > 0, "banca extraída pelo parser foi descartada"
     assert linha["com_orgao"] > 0, "órgão extraído pelo parser foi descartado"
     con.close()
+
+
+def test_questao_ruim_nao_derruba_o_tema_inteiro(html, monkeypatch):
+    """Uma questão que estoura na gravação não pode abortar as demais.
+
+    Foi o que aconteceu em produção: um byte NUL numa questão de `matematica`
+    propagou até o except no nível da categoria e descartou os 63 temas dela.
+    """
+    real = db.salvar_questao
+    chamadas = {"n": 0}
+
+    def salvar_com_a_primeira_quebrada(con, q):
+        chamadas["n"] += 1
+        if chamadas["n"] == 1:
+            raise ValueError("A string literal cannot contain NUL (0x00) characters.")
+        return real(con, q)
+
+    monkeypatch.setattr(db, "salvar_questao", salvar_com_a_primeira_quebrada)
+
+    con = db.conectar()
+    novas = coletor_v2.coletar_tema_v2(_SessaoFalsa(html), "portugues", "ortografia", con)
+
+    assert chamadas["n"] > 1, "parou na primeira questão em vez de seguir para as demais"
+    assert novas > 0, "nenhuma questão foi gravada apesar de só uma estar quebrada"
+    con.close()

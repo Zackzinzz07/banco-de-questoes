@@ -61,30 +61,36 @@ def coletar_tema_v2(sessao, categoria, tema_slug, con):
             break
 
         for q in questoes:
-            salvou = db.salvar_questao(
-                con,
-                {
-                    "id_qc": q.get("id_pci"),
-                    "enunciado": q.get("enunciado"),
-                    "alternativas": q.get("alternativas", {}),
-                    # O PCI publica o gabarito da página inteira num JSON no HTML
-                    # (simGabaritos), então a resposta vem junto do enunciado.
-                    "gabarito": q.get("gabarito"),
-                    "comentario": None,
-                    "materia": materia,
-                    "assunto": None,
-                    "banca": q.get("banca"),
-                    "orgao": q.get("orgao"),
-                    "ano": q.get("ano"),
-                    "prova": q.get("prova"),
-                    "fonte": "pci",
-                    "texto_associado": q.get("texto_associado"),
-                    "imagens": q.get("imagens", []),
-                    "imagens_urls": q.get("imagens_urls", []),
-                    "categoria": categoria,
-                    "tema": tema_slug,
-                },
-            )
+            try:
+                salvou = db.salvar_questao(
+                    con,
+                    {
+                        "id_qc": q.get("id_pci"),
+                        "enunciado": q.get("enunciado"),
+                        "alternativas": q.get("alternativas", {}),
+                        # O PCI publica o gabarito da página inteira num JSON no HTML
+                        # (simGabaritos), então a resposta vem junto do enunciado.
+                        "gabarito": q.get("gabarito"),
+                        "comentario": None,
+                        "materia": materia,
+                        "assunto": None,
+                        "banca": q.get("banca"),
+                        "orgao": q.get("orgao"),
+                        "ano": q.get("ano"),
+                        "prova": q.get("prova"),
+                        "fonte": "pci",
+                        "texto_associado": q.get("texto_associado"),
+                        "imagens": q.get("imagens", []),
+                        "imagens_urls": q.get("imagens_urls", []),
+                        "categoria": categoria,
+                        "tema": tema_slug,
+                    },
+                )
+            except Exception as erro:
+                # Uma questão malformada não pode derrubar o tema inteiro
+                # (CLAUDE.md 3): registra e segue para a próxima.
+                print(f"      [SKIP] questao {q.get('id_pci')}: {erro}")
+                continue
             if salvou:
                 total_novas += 1
 

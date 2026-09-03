@@ -8,6 +8,8 @@ import psycopg2
 import psycopg2.errors
 from psycopg2.extras import RealDictCursor
 
+import sanitizacao
+
 try:
     from . import config
 except ImportError:
@@ -145,6 +147,8 @@ def salvar_questao(con, q):
     if fonte not in FONTES_VALIDAS:
         raise ValueError(f"fonte inválida: '{fonte}'. Use {', '.join(sorted(FONTES_VALIDAS))}.")
 
+    # PostgreSQL rejeita 0x00 em text; limpar aqui protege todas as fontes.
+    q = sanitizacao.sem_nul(q)
     c_hash = content_hash(q["enunciado"], q["alternativas"])
     # Gabarito "" é ausência de gabarito, não gabarito válido: guardar a string
     # vazia esconderia a questão de sem_gabarito() para sempre.

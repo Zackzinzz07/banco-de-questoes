@@ -333,3 +333,26 @@ def test_sortear_questoes_cargo_nao_encontra_quando_diferente():
     # Filter by different cargo - should return empty
     resultados = db.sortear_questoes(con, "Direito", 1, cargo="Técnico Administrativo")
     assert len(resultados) == 0
+
+
+def test_salvar_questao_com_byte_nul_no_enunciado_nao_quebra():
+    """PostgreSQL rejeita 0x00 em text. Uma questão do PCI com esse byte
+    derrubou a categoria `matematica` inteira; a gravação tem que limpar o
+    caractere em vez de estourar."""
+    con = db.conectar()
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QNUL1",
+            enunciado="Quanto é 2\x00 + 2?",
+            alternativas={"A": "4\x00", "B": "5"},
+        ),
+    )
+    linha = con.execute(
+        "SELECT enunciado, alternativas FROM questoes WHERE id_qc=%s", ("QNUL1",)
+    ).fetchone()
+    assert linha is not None, "a questão não foi gravada"
+    assert "\x00" not in linha["enunciado"]
+    assert linha["enunciado"] == "Quanto é 2 + 2?"
+    assert "\x00" not in str(linha["alternativas"])
+    con.close()
