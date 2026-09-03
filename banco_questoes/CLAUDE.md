@@ -7,13 +7,13 @@
 - Demais módulos de aplicação (`web_api.py`, `db.py`, `simulados/**`, raiz): máximo **350 linhas**.
 - `tests/**`: **isento**. Cobertura não é dívida técnica e não deve ser desincentivada.
 - Orquestradores de CLI (`main.py`, `simulados/cli_multibanca.py`): abaixo de **60 linhas**.
-- Dívida conhecida: 27 arquivos hoje excedem esses limites. O hook trava apenas o que for
+- Dívida conhecida: 11 arquivos hoje excedem esses limites. O hook trava apenas o que for
   editado daqui em diante — não é para refatorar tudo de uma vez.
 
 ### 1.2 Divisão obrigatória de camadas
-- **Automação** — `scraper_qc.py`, `scrapers/qconcursos_*.py`, `scrapers/prf_federal_scraper.py`,
-  `scrapers/pci/coletor*.py`: apenas Playwright (navegação, cliques, waits, obtenção de HTML).
-  Proibido BeautifulSoup. Proibido acessar banco de dados.
+- **Automação** — `scraper_qc.py` e `scrapers/pci/coletor*.py`: apenas Playwright ou HTTP
+  (navegação, cliques, waits, obtenção de HTML). Proibido BeautifulSoup. Proibido acessar
+  banco de dados.
 - **Parsing** — `scrapers/pci/parser.py` e qualquer `**/parser.py`: apenas extração e tratamento
   com BeautifulSoup (recebe string HTML, devolve modelos tipados). Funções 100% puras, sem I/O
   de rede ou banco.

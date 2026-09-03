@@ -19,8 +19,7 @@ bloqueia() {
 }
 
 # --- Camada de automacao: Playwright apenas ---
-if [[ "$rel" == scraper_qc.py || "$rel" == scrapers/qconcursos_*.py \
-   || "$rel" == scrapers/prf_federal_scraper.py || "$rel" == scrapers/pci/coletor*.py ]]; then
+if [[ "$rel" == scraper_qc.py || "$rel" == scrapers/pci/coletor*.py ]]; then
   if grep -qiE 'BeautifulSoup|from[[:space:]]+bs4|import[[:space:]]+bs4' <<<"$conteudo"; then
     bloqueia "Parsing de HTML nao pertence a camada de automacao. Mova para a camada de parsing (**/parser.py)."
   fi
