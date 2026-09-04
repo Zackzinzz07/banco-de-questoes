@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
+from . import alternativas
 from .base import BaseBancaStyle
 
 
@@ -207,13 +208,25 @@ class EstiloCebraspe(BaseBancaStyle):
         # Calculate position for answer options
         y_opcoes = posicao_y - altura_usada - self.MARGEM_INTERNA_PT
 
-        # Draw response options: (C) and (E)
-        canvas_obj.setFont("Helvetica", 10)
-        opcoes_texto = "( ) Certo    ( ) Errado"
-        canvas_obj.drawString(x_enunciado, y_opcoes, opcoes_texto)
+        # As alternativas com o texto. Item sem opcao (certo/errado puro da
+        # banca) cai no marcador, que e o formato correto ali.
+        largura_opcoes = largura_disponivel - (x_enunciado - posicao_x)
+        altura_opcoes = alternativas.desenhar(
+            canvas_obj,
+            questao_data.get("opcoes") or [],
+            x_enunciado,
+            y_opcoes,
+            largura_opcoes,
+            self._desenhar_texto_quebrado,
+            tamanho_fonte=9.5,
+            fonte="Times-Roman",
+        )
+        if not altura_opcoes:
+            canvas_obj.setFont("Helvetica", 10)
+            canvas_obj.drawString(x_enunciado, y_opcoes, "( ) Certo    ( ) Errado")
+            altura_opcoes = alternativas.ALTURA_MARCADOR_PT
 
-        # Calculate total height used
-        altura_total = altura_usada + self.MARGEM_INTERNA_PT + 12  # 12 points for options
+        altura_total = altura_usada + self.MARGEM_INTERNA_PT + altura_opcoes
 
         return altura_total
 
@@ -248,7 +261,17 @@ class EstiloCebraspe(BaseBancaStyle):
 
         # Estimate height: base height + additional space for text
         altura_texto = numero_linhas * 12  # 12 points per line
-        altura_opcoes = 15  # Space for the C/E options
+
+        # A altura das alternativas usa a MESMA quebra de linha do desenho:
+        # 15pt fixos so servem para o item certo/errado puro, sem opcoes. Com
+        # alternativas impressas, subestimar faz a questao seguinte entrar por
+        # cima -- foi o que embaralhou as opcoes (C), (D) e (E) num simulado.
+        altura_opcoes = alternativas.altura(
+            questao_data.get("opcoes") or [],
+            largura_disponivel,
+            self._quebrar_texto,
+            tamanho_fonte=9.5,
+        )
 
         altura_total = altura_base_pt + altura_texto + altura_opcoes
 

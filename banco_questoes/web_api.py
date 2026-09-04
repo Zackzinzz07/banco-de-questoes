@@ -144,10 +144,12 @@ def stats_materias():
         "SELECT COUNT(DISTINCT categoria) AS n FROM questoes WHERE categoria IS NOT NULL"
     )
 
-    # Por matéria com fontes e categorias
+    # Por matéria com fontes e categorias.
     # LIMIT nao entra no ORDER BY de agregacao no PostgreSQL -- era erro de
     # sintaxe, e este endpoint devolvia 500 desde que foi escrito. A amostra de
-    # 3 categorias sai fatiando o array agregado.
+    # 3 categorias sai fatiando o array agregado; sem o corte, materias como
+    # Lingua Portuguesa mandariam dezenas de categorias numa string so (o banco
+    # tem 433 distintas).
     materias_data = con.execute("""
         SELECT
             materia,

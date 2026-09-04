@@ -14,6 +14,7 @@ from typing import Any, Dict, List
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
+from . import alternativas
 from .base import BaseBancaStyle
 
 
@@ -213,8 +214,20 @@ class EstiloAOCP(BaseBancaStyle):
 
         # Draw response options: (A) (B) (C) (D) (E)
         canvas_obj.setFont("Helvetica", 10)
-        opcoes_texto = "( ) A    ( ) B    ( ) C    ( ) D    ( ) E"
-        canvas_obj.drawString(x_enunciado, y_opcoes, opcoes_texto)
+        largura_opcoes = largura_disponivel - (x_enunciado - posicao_x)
+        altura_opcoes = alternativas.desenhar(
+            canvas_obj,
+            questao_data.get("opcoes") or [],
+            x_enunciado,
+            y_opcoes,
+            largura_opcoes,
+            self._desenhar_texto_quebrado,
+        )
+        if not altura_opcoes:
+            canvas_obj.drawString(
+                x_enunciado, y_opcoes, "( ) A    ( ) B    ( ) C    ( ) D    ( ) E"
+            )
+            altura_opcoes = alternativas.ALTURA_MARCADOR_PT
 
         # Calculate total height used
         altura_total = altura_usada + self.MARGEM_INTERNA_PT + 20  # 20 points for box and options
@@ -254,7 +267,15 @@ class EstiloAOCP(BaseBancaStyle):
         # Estimate height: base height + additional space for text
         altura_texto = numero_linhas * 14  # 14 points per line
         altura_box_numero = self.TAMANHO_BOX_NUMERO_PT + 5  # Box plus margin
-        altura_opcoes = 20  # Space for the A-E options
+
+        # A altura das alternativas usa a MESMA quebra de linha do desenho:
+        # contar opcoes e multiplicar por altura fixa subestima quando a
+        # alternativa quebra em duas linhas, e a questao seguinte entra por cima.
+        altura_opcoes = alternativas.altura(
+            questao_data.get("opcoes") or [],
+            largura_disponivel,
+            self._quebrar_texto,
+        )
 
         altura_total = altura_base_pt + altura_texto + altura_box_numero + altura_opcoes
 
