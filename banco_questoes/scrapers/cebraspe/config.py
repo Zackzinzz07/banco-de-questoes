@@ -46,7 +46,13 @@ _REGRAS = (
     (r"ABERTURA|RETIFICA", EDITAL),
 )
 
-# Se bater aqui, nao e edital normativo por mais que o titulo diga "Edital".
+# Tipos em que um aviso administrativo se disfarca: "Edital n.o 7 -- Resultado
+# final na PROVA OBJETIVA" casava com a regra de CADERNO por conter a
+# expressao. Gabarito fica de fora da guarda de proposito: a banca costuma
+# publicar "resultado" e "gabarito" no mesmo aviso.
+_SUJEITOS_A_GUARDA = (CADERNO, EDITAL)
+
+# Se bater aqui, e aviso administrativo por mais que o titulo diga "Edital".
 _NAO_NORMATIVO = re.compile(
     # "INSCRICOES" fica de fora de proposito: "Abertura de inscricoes" e o
     # edital normativo. As listas de inscritos ja caem em RELATORIO / REL_.
@@ -69,7 +75,7 @@ def classificar(arquivo: dict) -> str:
     alvo = _sem_acento(f"{arquivo.get('nome', '')} {arquivo.get('descricao', '')}")
     for padrao, tipo in _REGRAS:
         if re.search(padrao, alvo):
-            if tipo is EDITAL and _NAO_NORMATIVO.search(alvo):
+            if tipo in _SUJEITOS_A_GUARDA and _NAO_NORMATIVO.search(alvo):
                 return OUTRO
             return tipo
     return OUTRO
@@ -95,6 +101,9 @@ def aproveitaveis(arquivos: list[dict]) -> list[dict]:
     """
     por_tipo: dict[str, list[dict]] = {}
     for arquivo in arquivos:
+        # A Cebraspe publica parte dos documentos em HTML; o parser le PDF.
+        if not arquivo.get("nome", "").lower().endswith(".pdf"):
+            continue
         tipo = classificar(arquivo)
         if tipo in APROVEITAVEIS:
             por_tipo.setdefault(tipo, []).append(arquivo)

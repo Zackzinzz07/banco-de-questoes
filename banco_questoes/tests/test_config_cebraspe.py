@@ -136,3 +136,36 @@ def test_aviso_de_resultado_nao_e_edital_aproveitavel():
     ):
         item = {"nome": nome, "descricao": descricao, "origem": "edital"}
         assert config.classificar(item) == "outro", f"{descricao!r} não deveria ser arquivado"
+
+
+def test_aviso_de_resultado_nao_vira_caderno_por_conter_prova_objetiva():
+    """Caso real (AGSUS_25_CCE): a descrição "Edital nº 7 – Resultado final na
+    prova objetiva e a convocação..." casava com a regra de CADERNO por causa
+    de "prova objetiva", e o arquivo entrava na lista de aproveitáveis."""
+    item = {
+        "nome": "C5FF2BA57D467D34F61D023FCAAFBB1C0E19DC9A43C47AF45293F5439A527B86.html",
+        "descricao": "Edital nº 7 – Resultado final na prova objetiva e a convocação",
+        "origem": "gabarito",
+    }
+    assert config.classificar(item) == "outro"
+
+
+def test_gabarito_continua_valido_mesmo_falando_em_resultado():
+    """A guarda de não-normativo não pode derrubar gabarito: a banca costuma
+    publicar "resultado" e "gabarito" no mesmo aviso."""
+    item = {
+        "nome": "GAB_DEFINITIVO_578_PRF_001_01.PDF",
+        "descricao": "Gabarito definitivo e resultado da prova objetiva",
+        "origem": "gabarito",
+    }
+    assert config.classificar(item) == "gabarito_definitivo"
+
+
+def test_arquivo_que_nao_e_pdf_fica_de_fora_dos_aproveitaveis():
+    """A Cebraspe publica parte dos documentos em HTML; o parser lê PDF."""
+    arquivos = [
+        _arquivo("CAD_01.html", "PROVA OBJETIVA - ITENS DE 1 A 50"),
+        _arquivo("CAD_02.PDF", "PROVA OBJETIVA - ITENS DE 51 A 100"),
+    ]
+    nomes = {a["nome"] for a in config.aproveitaveis(arquivos)}
+    assert nomes == {"CAD_02.PDF"}

@@ -70,7 +70,12 @@ def coletar_concurso(sessao, slug: str, pasta_base: Path) -> int:
 
     arquivos = coletor.listar_arquivos(sessao, slug)
     uteis = config.aproveitaveis(arquivos)
-    editais = [a for a in arquivos if config.classificar(a) == config.EDITAL]
+    editais = [
+        a
+        for a in arquivos
+        # A Cebraspe publica parte dos avisos em HTML; o parser le PDF.
+        if a["nome"].lower().endswith(".pdf") and config.classificar(a) == config.EDITAL
+    ]
     if not uteis and not editais:
         return 0
 

@@ -131,3 +131,29 @@ def test_segue_normalmente_quando_ha_espaco(tmp_path, pdf_real):
     assert coletar_cebraspe.espaco_livre_gb(tmp_path) > 0
     coletar_cebraspe.coletar_concurso(_SessaoFalsa(pdf=pdf_real), "PC_DF_24_ADM", tmp_path)
     assert (tmp_path / "PC_DF_24_ADM" / "itens.json").exists()
+
+
+def test_edital_em_html_nao_e_baixado(tmp_path):
+    """A Cebraspe publica parte dos avisos em HTML. Baixar para tentar ler como
+    PDF gastava banda e enchia o log de erro."""
+
+    class _ComHtml(_SessaoFalsa):
+        def get(self, url, timeout=None, **kwargs):
+            if "fase/encerrado" in url:
+                return _Resposta(dados=EVENTOS)
+            if url.endswith("PC_DF_24_ADM"):
+                return _Resposta(
+                    dados={
+                        "arquivosGabarito": [],
+                        "arquivosEdital": [
+                            {"nomeArquivo": "ED_1.html", "descricaoArquivo": "Edital nº 1 – Abertura"},
+                            {"nomeArquivo": "ED_1.PDF", "descricaoArquivo": "Edital nº 1 – Abertura"},
+                        ],
+                    }
+                )
+            self.baixados.append(url.rsplit("/", 1)[-1])
+            return _Resposta(conteudo=self._pdf)
+
+    sessao = _ComHtml()
+    coletar_cebraspe.coletar_concurso(sessao, "PC_DF_24_ADM", tmp_path)
+    assert sessao.baixados == ["ED_1.PDF"]
