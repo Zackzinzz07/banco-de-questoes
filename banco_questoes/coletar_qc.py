@@ -15,13 +15,12 @@ import sys
 from playwright.sync_api import sync_playwright
 
 import scraper_qc
-from scrapers.qc import parser
+from scrapers.qc import disciplinas, parser
 
 try:
-    from . import db, edital
+    from . import db
 except ImportError:
     import db
-    import edital
 
 
 def salvar_pagina(html: str, con, materia: str) -> int:
@@ -105,6 +104,16 @@ def _pendentes_por_materia(con) -> dict:
     return por_materia
 
 
+def materias_a_coletar() -> list[tuple[str, str]]:
+    """Devolve (matéria, url de busca) de tudo que há para coletar no QC.
+
+    A fonte é `scrapers/qc/disciplinas.py`, não o `edital.py`: o edital
+    descreve UM concurso (o SEDES/DF), e enquanto ele mandava na coleta os
+    outros 8 concursos configurados não coletavam questão nenhuma.
+    """
+    return [(nome, disciplinas.url_de_busca(ids)) for nome, ids in disciplinas.listar()]
+
+
 def coletar_gabaritos(limite_questoes: int | None = None) -> None:
     """Responde as questões pendentes direto na página de listagem, respeitando
     a cota diária gratuita do QC.
@@ -126,12 +135,11 @@ def coletar_gabaritos(limite_questoes: int | None = None) -> None:
     with sync_playwright() as p:
         contexto, aba = scraper_qc.abrir_navegador(p)
         try:
-            for materia in edital.nomes_materias():
+            for materia, url_base in materias_a_coletar():
                 if parar:
                     break
                 faltam = por_materia.get(materia)
-                url_base = edital.MATERIAS.get(materia, {}).get("url_qc")
-                if not faltam or not url_base:
+                if not faltam:
                     continue
                 pagina = 1
                 while faltam and not parar and pagina <= scraper_qc.MAX_PAGINAS_POR_MATERIA:
@@ -216,9 +224,8 @@ def coletar_materia(aba, con, materia: str, url_base: str) -> int:
 
         if total_blocos == 0:
             vazias_seguidas += 1
-            print(
-                f"[{materia}] página {pagina}: vazia ({vazias_seguidas}/{VAZIAS_SEGUIDAS_PARA_DESISTIR})"
-            )
+            limite = VAZIAS_SEGUIDAS_PARA_DESISTIR
+            print(f"[{materia}] página {pagina}: vazia ({vazias_seguidas}/{limite})")
             if vazias_seguidas >= VAZIAS_SEGUIDAS_PARA_DESISTIR:
                 print(
                     f"[{materia}] {vazias_seguidas} páginas vazias seguidas — encerrando a matéria."
@@ -244,11 +251,7 @@ def coletar_enunciados() -> None:
     with sync_playwright() as p:
         contexto, aba = scraper_qc.abrir_navegador(p)
         try:
-            for materia in edital.nomes_materias():
-                url_base = edital.MATERIAS[materia]["url_qc"]
-                if not url_base:
-                    print(f"[{materia}] sem url_qc no edital.py — pulando.")
-                    continue
+            for materia, url_base in materias_a_coletar():
                 coletar_materia(aba, con, materia, url_base)
         finally:
             contexto.close()

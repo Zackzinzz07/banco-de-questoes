@@ -114,3 +114,43 @@ def test_varias_paginas_vazias_seguidas_encerram_a_materia(html, monkeypatch):
 
     assert len(aba.visitadas) < 10, f"não parou: visitou {len(aba.visitadas)} páginas"
     assert len(aba.visitadas) >= 4, "parou cedo demais para tolerar erro transitório"
+
+
+def test_coleta_vai_alem_das_materias_do_sedes():
+    """O coletor iterava `edital.nomes_materias()` — as 8 do SEDES/DF. Nenhum
+    dos outros 8 concursos configurados coletava questão nenhuma."""
+    materias = dict(coletar_qc.materias_a_coletar())
+
+    assert "Língua Portuguesa" in materias, "as originais precisam continuar"
+    assert "Noções de Informática" in materias, "as novas precisam entrar"
+    assert "Direito Penal Militar" in materias
+    assert len(materias) > 8
+
+
+def test_url_de_uma_materia_original_nao_mudou():
+    """Mudar a URL faria o coletor recomeçar de outro conjunto de questões."""
+    import edital
+
+    materias = dict(coletar_qc.materias_a_coletar())
+    antiga = edital.MATERIAS["Direito Administrativo"]["url_qc"]
+    assert "discipline_ids%5B%5D=2" in materias["Direito Administrativo"]
+    assert "discipline_ids%5B%5D=2" in antiga
+
+
+def test_toda_materia_tem_url():
+    """`Programas e Benefícios do DF` ficou meses com url vazia e era pulada
+    silenciosamente em toda rodada."""
+    for materia, url in coletar_qc.materias_a_coletar():
+        assert url, f"{materia} sem url de busca"
+
+
+def test_fase_de_gabaritos_cobre_as_mesmas_materias_da_coleta():
+    """Se a coleta de enunciados vai além do SEDES mas a de gabaritos não, as
+    questões das disciplinas novas ficam sem gabarito para sempre."""
+    import inspect
+
+    fonte = inspect.getsource(coletar_qc.coletar_gabaritos)
+    assert "edital.nomes_materias" not in fonte, (
+        "a fase de gabaritos ainda deriva as matérias do edital do SEDES"
+    )
+    assert "materias_a_coletar" in fonte
