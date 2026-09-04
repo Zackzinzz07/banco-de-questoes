@@ -21,6 +21,7 @@ não estar quando o parser de edital ficar pronto.
 """
 
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -28,6 +29,20 @@ from scrapers import http_utils
 from scrapers.cebraspe import coletor, config, parser
 
 PASTA = Path(__file__).resolve().parent / "provas_pdf" / "cebraspe"
+
+# Os 425 concursos ocupam ~2 GB (medido: 4,9 MB por concurso). Encher o disco
+# de quem esta usando o projeto e pior do que coletar menos, entao a varredura
+# para sozinha antes de chegar no limite.
+MINIMO_LIVRE_GB = 3.0
+
+
+class DiscoCheio(RuntimeError):
+    """Espaco em disco abaixo do minimo seguro."""
+
+
+def espaco_livre_gb(caminho: Path) -> float:
+    alvo = caminho if caminho.exists() else caminho.parent
+    return shutil.disk_usage(alvo).free / 1024**3
 
 
 def _extrair(tipo: str, conteudo: bytes) -> list[dict]:
@@ -49,6 +64,10 @@ def coletar_concurso(sessao, slug: str, pasta_base: Path) -> int:
     Arquivo já baixado é pulado — 425 concursos são muitas horas, e a retomada
     não pode reconsumir a banda inteira.
     """
+    livre = espaco_livre_gb(pasta_base)
+    if livre < MINIMO_LIVRE_GB:
+        raise DiscoCheio(f"restam {livre:.1f} GB, menos que o minimo de {MINIMO_LIVRE_GB} GB")
+
     arquivos = coletor.listar_arquivos(sessao, slug)
     uteis = config.aproveitaveis(arquivos)
     editais = [a for a in arquivos if config.classificar(a) == config.EDITAL]
@@ -93,6 +112,9 @@ def coletar_todos(slugs: list[str] | None = None) -> None:
     for indice, slug in enumerate(slugs, 1):
         try:
             extraidos = coletar_concurso(sessao, slug, PASTA)
+        except DiscoCheio as erro:
+            print(f"[PARADO] {erro}. Libere espaco e rode de novo -- retoma daqui.")
+            break
         except Exception as erro:
             print(f"[{indice}/{len(slugs)}] {slug}: ERRO ({erro.__class__.__name__}: {erro})")
             continue

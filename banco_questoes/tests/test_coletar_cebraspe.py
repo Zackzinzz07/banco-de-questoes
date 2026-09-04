@@ -117,3 +117,17 @@ def test_concurso_sem_arquivo_util_nao_cria_pasta_vazia(tmp_path):
 
     coletar_cebraspe.coletar_concurso(_Vazia(), "PC_DF_24_ADM", tmp_path)
     assert not (tmp_path / "PC_DF_24_ADM").exists()
+
+
+def test_para_quando_o_disco_esta_acabando(tmp_path, monkeypatch, pdf_real):
+    """425 concursos ocupam ~2 GB. Encher o disco do usuário seria pior que
+    coletar menos, então a varredura para sozinha antes de chegar no limite."""
+    monkeypatch.setattr(coletar_cebraspe, "espaco_livre_gb", lambda _: 0.5)
+    with pytest.raises(coletar_cebraspe.DiscoCheio):
+        coletar_cebraspe.coletar_concurso(_SessaoFalsa(pdf=pdf_real), "PC_DF_24_ADM", tmp_path)
+
+
+def test_segue_normalmente_quando_ha_espaco(tmp_path, pdf_real):
+    assert coletar_cebraspe.espaco_livre_gb(tmp_path) > 0
+    coletar_cebraspe.coletar_concurso(_SessaoFalsa(pdf=pdf_real), "PC_DF_24_ADM", tmp_path)
+    assert (tmp_path / "PC_DF_24_ADM" / "itens.json").exists()
