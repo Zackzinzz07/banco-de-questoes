@@ -58,7 +58,14 @@ MATERIAS = {
             "SISAN e Restaurantes Comunitários (Decreto nº 33.329/2011)",
         ],
         "titulos_pdf": ["PROGRAMAS E BENEFÍCIOS", "PROGRAMAS SOCIAIS DO DF"],
-        "url_qc": "",
+        # O QConcursos NÃO tem disciplina para os programas distritais (buscas por
+        # "assist", "distrital", "orgânica" e "LOAS" devolvem zero — verificado no
+        # site logado em 03/09/2026). O que existe de mais próximo e confirmado são
+        # ECA (233) e Estatuto da Pessoa Idosa (534), ambos citados no edital do
+        # SEDES junto de LOAS/SUAS. É aproximação, não equivalência: cobre a base
+        # legal socioassistencial, não os programas do DF em si (Prato Cheio, DF
+        # Social, Cartão Gás), que continuam sem fonte no QC.
+        "url_qc": _BASE_QC + "&discipline_ids%5B%5D=233&discipline_ids%5B%5D=534",
     },
     "Direito Constitucional": {
         "assuntos": [

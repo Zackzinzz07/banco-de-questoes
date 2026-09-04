@@ -1,7 +1,20 @@
 """Testes do orquestrador da coleta no QConcursos."""
 
+from pathlib import Path
+
+import pytest
+
 import coletar_qc
 import db
+
+FIXTURE = Path(__file__).parent / "fixtures" / "pagina_qc.html"
+
+
+@pytest.fixture
+def html():
+    if not FIXTURE.exists():
+        pytest.skip("fixture pagina_qc.html ainda não capturada")
+    return FIXTURE.read_text(encoding="utf-8")
 
 
 def _questao(id_qc, materia, gabarito=None):
@@ -53,3 +66,51 @@ def test_pendentes_por_materia_ignora_questao_sem_id_qc():
 
     assert coletar_qc._pendentes_por_materia(con) == {}
     con.close()
+
+
+class _AbaFalsa:
+    """Navegador de mentira: devolve o HTML mapeado por página.
+
+    Página sem mapeamento devolve HTML vazio — simula o erro 500 intermitente
+    que o QConcursos devolveu (confirmado ao vivo: discipline_ids[]=213 deu 500
+    numa sessão e voltou ao normal na seguinte).
+    """
+
+    def __init__(self, paginas):
+        self.paginas = paginas
+        self.visitadas = []
+
+    def goto(self, url, **kwargs):
+        numero = int(url.rsplit("page=", 1)[1])
+        self.visitadas.append(numero)
+        self._atual = self.paginas.get(numero, "<html></html>")
+
+    def content(self):
+        return self._atual
+
+
+def test_pagina_vazia_isolada_nao_encerra_a_materia(html, monkeypatch):
+    """Uma página vazia no meio era tratada como "acabou o conteúdo" e
+    encerrava a matéria inteira. O QC tem 80 mil questões em Direito
+    Administrativo e a coleta parava na página 20 por causa disso."""
+    monkeypatch.setattr(coletar_qc.scraper_qc, "pausa", lambda: None)
+    aba = _AbaFalsa({1: html, 3: html})  # a 2 vem vazia (erro transitório)
+
+    con = db.conectar()
+    coletar_qc.coletar_materia(aba, con, "SUAS", "https://exemplo/questoes?x=1")
+    con.close()
+
+    assert 3 in aba.visitadas, "parou na primeira página vazia em vez de tentar a seguinte"
+
+
+def test_varias_paginas_vazias_seguidas_encerram_a_materia(html, monkeypatch):
+    """Sem um limite, uma matéria realmente esgotada gastaria as 40 páginas."""
+    monkeypatch.setattr(coletar_qc.scraper_qc, "pausa", lambda: None)
+    aba = _AbaFalsa({1: html})  # da 2 em diante, tudo vazio
+
+    con = db.conectar()
+    coletar_qc.coletar_materia(aba, con, "SUAS", "https://exemplo/questoes?x=1")
+    con.close()
+
+    assert len(aba.visitadas) < 10, f"não parou: visitou {len(aba.visitadas)} páginas"
+    assert len(aba.visitadas) >= 4, "parou cedo demais para tolerar erro transitório"

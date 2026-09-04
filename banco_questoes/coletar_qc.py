@@ -189,6 +189,56 @@ def coletar_gabaritos(limite_questoes: int | None = None) -> None:
     print(f"Fase de gabaritos encerrada: {coletadas} coletados.")
 
 
+# Página sem bloco nenhum não prova que o conteúdo acabou: o QConcursos
+# devolve erro 500 intermitente (confirmado ao vivo — discipline_ids[]=213 deu
+# 500 numa sessão e voltou ao normal na seguinte). Antes, uma única página
+# assim encerrava a matéria: Direito Administrativo parou na página 20 com
+# 80.542 questões disponíveis. Só desiste depois de N vazias em sequência.
+VAZIAS_SEGUIDAS_PARA_DESISTIR = 3
+
+
+def coletar_materia(aba, con, materia: str, url_base: str) -> int:
+    """Percorre as páginas de uma matéria e grava o que achar.
+
+    Recebe a aba do Playwright e a conexão já abertas (CLAUDE.md 2); quem as
+    abre e fecha é o orquestrador. Devolve o total de questões novas.
+    """
+    pagina = db.obter_progresso(con, "qconcursos", materia) + 1
+    fim = pagina + scraper_qc.MAX_PAGINAS_POR_MATERIA
+    total_novas = 0
+    vazias_seguidas = 0
+
+    while pagina < fim:
+        aba.goto(scraper_qc.url_pagina(url_base, pagina))
+        scraper_qc.pausa()
+        html = aba.content()
+        total_blocos = len(parser.extrair_blocos(html))
+
+        if total_blocos == 0:
+            vazias_seguidas += 1
+            print(
+                f"[{materia}] página {pagina}: vazia ({vazias_seguidas}/{VAZIAS_SEGUIDAS_PARA_DESISTIR})"
+            )
+            if vazias_seguidas >= VAZIAS_SEGUIDAS_PARA_DESISTIR:
+                print(
+                    f"[{materia}] {vazias_seguidas} páginas vazias seguidas — encerrando a matéria."
+                )
+                break
+            pagina += 1
+            continue
+
+        vazias_seguidas = 0
+        novas = salvar_pagina(html, con, materia)
+        total_novas += novas
+        print(f"[{materia}] página {pagina}: {novas} novas ({total_blocos} na página)")
+        # Só grava progresso em página que rendeu: assim uma falha transitória
+        # não faz a próxima rodada pular o trecho que ficou por coletar.
+        db.salvar_progresso(con, "qconcursos", materia, pagina)
+        pagina += 1
+
+    return total_novas
+
+
 def coletar_enunciados() -> None:
     con = db.conectar()
     with sync_playwright() as p:
@@ -199,19 +249,7 @@ def coletar_enunciados() -> None:
                 if not url_base:
                     print(f"[{materia}] sem url_qc no edital.py — pulando.")
                     continue
-                pagina = db.obter_progresso(con, "qconcursos", materia) + 1
-                fim = pagina + scraper_qc.MAX_PAGINAS_POR_MATERIA
-                while pagina < fim:
-                    aba.goto(scraper_qc.url_pagina(url_base, pagina))
-                    scraper_qc.pausa()
-                    html = aba.content()
-                    novas = salvar_pagina(html, con, materia)
-                    total_blocos = len(parser.extrair_blocos(html))
-                    print(f"[{materia}] página {pagina}: {novas} novas ({total_blocos} na página)")
-                    db.salvar_progresso(con, "qconcursos", materia, pagina)
-                    if total_blocos == 0:  # acabaram as páginas (ou caiu o login)
-                        break
-                    pagina += 1
+                coletar_materia(aba, con, materia, url_base)
         finally:
             contexto.close()
             con.close()
