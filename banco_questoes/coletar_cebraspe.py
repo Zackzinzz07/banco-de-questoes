@@ -30,10 +30,11 @@ from scrapers.cebraspe import coletor, config, parser
 
 PASTA = Path(__file__).resolve().parent / "provas_pdf" / "cebraspe"
 
-# Os 425 concursos ocupam ~2 GB (medido: 4,9 MB por concurso). Encher o disco
-# de quem esta usando o projeto e pior do que coletar menos, entao a varredura
-# para sozinha antes de chegar no limite.
-MINIMO_LIVRE_GB = 3.0
+# Medicao atualizada com 36 concursos arquivados: 6,8 MB cada, ~2,9 GB nos 425
+# (a primeira estimativa, de 4,9 MB, veio de uma amostra pequena demais).
+# Encher o disco de quem usa o projeto e pior do que coletar menos, entao a
+# varredura para sozinha antes de chegar no limite.
+MINIMO_LIVRE_GB = 5.0
 
 
 class DiscoCheio(RuntimeError):
