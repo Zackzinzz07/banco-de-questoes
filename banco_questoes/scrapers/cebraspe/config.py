@@ -39,7 +39,19 @@ _REGRAS = (
     (r"GAB[_\s]?DEFINITIVO|GABARITOS?\s+(OFICIAIS?\s+)?DEFINITIVOS?", GABARITO_DEFINITIVO),
     (r"GAB[_\s]?PRELIMINAR|GABARITOS?\s+(OFICIAIS?\s+)?PRELIMINARES?", GABARITO_PRELIMINAR),
     (r"PROVA\s+OBJETIVA|CADERNO\s+DE\s+PROVA", CADERNO),
-    (r"^EDITAL|EDITAL\s+N", EDITAL),
+    # So o edital NORMATIVO interessa: e ele que traz o conteudo programatico
+    # e o quadro de provas. Os demais "Edital n.o N" sao avisos de resultado e
+    # listas de candidatos -- 31 dos 33 MB baixados da PCDF 2024 eram isso, o
+    # que nos 425 concursos seria ~14 GB em vez de ~640 MB.
+    (r"ABERTURA|RETIFICA", EDITAL),
+)
+
+# Se bater aqui, nao e edital normativo por mais que o titulo diga "Edital".
+_NAO_NORMATIVO = re.compile(
+    # "INSCRICOES" fica de fora de proposito: "Abertura de inscricoes" e o
+    # edital normativo. As listas de inscritos ja caem em RELATORIO / REL_.
+    r"RESULTADO|RESUL|\bRES[_\s]|RELATORIO|\bREL[_\s]|CONVOCA|HOMOLOGA"
+    r"|DESEMPATE|DESEMP|PRORROGA|MOVIMENTACAO|ISENCAO"
 )
 
 
@@ -57,9 +69,9 @@ def classificar(arquivo: dict) -> str:
     alvo = _sem_acento(f"{arquivo.get('nome', '')} {arquivo.get('descricao', '')}")
     for padrao, tipo in _REGRAS:
         if re.search(padrao, alvo):
+            if tipo is EDITAL and _NAO_NORMATIVO.search(alvo):
+                return OUTRO
             return tipo
-    if arquivo.get("origem") == "edital":
-        return EDITAL
     return OUTRO
 
 

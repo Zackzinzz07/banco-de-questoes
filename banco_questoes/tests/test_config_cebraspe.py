@@ -48,12 +48,23 @@ def test_reconhece_caderno_de_prova_pela_descricao():
 
 
 def test_reconhece_edital_mesmo_com_nome_em_hash():
+    """Certames recentes nomeiam o arquivo com SHA-256; só a descrição informa."""
+    item = {
+        "nome": "195BA59646CF44425A6CCBA8C096B95F903389CAA72252914345F725BA6C4D77.PDF",
+        "descricao": "Edital nº 1 – Abertura de inscrições",
+        "origem": "edital",
+    }
+    assert config.classificar(item) == "edital"
+
+
+def test_prorrogacao_de_validade_nao_e_edital_aproveitavel():
+    """Aviso administrativo: não traz conteúdo programático nem quadro de provas."""
     item = {
         "nome": "195BA59646CF44425A6CCBA8C096B95F903389CAA72252914345F725BA6C4D77.PDF",
         "descricao": "Edital nº 118 – Prorrogação da validade do concurso",
         "origem": "edital",
     }
-    assert config.classificar(item) == "edital"
+    assert config.classificar(item) == "outro"
 
 
 def test_reconhece_padrao_de_resposta_da_discursiva():
@@ -88,3 +99,40 @@ def test_aproveitaveis_prioriza_o_caderno_com_justificativa():
     tipos = {config.classificar(a) for a in config.aproveitaveis(arquivos)}
     assert "caderno_com_justificativa" in tipos
     assert "justificativa_de_alteracao" not in tipos
+
+
+def test_edital_de_abertura_e_normativo():
+    """É o edital de abertura que carrega o conteúdo programático."""
+    item = {
+        "nome": "ED_1_PCDF_ADM_2024_ABERTURA.PDF",
+        "descricao": "Edital nº 1 – Abertura",
+        "origem": "edital",
+    }
+    assert config.classificar(item) == "edital"
+
+
+def test_retificacao_tambem_e_normativa():
+    """Retificação altera o conteúdo programático e o quadro de provas."""
+    item = {
+        "nome": "ED_4_PCDF_ADM_2024_RETIFICACOES.PDF",
+        "descricao": "Edital nº 4 – Retificações",
+        "origem": "edital",
+    }
+    assert config.classificar(item) == "edital"
+
+
+def test_aviso_de_resultado_nao_e_edital_aproveitavel():
+    """São listas de candidatos: 31 dos 33 MB baixados da PCDF 2024 eram isso.
+
+    Arquivar tudo custaria ~14 GB nos 425 concursos, contra ~640 MB só com o
+    que tem conteúdo programático.
+    """
+    for nome, descricao in (
+        ("ED_10_PCDF_2024_Res_final_obj_prov_disc.pdf", "Edital nº 10 – Resultado final"),
+        ("ED_8_PCDF_ADM_2024_RES_PROV_OBJ.PDF", "Edital nº 8 – Resultado provisório"),
+        ("PCDF_ADM_2024_REL_PROV_INSC_DEF.PDF", "Relatório de inscrições deferidas"),
+        ("PC DF GESTOR DE APOIO.pdf", "Relatório de movimentação financeira"),
+        ("ED_16_PCDF_2024_Res_prov_desemp.pdf", "Edital nº 16 – Resultado no desempate"),
+    ):
+        item = {"nome": nome, "descricao": descricao, "origem": "edital"}
+        assert config.classificar(item) == "outro", f"{descricao!r} não deveria ser arquivado"
