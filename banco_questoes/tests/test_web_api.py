@@ -71,3 +71,42 @@ def test_coletar_desabilitado(tmp_path, monkeypatch):
     r = cliente.post("/api/coletar")
     assert r.status_code == 503
     assert "fora do Docker" in r.json()["detail"]
+
+
+def _questao(id_qc, materia, categoria=None, fonte="pci"):
+    return {
+        "id_qc": id_qc,
+        "enunciado": f"Enunciado da {id_qc}?",
+        "alternativas": {"A": "a", "B": "b"},
+        "gabarito": "A",
+        "materia": materia,
+        "categoria": categoria,
+        "fonte": fonte,
+    }
+
+
+def test_stats_materias_responde_200(tmp_path, monkeypatch):
+    """O endpoint sempre devolveu 500: `STRING_AGG(... ORDER BY x LIMIT 3)` é
+    erro de sintaxe no PostgreSQL — LIMIT não entra no ORDER BY de agregação.
+    O dashboard de matérias nunca carregou."""
+    cliente = cliente_com_banco(tmp_path, monkeypatch)
+    con = db.conectar()
+    for n in range(4):
+        db.salvar_questao(con, _questao(f"QSM{n}", "Informática", f"categoria-{n}"))
+    con.close()
+
+    resposta = cliente.get("/api/stats/materias")
+    assert resposta.status_code == 200, resposta.text
+
+
+def test_stats_materias_traz_no_maximo_tres_categorias(tmp_path, monkeypatch):
+    """A intenção do LIMIT 3 era mostrar uma amostra, não todas."""
+    cliente = cliente_com_banco(tmp_path, monkeypatch)
+    con = db.conectar()
+    for n in range(6):
+        db.salvar_questao(con, _questao(f"QCAT{n}", "Matemática", f"cat-{n}"))
+    con.close()
+
+    dados = cliente.get("/api/stats/materias").json()
+    linha = next(m for m in dados["por_materia"] if m["materia"] == "Matemática")
+    assert len([c for c in (linha["categorias"] or "").split(",") if c.strip()]) <= 3

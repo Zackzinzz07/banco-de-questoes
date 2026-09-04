@@ -127,43 +127,53 @@ def stats_materias():
     """Dashboard: Estatísticas por MATÉRIA com conteúdo (categoria/tema)."""
     con = db.conectar()
 
-    # Total geral
-    total_row = con.execute("SELECT COUNT(*) FROM questoes").fetchone()
-    total = total_row[0] if total_row else 0
+    # A conexao usa RealDictCursor: toda linha e dict. Indexar por numero
+    # (`linha[0]`) levanta KeyError, entao toda contagem precisa de alias.
+    def _contar(sql: str) -> int:
+        linha = con.execute(sql).fetchone()
+        return linha["n"] if linha else 0
 
-    # Contagem de materias únicas
-    materias_unicas = con.execute(
-        "SELECT COUNT(DISTINCT materia) FROM questoes WHERE materia IS NOT NULL"
-    ).fetchone()[0]
-
-    # Contagem de fontes únicas
-    fontes_unicas = con.execute(
-        "SELECT COUNT(DISTINCT fonte) FROM questoes WHERE fonte IS NOT NULL"
-    ).fetchone()[0]
-
-    # Contagem de categorias/temas
-    categorias_unicas = con.execute(
-        "SELECT COUNT(DISTINCT categoria) FROM questoes WHERE categoria IS NOT NULL"
-    ).fetchone()[0]
+    total = _contar("SELECT COUNT(*) AS n FROM questoes")
+    materias_unicas = _contar(
+        "SELECT COUNT(DISTINCT materia) AS n FROM questoes WHERE materia IS NOT NULL"
+    )
+    fontes_unicas = _contar(
+        "SELECT COUNT(DISTINCT fonte) AS n FROM questoes WHERE fonte IS NOT NULL"
+    )
+    categorias_unicas = _contar(
+        "SELECT COUNT(DISTINCT categoria) AS n FROM questoes WHERE categoria IS NOT NULL"
+    )
 
     # Por matéria com fontes e categorias
+    # LIMIT nao entra no ORDER BY de agregacao no PostgreSQL -- era erro de
+    # sintaxe, e este endpoint devolvia 500 desde que foi escrito. A amostra de
+    # 3 categorias sai fatiando o array agregado.
     materias_data = con.execute("""
         SELECT
             materia,
-            COUNT(*) as count,
-            STRING_AGG(DISTINCT fonte, ', ' ORDER BY fonte) as fontes,
-            STRING_AGG(DISTINCT categoria, ', ' ORDER BY categoria LIMIT 3) as categorias
+            COUNT(*) AS count,
+            STRING_AGG(DISTINCT fonte, ', ' ORDER BY fonte) AS fontes,
+            array_to_string(
+                (array_agg(DISTINCT categoria) FILTER (WHERE categoria IS NOT NULL))[1:3],
+                ', '
+            ) AS categorias
         FROM questoes
         WHERE materia IS NOT NULL
         GROUP BY materia
         ORDER BY count DESC
     """).fetchall()
 
-    por_materia = []
-    for row in materias_data:
-        por_materia.append(
-            {"materia": row[0], "count": row[1], "fontes": row[2], "categorias": row[3]}
-        )
+    # A conexao usa RealDictCursor: a linha e dict, nao tupla. row[0] levantava
+    # KeyError mesmo depois de a consulta passar.
+    por_materia = [
+        {
+            "materia": row["materia"],
+            "count": row["count"],
+            "fontes": row["fontes"],
+            "categorias": row["categorias"],
+        }
+        for row in materias_data
+    ]
 
     con.close()
 
