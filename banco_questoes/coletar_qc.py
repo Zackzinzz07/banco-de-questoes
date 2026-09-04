@@ -104,14 +104,23 @@ def _pendentes_por_materia(con) -> dict:
     return por_materia
 
 
-def materias_a_coletar() -> list[tuple[str, str]]:
+def materias_a_coletar(con=None) -> list[tuple[str, str]]:
     """Devolve (matéria, url de busca) de tudo que há para coletar no QC.
 
     A fonte é `scrapers/qc/disciplinas.py`, não o `edital.py`: o edital
     descreve UM concurso (o SEDES/DF), e enquanto ele mandava na coleta os
     outros 8 concursos configurados não coletavam questão nenhuma.
+
+    Com a conexão, ordena da menos coletada para a mais coletada. São 23
+    disciplinas e a cota é de 40 páginas por matéria, então a ordem decide o
+    que entra antes de a sessão acabar: Língua Portuguesa chegou à página 149
+    rendendo zero por página enquanto Noções de Informática, com 70 mil
+    questões no QC, seguia intocada.
     """
-    return [(nome, disciplinas.url_de_busca(ids)) for nome, ids in disciplinas.listar()]
+    itens = [(nome, disciplinas.url_de_busca(ids)) for nome, ids in disciplinas.listar()]
+    if con is None:
+        return itens
+    return sorted(itens, key=lambda item: db.obter_progresso(con, "qconcursos", item[0]))
 
 
 def coletar_gabaritos(limite_questoes: int | None = None) -> None:
@@ -135,7 +144,7 @@ def coletar_gabaritos(limite_questoes: int | None = None) -> None:
     with sync_playwright() as p:
         contexto, aba = scraper_qc.abrir_navegador(p)
         try:
-            for materia, url_base in materias_a_coletar():
+            for materia, url_base in materias_a_coletar(con):
                 if parar:
                     break
                 faltam = por_materia.get(materia)
@@ -251,7 +260,7 @@ def coletar_enunciados() -> None:
     with sync_playwright() as p:
         contexto, aba = scraper_qc.abrir_navegador(p)
         try:
-            for materia, url_base in materias_a_coletar():
+            for materia, url_base in materias_a_coletar(con):
                 coletar_materia(aba, con, materia, url_base)
         finally:
             contexto.close()

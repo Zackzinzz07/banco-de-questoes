@@ -154,3 +154,26 @@ def test_fase_de_gabaritos_cobre_as_mesmas_materias_da_coleta():
         "a fase de gabaritos ainda deriva as matérias do edital do SEDES"
     )
     assert "materias_a_coletar" in fonte
+
+
+def test_materias_menos_coletadas_vem_primeiro():
+    """Com 23 disciplinas e cota de 40 páginas por matéria, a ordem decide o
+    que é coletado antes de a sessão acabar. Língua Portuguesa estava na
+    página 149 rendendo 0 novas por página, enquanto Noções de Informática
+    (70.687 questões no QC) não tinha sido tocada."""
+    con = db.conectar()
+    db.salvar_progresso(con, "qconcursos", "Língua Portuguesa", 149)
+    db.salvar_progresso(con, "qconcursos", "Direito Administrativo", 20)
+    # "Noções de Informática" fica sem progresso: nunca coletada.
+
+    ordem = [materia for materia, _ in coletar_qc.materias_a_coletar(con)]
+    con.close()
+
+    assert ordem.index("Noções de Informática") < ordem.index("Direito Administrativo")
+    assert ordem.index("Direito Administrativo") < ordem.index("Língua Portuguesa")
+
+
+def test_sem_conexao_a_ordem_e_a_do_registro():
+    """Sem banco, não há progresso para consultar — mantém a ordem declarada."""
+    ordem = [materia for materia, _ in coletar_qc.materias_a_coletar()]
+    assert ordem[0] == "Língua Portuguesa"
