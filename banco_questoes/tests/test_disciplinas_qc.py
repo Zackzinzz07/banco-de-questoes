@@ -94,3 +94,27 @@ def test_nenhum_id_aparece_em_duas_disciplinas():
             anterior = vistos.get(identificador)
             assert anterior is None, f"id {identificador} em {anterior!r} e {nome!r}"
             vistos[identificador] = nome
+
+
+def test_disciplina_imprecisa_fica_pausada():
+    """O id 61 é "Legislação Estadual" genérico, não legislação do DF.
+
+    Medido no banco: das 1.546 questões coletadas sob "Conhecimentos do DF e
+    Legislação", só 25 (2%) eram de órgão do DF — o resto veio de SEDUC-SP,
+    Polícia Penal-RS, AL-CE, MPE-GO. Segundo o mapeamento das bancas, a
+    legislação distrital exige `subject_ids[]` (LODF, LC 840/2011, Lei
+    4.990/2012), que ainda não temos. Até lá, coletar mais é piorar o banco.
+    """
+    assert "Conhecimentos do DF e Legislação" in disciplinas.PAUSADAS
+    assert disciplinas.PAUSADAS["Conhecimentos do DF e Legislação"], "pausa precisa de motivo"
+
+
+def test_pausada_nao_entra_na_coleta():
+    ativas = dict(disciplinas.listar())
+    assert "Conhecimentos do DF e Legislação" not in ativas
+    assert "Noções de Informática" in ativas
+
+
+def test_pausada_continua_no_registro_para_nao_perder_o_id():
+    """Some da coleta, não do registro: o id e o histórico continuam ali."""
+    assert "Conhecimentos do DF e Legislação" in disciplinas.DISCIPLINAS

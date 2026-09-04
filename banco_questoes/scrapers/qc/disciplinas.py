@@ -58,6 +58,29 @@ DISCIPLINAS: dict[str, tuple[int, ...]] = {
 }
 
 
+# Disciplinas que existem no registro mas NAO devem ser coletadas, com o
+# motivo. O QC organiza o acervo em tres niveis -- discipline_ids[] (a
+# disciplina), subject_ids[] (o assunto) e institute_ids[] (o orgao) -- e este
+# registro so usa o primeiro. Quando a disciplina sozinha e larga demais, o
+# resultado nao e "menos preciso": e conteudo de outro concurso entrando com o
+# rotulo errado.
+PAUSADAS: dict[str, str] = {
+    "Conhecimentos do DF e Legislação": (
+        "o id 61 e 'Legislacao Estadual' generico, nao legislacao do DF. Das "
+        "1.546 questoes ja coletadas sob esse rotulo, so 25 (2%) eram de orgao "
+        "do DF -- o resto veio de SEDUC-SP, Policia Penal-RS, AL-CE, MPE-GO. "
+        "Filtrar a legislacao distrital exige subject_ids[] (LODF, LC 840/2011, "
+        "Lei 4.990/2012), que ainda nao temos."
+    ),
+    "Programas e Benefícios do DF": (
+        "ECA (233) e Estatuto da Pessoa Idosa (534) foram aproximacao minha, "
+        "nao equivalencia. O mapeamento das bancas mostra que os programas "
+        "distritais sao subdivisoes de Servico Social (188) indexadas por "
+        "institute_ids[] da SEDES -- outro nivel da taxonomia."
+    ),
+}
+
+
 def url_de_busca(ids: tuple[int, ...]) -> str:
     """Monta a URL de busca do QC para uma ou mais disciplinas."""
     partes = list(FILTROS.items()) + [("discipline_ids[]", str(i)) for i in ids]
@@ -65,5 +88,9 @@ def url_de_busca(ids: tuple[int, ...]) -> str:
 
 
 def listar() -> list[tuple[str, tuple[int, ...]]]:
-    """Devolve (matéria, ids) de todas as disciplinas registradas."""
-    return list(DISCIPLINAS.items())
+    """Devolve (matéria, ids) das disciplinas ATIVAS.
+
+    As pausadas continuam em DISCIPLINAS — some da coleta, não do registro,
+    para não perder o id nem o histórico de por que saiu.
+    """
+    return [(nome, ids) for nome, ids in DISCIPLINAS.items() if nome not in PAUSADAS]
