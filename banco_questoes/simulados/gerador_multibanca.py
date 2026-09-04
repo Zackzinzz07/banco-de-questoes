@@ -200,64 +200,22 @@ class GeradorSimuladoMultiBanca:
                         ids_vistos.add(q["id"])
                         questoes.append(q)
 
-        # Backfill genérico: completa o déficit com questões de qualquer
-        # matéria (necessário porque os nomes de disciplina da banca nem
-        # sempre batem exatamente com `questoes.materia` no banco).
+        # NAO completar com questao de qualquer materia. O backfill generico
+        # que existia aqui enfiou Lei Municipal de Estancia/SE e Codigo de
+        # Etica do TRT da 8a Regiao num simulado do PMDF, debaixo de
+        # "LEGISLACAO ESPECIFICA DA PMDF E RIDE". Entregar menos com aviso e
+        # melhor que entregar errado em silencio: questao de outra materia
+        # nao e "menos precisa", e conteudo de outro concurso.
         faltam = quantidade - len(questoes)
         if faltam > 0:
-            genericas = self._sortear_generico(con, faltam, excluir_ids=ids_vistos)
-            questoes.extend(genericas)
+            print(
+                f"Aviso: faltaram {faltam} de {quantidade} questoes para a banca"
+                f" {self.banca_nome}. As disciplinas declaradas no YAML da banca nao"
+                " encontraram par em `questoes.materia`; o simulado sai menor em vez"
+                " de ser completado com materia que o edital nao pede."
+            )
 
         return questoes[:quantidade]
-
-    def _sortear_generico(self, con, quantidade: int, excluir_ids=None) -> List[Dict[str, Any]]:
-        """Sorteia questões de qualquer matéria (ineditas primeiro, repetidas
-        para completar), ignorando ids já selecionados e DEDUPLICANDO POR CONTEÚDO.
-        Prioriza fontes: qconcursos > pci > quadrix_pdf. Usado como fallback
-        de `_buscar_questoes` quando a distribuição por disciplina não é
-        suficiente.
-        """
-        import json
-
-        excluir_ids = excluir_ids or set()
-        # DISTINCT ON (content_hash) deduplica por conteúdo
-        linhas = con.execute(
-            "SELECT DISTINCT ON (content_hash) * FROM questoes"
-            " WHERE usada_em_simulado=0 AND content_hash IS NOT NULL"
-            " ORDER BY content_hash,"
-            "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-            "   RANDOM()"
-            " LIMIT %s",
-            (quantidade + len(excluir_ids),),
-        ).fetchall()
-        candidatas = [dict(l) for l in linhas if dict(l)["id"] not in excluir_ids][:quantidade]
-
-        faltam = quantidade - len(candidatas)
-        if faltam > 0:
-            linhas_rep = con.execute(
-                "SELECT DISTINCT ON (content_hash) * FROM questoes"
-                " WHERE usada_em_simulado=1 AND content_hash IS NOT NULL"
-                " ORDER BY content_hash,"
-                "   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-                "   RANDOM()"
-                " LIMIT %s",
-                (faltam + len(excluir_ids),),
-            ).fetchall()
-            repetidas = [dict(l) for l in linhas_rep if dict(l)["id"] not in excluir_ids][:faltam]
-            candidatas.extend(repetidas)
-
-        for q in candidatas:
-            if isinstance(q.get("alternativas"), str):
-                q["alternativas"] = json.loads(q["alternativas"])
-            if isinstance(q.get("imagens"), str) and q["imagens"]:
-                q["imagens"] = json.loads(q["imagens"])
-            elif not q.get("imagens"):
-                q["imagens"] = []
-        return candidatas
-
-    # ------------------------------------------------------------------
-    # Preparação de dados de questão para o estilo
-    # ------------------------------------------------------------------
 
     def _preparar_questao_data(self, numero: int, q: Dict[str, Any]) -> Dict[str, Any]:
         """Converte uma linha de `questoes` (formato do banco) no dicionário

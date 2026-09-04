@@ -172,3 +172,45 @@ def test_gerar_simulado_completo_todas_bancas(tmp_path, monkeypatch):
         # Print result in format: [PASS] banca: path (size KB)
         tamanho_kb = tamanho_bytes / 1024
         print(f"[PASS] {banca}: {saida} ({tamanho_kb:.1f} KB)")
+
+
+def test_nao_completa_com_questao_de_qualquer_materia(monkeypatch):
+    """O gerador tinha um "backfill genérico" que completava o déficit com
+    questão de QUALQUER matéria. Num simulado do PMDF isso enfiou Lei
+    Municipal de Estância/SE e Código de Ética do TRT da 8ª Região debaixo de
+    "LEGISLAÇÃO ESPECÍFICA DA PMDF E RIDE".
+
+    As disciplinas declaradas em `cebraspe.yaml` são rótulos de BLOCO
+    ("Conhecimentos Básicos (...)"), que não casam com `questoes.materia`
+    nenhuma. Antes, isso fazia 100% do simulado vir do backfill.
+
+    Entregar menos com aviso é melhor que entregar errado em silêncio.
+    """
+    import config as cfg
+    import db
+
+    monkeypatch.setattr(db, "DATABASE_URL", cfg.TEST_DATABASE_URL)
+    con = db.conectar()
+    for materia in ("Língua Portuguesa", "Contabilidade", "Enfermagem"):
+        for n in range(20):
+            db.salvar_questao(
+                con,
+                {
+                    "id_qc": f"Q{materia[:3]}{n}",
+                    "enunciado": f"Questão de {materia} número {n}?",
+                    "alternativas": {"A": "a", "B": "b"},
+                    "gabarito": "A",
+                    "materia": materia,
+                    "fonte": "pci",
+                },
+            )
+
+    from simulados.gerador_multibanca import GeradorSimuladoMultiBanca
+
+    gerador = GeradorSimuladoMultiBanca("cebraspe", con=con)
+    questoes = gerador._buscar_questoes(con, 60)
+    con.close()
+
+    assert len(questoes) < 60, (
+        f"o gerador completou {len(questoes)} de 60 com matéria que ninguém pediu"
+    )
