@@ -136,3 +136,52 @@ def test_gerar_completo_banco_vazio(tmp_path, capsys):
     con = db.conectar(tmp_path / "t.db")
     assert gerar_simulado.gerar_completo(10, tmp_path / "x.pdf", con=con) is None
     assert "Nenhuma questão" in capsys.readouterr().out
+
+
+def _texto_do_pdf(caminho):
+    import pdfplumber
+
+    with pdfplumber.open(caminho) as pdf:
+        return "\n".join(p.extract_text() or "" for p in pdf.pages)
+
+
+def _com_questoes(prefixo, materia="Direito Administrativo", quantas=3):
+    con = db.conectar()
+    for i in range(quantas):
+        q = questao_fake(i)
+        q["id_qc"] = f"{prefixo}{i}"
+        q["enunciado"] = f"{prefixo}: enunciado da questão {i}, assinale a correta."
+        q["materia"] = materia
+        q["gabarito"] = "B"
+        db.salvar_questao(con, q)
+    return con
+
+
+def test_cabecalho_nao_inventa_concurso_quando_nenhum_e_informado(tmp_path):
+    """O cabeçalho era fixo no SEDES/DF, em 6 lugares do arquivo. Um simulado
+    de Direito Administrativo com questões da Prefeitura de Vermelho Novo/MG
+    saía dizendo "CONCURSO PÚBLICO SEDES/DF — Cargo 202: TDAS — banca Instituto
+    Quadrix". Nada disso era verdade."""
+    con = _com_questoes("CAB")
+    saida = tmp_path / "sem_concurso.pdf"
+    gerar_simulado.gerar("Direito Administrativo", 3, saida, con=con)
+    con.close()
+
+    # Só o cabeçalho: a linha de crédito de cada questão cita banca e órgão de
+    # origem de verdade, e isso está certo.
+    cabecalho = "\n".join(_texto_do_pdf(saida).splitlines()[:6]).upper()
+    assert "SEDES" not in cabecalho
+    assert "TDAS" not in cabecalho
+    assert "QUADRIX" not in cabecalho
+
+
+def test_cabecalho_usa_o_concurso_informado(tmp_path):
+    """Com o concurso informado, o cabeçalho sai do YAML do edital."""
+    con = _com_questoes("PM")
+    saida = tmp_path / "com_concurso.pdf"
+    gerar_simulado.gerar("Direito Administrativo", 3, saida, con=con, concurso="pmdf")
+    con.close()
+
+    cabecalho = "\n".join(_texto_do_pdf(saida).splitlines()[:6]).upper()
+    assert "PMDF" in cabecalho or "POLÍCIA MILITAR" in cabecalho
+    assert "SEDES" not in cabecalho

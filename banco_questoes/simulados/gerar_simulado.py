@@ -238,28 +238,56 @@ def _construir_doc(arquivo, titulo):
     return doc
 
 
-def _cabecalho(materia, quantidade):
+def _dados_do_concurso(concurso):
+    """Le nome, orgao, banca e cargo do YAML do edital. Nada disso e inventado.
+
+    Sem concurso informado, devolve None em tudo: o cabecalho sai generico em
+    vez de afirmar um concurso que nao e o daquele simulado. Antes, TODO
+    simulado dizia "CONCURSO PUBLICO SEDES/DF -- Cargo 202: TDAS -- banca
+    Instituto Quadrix", mesmo sendo de Direito Administrativo com questoes da
+    Prefeitura de Vermelho Novo/MG.
+    """
+    vazio = {"nome": None, "orgao": None, "banca": None, "cargo": None}
+    if not concurso:
+        return vazio
+    try:
+        import edital_loader
+
+        dados = edital_loader.carregar_edital(concurso) or {}
+    except Exception:
+        return vazio
+    cargos = list((dados.get("cargos") or {}).keys())
+    return {
+        "nome": dados.get("nome"),
+        "orgao": dados.get("orgao"),
+        "banca": dados.get("banca"),
+        "cargo": cargos[0] if cargos else None,
+    }
+
+
+def _cabecalho(materia, quantidade, concurso=None):
     minutos = quantidade * 3
-    return [
-        Paragraph("SIMULADO — CONCURSO PÚBLICO SEDES/DF", e_prova_titulo),
+    info = _dados_do_concurso(concurso)
+    titulo = f"SIMULADO — {info['nome']}" if info["nome"] else "SIMULADO DE TREINO"
+    linhas = [Paragraph(escape(titulo), e_prova_titulo)]
+    if info["orgao"]:
+        linhas.append(Paragraph(escape(info["orgao"]), e_prova_sub))
+    if info["cargo"]:
+        linhas.append(Paragraph(escape(f"Cargo: {info['cargo']}"), e_prova_cargo))
+
+    estilo_banca = f"no estilo da banca {info['banca']} " if info["banca"] else ""
+    linhas.append(
         Paragraph(
-            "SECRETARIA DE ESTADO DE DESENVOLVIMENTO SOCIAL DO DISTRITO FEDERAL", e_prova_sub
-        ),
-        Paragraph(
-            "Cargo 202: TÉCNICO EM DESENVOLVIMENTO E ASSISTÊNCIA SOCIAL (TDAS)"
-            " — ESPECIALIDADE: TÉCNICO ADMINISTRATIVO",
+            f"Simulado de treino {estilo_banca}— {escape(materia)} — {quantidade} questões",
             e_prova_cargo,
-        ),
-        Paragraph(
-            f"Simulado de treino no estilo da banca Instituto Quadrix — "
-            f"{escape(materia)} — {quantidade} questões",
-            e_prova_cargo,
-        ),
+        )
+    )
+    vinculo = f" Não possui vínculo com {escape(info['banca'])}." if info["banca"] else ""
+    return linhas + [
         Spacer(1, 6),
         Paragraph(
-            "Material de estudo NÃO OFICIAL, elaborado com base no conteúdo "
-            "programático do edital de abertura. Não possui vínculo com o "
-            "Instituto Quadrix ou com a SEDES/DF.",
+            "Material de estudo NÃO OFICIAL, montado a partir de questões de "
+            "provas anteriores." + vinculo,
             e_aviso,
         ),
         Spacer(1, 6),
@@ -310,7 +338,7 @@ def _gabarito_flowables(questoes):
     return partes
 
 
-def gerar(materia, quantidade, arquivo_saida=None, con=None):
+def gerar(materia, quantidade, arquivo_saida=None, con=None, concurso=None):
     """Sorteia questões, gera o PDF e marca as usadas. Retorna o caminho ou None."""
     con_proprio = con is None
     if con_proprio:
@@ -331,7 +359,7 @@ def gerar(materia, quantidade, arquivo_saida=None, con=None):
 
     doc = _construir_doc(arquivo_saida, f"Simulado — {materia}")
     story = [NextPageTemplate("demais")]
-    story += _cabecalho(materia, len(questoes))
+    story += _cabecalho(materia, len(questoes), concurso)
     story.append(FrameBreak())  # pula do cabeçalho para a 1ª coluna
     story.append(Paragraph(escape(materia).upper(), e_secao))
     for numero, q in enumerate(questoes, 1):
@@ -347,8 +375,12 @@ def gerar(materia, quantidade, arquivo_saida=None, con=None):
     return arquivo_saida
 
 
-def gerar_completo(quantidade, arquivo_saida=None, con=None):
-    """Simulado Geral: distribui a quantidade pelas matérias (edital.PESOS) com formato profissional."""
+def gerar_completo(quantidade, arquivo_saida=None, con=None, concurso=None):
+    """Simulado Geral: distribui a quantidade pelas matérias (edital.PESOS).
+
+    `concurso` nomeia o edital em `configuracoes_editais/`; sem ele, o cabeçalho
+    sai genérico em vez de afirmar um concurso que não é o daquele simulado.
+    """
     import edital
 
     con_proprio = con is None
@@ -400,30 +432,16 @@ def gerar_completo(quantidade, arquivo_saida=None, con=None):
     arquivo_saida = Path(arquivo_saida)
 
     # Usa BaseDocTemplate com duas colunas como em gerar()
-    doc = _construir_doc(arquivo_saida, "Simulado Geral — SEDES/DF")
-    story = [NextPageTemplate("demais")]
-
-    # Cabeçalho profissional (largura cheia na primeira página)
-    story += [
-        Paragraph("SIMULADO GERAL — CONCURSO PÚBLICO SEDES/DF", e_prova_titulo),
-        Paragraph(
-            "SECRETARIA DE ESTADO DE DESENVOLVIMENTO SOCIAL DO DISTRITO FEDERAL", e_prova_sub
-        ),
-        Paragraph(
-            "Cargo 202: TÉCNICO EM DESENVOLVIMENTO E ASSISTÊNCIA SOCIAL (TDAS)"
-            " — ESPECIALIDADE: TÉCNICO ADMINISTRATIVO",
-            e_prova_cargo,
-        ),
-        Paragraph(
-            f"Simulado geral no estilo da banca Instituto Quadrix — "
-            f"{total} questões de todas as matérias",
-            e_prova_cargo,
-        ),
+    info = _dados_do_concurso(concurso)
+    titulo = f"Simulado Geral — {info['nome']}" if info["nome"] else "Simulado Geral"
+    doc = _construir_doc(arquivo_saida, titulo)
+    story = [
+        Paragraph(escape(titulo.upper()), e_prova_titulo),
+        *([Paragraph(escape(info["orgao"]), e_prova_sub)] if info["orgao"] else []),
+        *([Paragraph(escape(f"Cargo: {info['cargo']}"), e_prova_cargo)] if info["cargo"] else []),
         Spacer(1, 6),
         Paragraph(
-            "Material de estudo NÃO OFICIAL, elaborado com base no conteúdo "
-            "programático do edital de abertura. Não possui vínculo com o "
-            "Instituto Quadrix ou com a SEDES/DF.",
+            "Material de estudo NÃO OFICIAL, montado a partir de questões de provas anteriores.",
             e_aviso,
         ),
         Spacer(1, 6),
