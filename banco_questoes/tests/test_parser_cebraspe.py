@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from scrapers.cebraspe import parser
+from scrapers.cebraspe import leitura_pdf, parser
 
 FIXTURE = Path(__file__).parent / "fixtures" / "cebraspe_com_justificativa.pdf"
 
@@ -144,3 +144,43 @@ def test_gabarito_cobre_a_faixa_do_arquivo(pdf_gabarito):
 def test_gabarito_de_pdf_invalido_devolve_dict_vazio():
     assert parser.extrair_gabarito(b"") == {}
     assert parser.extrair_gabarito(b"nao sou pdf") == {}
+
+
+FIXTURE_CADERNO = Path(__file__).parent / "fixtures" / "cebraspe_caderno_simples.pdf"
+
+
+@pytest.fixture
+def pdf_caderno():
+    if not FIXTURE_CADERNO.exists():
+        pytest.skip("fixture cebraspe_caderno_simples.pdf ainda não baixada")
+    return FIXTURE_CADERNO.read_bytes()
+
+
+def test_extrai_enunciados_de_caderno_sem_gabarito(pdf_caderno):
+    """A maioria dos concursos NÃO publica a versão `_COM_JUSTIFICATIVA`: publica
+    o caderno (enunciado, sem resposta) e o gabarito (resposta, sem enunciado)
+    em arquivos separados. O caderno comum não estava sendo lido, e a extração
+    rendia 9.401 itens todos com enunciado vazio.
+
+    Medido nesta fixture (ABIN 2017, Conhecimentos Específicos): 90 itens,
+    numerados de 61 a 150.
+    """
+    itens = parser.extrair_enunciados(pdf_caderno)
+    numeros = sorted(i["numero"] for i in itens)
+
+    assert len(itens) == 90
+    assert numeros[0] == 61
+    assert numeros[-1] == 150
+    assert sorted(set(range(61, 151))) == numeros, "houve item perdido ou repetido"
+
+
+def test_enunciado_extraido_tem_texto_de_verdade(pdf_caderno):
+    itens = {i["numero"]: i for i in parser.extrair_enunciados(pdf_caderno)}
+    assert "Primeira República" in itens[61]["enunciado"]
+    assert all(len(i["enunciado"]) > 20 for i in itens.values())
+
+
+def test_caderno_sem_gabarito_nao_inventa_resposta(pdf_caderno):
+    """Enunciado sem gabarito é meia questão; o gabarito vem do outro arquivo."""
+    for item in parser.extrair_enunciados(pdf_caderno):
+        assert item.get("gabarito") is None

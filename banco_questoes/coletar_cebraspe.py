@@ -45,16 +45,27 @@ def espaco_livre_gb(caminho: Path) -> float:
     return shutil.disk_usage(alvo).free / 1024**3
 
 
-def _extrair(tipo: str, conteudo: bytes) -> list[dict]:
-    """Devolve os itens de um arquivo, conforme o tipo classificado."""
-    if tipo == config.CADERNO_COM_JUSTIFICATIVA:
-        return parser.extrair_itens(conteudo)
-    if tipo == config.GABARITO_DEFINITIVO:
-        return [
-            {"numero": numero, "gabarito": gabarito, "enunciado": "", "justificativa": ""}
-            for numero, gabarito in sorted(parser.extrair_gabarito(conteudo).items())
-        ]
-    return []
+PREFIXO_GABARITO = "GAB_DEFINITIVO_"
+
+
+def _par_de_gabarito(nome_do_caderno: str, disponiveis: dict[str, str]) -> str | None:
+    """Acha o gabarito do caderno: a banca nomeia `GAB_DEFINITIVO_<caderno>`.
+
+    Casar por numero de item dentro do concurso seria errado: cada cargo tem
+    seu caderno e TODOS numeram de 1 a 120, entao o item 61 de um cargo nao e
+    o item 61 do outro. O nome do arquivo e o unico vinculo confiavel --
+    medido: 82% dos gabaritos arquivados tem caderno de mesmo nome.
+    """
+    return disponiveis.get((PREFIXO_GABARITO + nome_do_caderno).upper())
+
+
+def _itens_do_caderno(conteudo: bytes, gabaritos: dict[int, str]) -> list[dict]:
+    """Junta as duas metades da questao: enunciado do caderno, resposta do gabarito."""
+    itens = parser.extrair_enunciados(conteudo)
+    for item in itens:
+        item["gabarito"] = gabaritos.get(item["numero"])
+        item["justificativa"] = ""
+    return itens
 
 
 def coletar_concurso(sessao, slug: str, pasta_base: Path) -> int:
@@ -82,21 +93,42 @@ def coletar_concurso(sessao, slug: str, pasta_base: Path) -> int:
     destino = pasta_base / slug / "arquivos"
     destino.mkdir(parents=True, exist_ok=True)
 
-    itens: list[dict] = []
+    baixados: dict[str, bytes] = {}
     for arquivo in uteis + editais:
         caminho = destino / arquivo["nome"]
         if caminho.exists():
-            conteudo = caminho.read_bytes()
-        else:
-            try:
-                conteudo = coletor.baixar(sessao, slug, arquivo["nome"])
-            except Exception as erro:
-                print(f"  [SKIP] {arquivo['nome'][:50]}: {erro.__class__.__name__}")
-                continue
-            caminho.write_bytes(conteudo)
-            http_utils.aguardar()
+            baixados[arquivo["nome"]] = caminho.read_bytes()
+            continue
+        try:
+            conteudo = coletor.baixar(sessao, slug, arquivo["nome"])
+        except Exception as erro:
+            print(f"  [SKIP] {arquivo['nome'][:50]}: {erro.__class__.__name__}")
+            continue
+        caminho.write_bytes(conteudo)
+        baixados[arquivo["nome"]] = conteudo
+        http_utils.aguardar()
 
-        for item in _extrair(config.classificar(arquivo), conteudo):
+    # Indice por nome em caixa alta: a banca alterna "GAB_DEFINITIVO_" e
+    # "Gab_Definitivo_" no mesmo acervo.
+    por_nome = {nome.upper(): nome for nome in baixados}
+
+    itens: list[dict] = []
+    for arquivo in uteis + editais:
+        conteudo = baixados.get(arquivo["nome"])
+        if conteudo is None:
+            continue
+        tipo = config.classificar(arquivo)
+
+        if tipo == config.CADERNO_COM_JUSTIFICATIVA:
+            extraidos = parser.extrair_itens(conteudo)
+        elif tipo == config.CADERNO:
+            par = _par_de_gabarito(arquivo["nome"], por_nome)
+            gabaritos = parser.extrair_gabarito(baixados[par]) if par else {}
+            extraidos = _itens_do_caderno(conteudo, gabaritos)
+        else:
+            continue  # gabarito sozinho nao vira questao: e meia questao
+
+        for item in extraidos:
             item["concurso"] = slug
             item["arquivo"] = arquivo["nome"]
             itens.append(item)

@@ -157,3 +157,75 @@ def test_edital_em_html_nao_e_baixado(tmp_path):
     sessao = _ComHtml()
     coletar_cebraspe.coletar_concurso(sessao, "PC_DF_24_ADM", tmp_path)
     assert sessao.baixados == ["ED_1.PDF"]
+
+
+def _fixture(nome):
+    from pathlib import Path
+
+    caminho = Path(__file__).parent / "fixtures" / nome
+    if not caminho.exists():
+        pytest.skip(f"fixture {nome} ainda não baixada")
+    return caminho.read_bytes()
+
+
+class _SessaoCadernoEGabarito:
+    """Serve um caderno e o gabarito de mesmo nome, como a Cebraspe publica."""
+
+    timeout = 5
+    CADERNO = "378_ABIN_001_01.PDF"
+    GABARITO = "GAB_DEFINITIVO_378_ABIN_001_01.PDF"
+
+    def __init__(self):
+        self.caderno = _fixture("cebraspe_caderno_simples.pdf")
+        self.gabarito = _fixture("cebraspe_gabarito.pdf")
+
+    def get(self, url, timeout=None, **kwargs):
+        if "fase/encerrado" in url:
+            return _Resposta(dados=EVENTOS)
+        if url.endswith("PC_DF_24_ADM"):
+            return _Resposta(
+                dados={
+                    "arquivosGabarito": [
+                        {"nomeArquivo": self.CADERNO, "descricaoArquivo": "PROVA OBJETIVA"},
+                        {
+                            "nomeArquivo": self.GABARITO,
+                            "descricaoArquivo": "Gabarito definitivo",
+                        },
+                    ],
+                    "arquivosEdital": [],
+                }
+            )
+        nome = url.rsplit("/", 1)[-1]
+        return _Resposta(conteudo=self.gabarito if "GAB_" in nome else self.caderno)
+
+
+def test_caderno_e_gabarito_viram_uma_questao_so(tmp_path):
+    """O caderno tem enunciado sem resposta; o gabarito tem resposta sem
+    enunciado. São metades da mesma questão, unidas pelo número do item.
+
+    Antes desta junção a extração rendia 9.401 itens TODOS com enunciado
+    vazio: o caderno comum era arquivado e nunca lido.
+
+    Medido nas fixtures: caderno com 90 itens (61 a 150), gabarito cobrindo
+    9 a 120 com 7 anulados nessa faixa — logo 53 itens completos.
+    """
+    coletar_cebraspe.coletar_concurso(_SessaoCadernoEGabarito(), "PC_DF_24_ADM", tmp_path)
+    itens = json.loads((tmp_path / "PC_DF_24_ADM" / "itens.json").read_text(encoding="utf-8"))
+
+    assert len(itens) == 90, "o caderno inteiro precisa entrar"
+    completos = [i for i in itens if i["enunciado"].strip() and i["gabarito"]]
+    assert len(completos) == 53
+
+    exemplo = next(i for i in completos if i["numero"] == 61)
+    assert "Primeira República" in exemplo["enunciado"]
+    assert exemplo["gabarito"] in ("CERTO", "ERRADO")
+
+
+def test_item_sem_gabarito_nao_e_descartado(tmp_path):
+    """Enunciado sem resposta ainda é conteúdo; o gabarito pode vir depois."""
+    coletar_cebraspe.coletar_concurso(_SessaoCadernoEGabarito(), "PC_DF_24_ADM", tmp_path)
+    itens = json.loads((tmp_path / "PC_DF_24_ADM" / "itens.json").read_text(encoding="utf-8"))
+
+    sem_gabarito = [i for i in itens if not i["gabarito"]]
+    assert sem_gabarito, "os itens 121-150 estão fora da faixa do gabarito"
+    assert all(i["enunciado"].strip() for i in sem_gabarito)
