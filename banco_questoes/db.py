@@ -200,73 +200,56 @@ def salvar_questao(con, q):
         return False
 
 
+# O DISTINCT ON exige que o ORDER BY comece pela sua expressão, então um
+# RANDOM() ali dentro nunca sorteia nada: cada content_hash tem uma linha só.
+# A subquery deduplica e o sorteio acontece do lado de fora.
+_SQL_SORTEIO = (
+    "SELECT * FROM ("
+    "  SELECT DISTINCT ON (content_hash) * FROM questoes WHERE {onde}"
+    "   ORDER BY content_hash,"
+    "     CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END"
+    ") AS unicas ORDER BY RANDOM() LIMIT %s"
+)
+
+
+def _sortear(con, materia, quantidade, usadas, banca, orgao, cargo):
+    """Sorteia `quantidade` questões distintas por conteúdo, em ordem aleatória."""
+    onde = ["materia=%s", "usada_em_simulado=%s", "content_hash IS NOT NULL"]
+    params = [materia, usadas]
+    for coluna, valor in (("banca", banca), ("orgao", orgao), ("cargo", cargo)):
+        if valor:
+            onde.append(f"{coluna}=%s")
+            params.append(valor)
+    params.append(quantidade)
+    sql = _SQL_SORTEIO.format(onde=" AND ".join(onde))
+    return [dict(linha) for linha in con.execute(sql, tuple(params)).fetchall()]
+
+
 def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=None):
-    """Sorteia questões não usadas (deduplicadas por conteúdo); se faltar, avisa e completa com repetidas.
+    """Sorteia questões inéditas, deduplicadas por conteúdo.
+
+    Se não houver inéditas suficientes, avisa e completa com repetidas.
 
     Args:
         con: Conexão com o banco
         materia: Matéria/disciplina para filtro
         quantidade: Número de questões desejadas
-        banca: Nome da banca examinadora para filtro (opcional, ex: "Instituto Quadrix")
-        orgao: Órgão/concurso para filtro (opcional, ex: "SEDES/DF")
-        cargo: Cargo para filtro (opcional, ex: "Policial Rodoviário Federal")
+        banca: Nome da banca examinadora (opcional, ex: "Instituto Quadrix")
+        orgao: Órgão/concurso (opcional, ex: "SEDES/DF")
+        cargo: Cargo (opcional, ex: "Policial Rodoviário Federal")
     """
-    # Construir WHERE dinamicamente
-    where_parts = ["materia=%s", "usada_em_simulado=0", "content_hash IS NOT NULL"]
-    params = [materia]
+    questoes = _sortear(con, materia, quantidade, 0, banca, orgao, cargo)
 
-    if banca:
-        where_parts.append("banca=%s")
-        params.append(banca)
-    if orgao:
-        where_parts.append("orgao=%s")
-        params.append(orgao)
-    if cargo:
-        where_parts.append("cargo=%s")
-        params.append(cargo)
-
-    where_clause = " AND ".join(where_parts)
-    params.append(quantidade)  # Para LIMIT
-
-    linhas = con.execute(
-        f"SELECT DISTINCT ON (content_hash) * FROM questoes"
-        f" WHERE {where_clause} AND content_hash IS NOT NULL"
-        f" ORDER BY content_hash,"
-        f"   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-        f"   RANDOM() LIMIT %s",
-        tuple(params),
-    ).fetchall()
-    questoes = [dict(l) for l in linhas]
     faltam = quantidade - len(questoes)
     if faltam > 0:
-        where_parts_rep = ["materia=%s", "usada_em_simulado=1", "content_hash IS NOT NULL"]
-        params_rep = [materia]
-        if banca:
-            where_parts_rep.append("banca=%s")
-            params_rep.append(banca)
-        if orgao:
-            where_parts_rep.append("orgao=%s")
-            params_rep.append(orgao)
-        if cargo:
-            where_parts_rep.append("cargo=%s")
-            params_rep.append(cargo)
-        where_clause_rep = " AND ".join(where_parts_rep)
-        params_rep.append(faltam)
-
-        repetidas = con.execute(
-            f"SELECT DISTINCT ON (content_hash) * FROM questoes"
-            f" WHERE {where_clause_rep}"
-            f" ORDER BY content_hash,"
-            f"   CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END,"
-            f"   RANDOM() LIMIT %s",
-            tuple(params_rep),
-        ).fetchall()
+        repetidas = _sortear(con, materia, faltam, 1, banca, orgao, cargo)
         if repetidas:
             print(
                 f"Aviso: só {len(questoes)} questões inéditas de {materia};"
                 f" completando com {len(repetidas)} repetidas."
             )
-        questoes += [dict(l) for l in repetidas]
+        questoes += repetidas
+
     for q in questoes:
         q["alternativas"] = json.loads(q["alternativas"])
         q["imagens"] = json.loads(q["imagens"]) if q["imagens"] else []

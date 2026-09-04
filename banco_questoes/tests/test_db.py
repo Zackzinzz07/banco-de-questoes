@@ -356,3 +356,32 @@ def test_salvar_questao_com_byte_nul_no_enunciado_nao_quebra():
     assert linha["enunciado"] == "Quanto é 2 + 2?"
     assert "\x00" not in str(linha["alternativas"])
     con.close()
+
+
+def test_sortear_questoes_nao_devolve_sempre_as_mesmas():
+    """O RANDOM() do sorteio era código morto.
+
+    `SELECT DISTINCT ON (content_hash) ... ORDER BY content_hash, ..., RANDOM()`
+    obriga o ORDER BY a começar pelo content_hash, então o LIMIT pegava as N
+    primeiras em ordem de hash e o RANDOM() só desempataria linhas de mesmo
+    hash — que, por definição do DISTINCT ON, nunca existem. Resultado: o mesmo
+    simulado toda vez, e sem relação nenhuma com equilíbrio de conteúdo.
+    """
+    con = db.conectar()
+    for n in range(60):
+        db.salvar_questao(
+            con,
+            questao_exemplo(
+                id_qc=f"QSORT{n}",
+                enunciado=f"Enunciado sorteável número {n}?",
+                materia="Direito Administrativo",
+            ),
+        )
+
+    sorteios = {
+        tuple(q["id"] for q in db.sortear_questoes(con, "Direito Administrativo", 10))
+        for _ in range(3)
+    }
+    con.close()
+
+    assert len(sorteios) > 1, "três sorteios seguidos devolveram exatamente as mesmas questões"
