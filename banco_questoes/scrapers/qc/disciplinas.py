@@ -21,6 +21,8 @@ IDs confirmados na interface logada do QConcursos em 03/09/2026.
 
 import urllib.parse
 
+from scrapers.qc.catalogo import CATALOGO
+
 BASE = "https://www.qconcursos.com/questoes-de-concursos/questoes"
 
 # Descarta questões anuladas e desatualizadas: não servem para estudo.
@@ -79,6 +81,17 @@ PAUSADAS: dict[str, str] = {
         "institute_ids[] da SEDES -- outro nivel da taxonomia."
     ),
 }
+
+
+# O catálogo do QC entra depois das matérias definidas acima, e só onde não
+# colide: id já usado numa matéria anterior não é reaproveitado, senão a mesma
+# questão seria coletada com duas classificações. Por isso Arquivologia (20)
+# não ganha entrada própria — ela já vive dentro da composta do SEDES.
+_ids_em_uso = {identificador for ids in DISCIPLINAS.values() for identificador in ids}
+for _nome, _id in CATALOGO.items():
+    if _id not in _ids_em_uso and _nome not in DISCIPLINAS:
+        DISCIPLINAS[_nome] = (_id,)
+        _ids_em_uso.add(_id)
 
 
 def url_de_busca(ids: tuple[int, ...]) -> str:

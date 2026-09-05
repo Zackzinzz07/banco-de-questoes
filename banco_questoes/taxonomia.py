@@ -92,10 +92,15 @@ def _partes_compostas(normalizado: str) -> list[str]:
         return []
 
     nucleo = partes[0].split()[0]
-    completas = [partes[0]]
+    candidatas = [partes[0]]
     for parte in partes[1:]:
-        completas.append(parte if parte.startswith(nucleo) else f"{nucleo} {parte}")
-    return completas
+        # A parte pode vir completa ("Matemática E RACIOCÍNIO LÓGICO") ou com o
+        # núcleo subentendido ("Direito Penal e PROCESSUAL PENAL"). Só o banco
+        # decide qual das duas existe, então as duas são oferecidas.
+        candidatas.append(parte)
+        if not parte.startswith(nucleo):
+            candidatas.append(f"{nucleo} {parte}")
+    return candidatas
 
 
 def resolver(materia_do_edital: str, disponiveis: list[str]) -> list[str]:

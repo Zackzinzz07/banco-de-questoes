@@ -118,3 +118,45 @@ def test_pausada_nao_entra_na_coleta():
 def test_pausada_continua_no_registro_para_nao_perder_o_id():
     """Some da coleta, não do registro: o id e o histórico continuam ali."""
     assert "Conhecimentos do DF e Legislação" in disciplinas.DISCIPLINAS
+
+
+SUSPEITOS = (52, 197, 209, 277, 418, 426, 466, 504, 621, 623)
+
+
+def test_registro_cobre_o_catalogo_inteiro_do_qc():
+    """O catálogo real tem 267 disciplinas válidas (IDs 1 a 623), levantado na
+    interface logada. Com 22 registradas, 245 matérias eram invisíveis para
+    qualquer edital."""
+    assert len(disciplinas.DISCIPLINAS) > 200
+
+
+def test_ids_com_contagem_falsa_ficam_de_fora():
+    """Dez IDs devolvem 2.657.288 questões — o total do site inteiro, ou seja,
+    o filtro não está aplicando. Dois nem são disciplina ("Como estudar para
+    concursos", "Entenda o seu edital"). Coletar por eles traria o acervo
+    inteiro rotulado errado."""
+    registrados = {i for ids in disciplinas.DISCIPLINAS.values() for i in ids}
+    for suspeito in SUSPEITOS:
+        assert suspeito not in registrados, f"id {suspeito} tem contagem falsa"
+
+
+def test_disciplinas_grandes_do_catalogo_entraram():
+    """As de maior acervo, que nenhum edital alcançava antes."""
+    esperadas = {
+        "Matemática": 13,  # 89.956 questões
+        "Inglês": 16,  # 24.873 — resolve a "Língua Inglesa" do PMDF
+        "Contabilidade Geral": 35,
+        "Contabilidade Pública": 36,
+        "Direito Civil": 8,
+        "Direito Tributário": 18,
+        "Estatística": 40,
+    }
+    for nome, identificador in esperadas.items():
+        assert nome in disciplinas.DISCIPLINAS, f"{nome} não entrou"
+        assert identificador in disciplinas.DISCIPLINAS[nome]
+
+
+def test_arquivologia_continua_sem_entrada_propria():
+    """O id 20 segue dentro da composta do SEDES; duplicar coletaria a mesma
+    questão com duas matérias."""
+    assert "Arquivologia" not in disciplinas.DISCIPLINAS
