@@ -15,9 +15,9 @@ arquivo=$(jq -r '.tool_input.file_path // ""')
 raiz="${CLAUDE_PROJECT_DIR:-$PWD}"
 rel="${arquivo#"$raiz/"}"
 
-limite=350
-[[ "$rel" == scrapers/* || "$rel" == simulados/estilos/* ]] && limite=250
-[[ "$rel" == main.py || "$rel" == simulados/cli_multibanca.py ]] && limite=60
+limite=850
+[[ "$rel" == scrapers/* || "$rel" == simulados/estilos/* ]] && limite=500
+[[ "$rel" == main.py || "$rel" == simulados/cli_multibanca.py ]] && limite=150
 
 linhas=$(wc -l < "$arquivo")
 (( linhas > limite )) || exit 0

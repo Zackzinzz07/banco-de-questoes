@@ -17,6 +17,11 @@ outra vira código morto silencioso.
 # tempo real; quando o coletor do QC esta rodando, um deles some no meio da
 # varredura e a coleta de testes aborta com AssertionError. Os PDFs arquivados
 # da Cebraspe sao so peso morto na varredura.
+collect_ignore = [
+    "provas_pdf",
+    "perfil_chrome_scraper",
+    ".venv",
+]
 collect_ignore_glob = [
     "perfil_chrome_scraper/*",
     "provas_pdf/*",
