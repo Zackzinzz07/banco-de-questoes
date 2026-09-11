@@ -229,3 +229,30 @@ def test_item_sem_gabarito_nao_e_descartado(tmp_path):
     sem_gabarito = [i for i in itens if not i["gabarito"]]
     assert sem_gabarito, "os itens 121-150 estão fora da faixa do gabarito"
     assert all(i["enunciado"].strip() for i in sem_gabarito)
+
+
+def test_auto_purge_remove_pdfs_de_caderno_e_gabarito(tmp_path):
+    """Auto-purge: apos gerar itens.json e gabarito.json, os PDFs brutos pesados
+    sao excluidos por padrao para poupar espaco em disco."""
+    sessao = _SessaoCadernoEGabarito()
+    coletar_cebraspe.coletar_concurso(sessao, "PC_DF_24_ADM", tmp_path, manter_pdfs=False)
+
+    pasta_arqs = tmp_path / "PC_DF_24_ADM" / "arquivos"
+    salvos = {p.name for p in pasta_arqs.iterdir()} if pasta_arqs.exists() else set()
+    assert sessao.CADERNO not in salvos, "Caderno bruto deve ser purgado"
+    assert sessao.GABARITO not in salvos, "Gabarito bruto deve ser purgado"
+    assert (tmp_path / "PC_DF_24_ADM" / "itens.json").exists()
+    assert (tmp_path / "PC_DF_24_ADM" / "gabarito.json").exists()
+
+
+def test_manter_pdfs_flag_preserva_arquivos(tmp_path):
+    """Quando manter_pdfs=True, os arquivos originais sao preservados."""
+    sessao = _SessaoCadernoEGabarito()
+    coletar_cebraspe.coletar_concurso(sessao, "PC_DF_24_ADM", tmp_path, manter_pdfs=True)
+
+    pasta_arqs = tmp_path / "PC_DF_24_ADM" / "arquivos"
+    salvos = {p.name for p in pasta_arqs.iterdir()}
+    assert sessao.CADERNO in salvos
+    assert sessao.GABARITO in salvos
+    assert (tmp_path / "PC_DF_24_ADM" / "itens.json").exists()
+
