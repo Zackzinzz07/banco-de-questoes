@@ -112,11 +112,12 @@ def conectar(caminho=None):
 
     if not _MIGRACOES_APLICADAS:
         try:
-            from migrations import migration_001, migration_002, migration_003
+            from migrations import migration_001, migration_002, migration_003, migration_004
 
             migration_001.aplicar(con)
             migration_002.aplicar(con)
             migration_003.aplicar(con)
+            migration_004.aplicar(con)
             _MIGRACOES_APLICADAS = True
         except ImportError:
             pass  # Migrations not available (should not happen in normal use)
@@ -303,7 +304,7 @@ def sem_gabarito(con):
     linhas = con.execute(
         "SELECT * FROM questoes WHERE (gabarito IS NULL OR gabarito = '') AND id_qc IS NOT NULL"
     ).fetchall()
-    return [dict(l) for l in linhas]
+    return [dict(linha) for linha in linhas]
 
 
 def atualizar_gabarito(con, id_qc, gabarito, comentario=None):
@@ -338,11 +339,11 @@ def estatisticas(con):
         " FROM questoes GROUP BY materia ORDER BY materia"
     ).fetchall()
     return {
-        l["materia"]: {
-            "total": l["total"],
-            "ineditas": l["ineditas"],
-            "usadas": l["usadas"],
-            "sem_gabarito": l["sem_gabarito"],
+        linha["materia"]: {
+            "total": linha["total"],
+            "ineditas": linha["ineditas"],
+            "usadas": linha["usadas"],
+            "sem_gabarito": linha["sem_gabarito"],
         }
-        for l in linhas
+        for linha in linhas
     }

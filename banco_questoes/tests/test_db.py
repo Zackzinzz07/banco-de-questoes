@@ -475,3 +475,161 @@ def test_sortear_questoes_nao_devolve_sempre_as_mesmas():
     con.close()
 
     assert len(sorteios) > 1, "três sorteios seguidos devolveram exatamente as mesmas questões"
+
+
+def test_migration_004_cria_tabelas_materias_e_conteudos():
+    """A migration roda no conectar() -- as tabelas já existem sem precisar
+    chamar nada explicitamente."""
+    con = db.conectar()
+    materias_cols = {
+        r["column_name"]
+        for r in con.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name='materias'"
+        ).fetchall()
+    }
+    conteudos_cols = {
+        r["column_name"]
+        for r in con.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name='conteudos'"
+        ).fetchall()
+    }
+    assert {"id", "nome"} <= materias_cols
+    assert {"id", "materia_id", "nome"} <= conteudos_cols
+
+    questoes_cols = {
+        r["column_name"]
+        for r in con.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name='questoes'"
+        ).fetchall()
+    }
+    assert "conteudo_id" in questoes_cols
+
+
+def test_migration_004_agrupa_variantes_de_materia_e_faz_backfill():
+    """'Informática' e 'Noções de Informática' são a mesma matéria pro
+    taxonomia -- tem que virar UMA linha em `materias`, não duas, e cada
+    questão tem que apontar pro conteúdo certo via `categoria`."""
+    import migrations.migration_004 as m4
+
+    con = db.conectar()
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QINF1",
+            enunciado="Questão de Informática 1?",
+            materia="Informática",
+            categoria="Hardware",
+        ),
+    )
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QINF2",
+            enunciado="Questão de Informática 2?",
+            materia="Informática",
+            categoria="Hardware",
+        ),
+    )
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QINF3",
+            enunciado="Questão de Noções de Informática?",
+            materia="Noções de Informática",
+            categoria="Redes",
+        ),
+    )
+
+    # A migration já rodou em conectar() antes destas questões existirem;
+    # chamar de novo é o mecanismo de idempotência que pega dado novo.
+    assert m4.aplicar(con) is True
+
+    materias = con.execute(
+        "SELECT id, nome FROM materias WHERE nome IN ('Informática', 'Noções de Informática')"
+    ).fetchall()
+    assert len(materias) == 1, "duas variantes da mesma matéria viraram duas linhas"
+    assert materias[0]["nome"] == "Informática"  # variante com mais questões (2 x 1)
+    materia_id = materias[0]["id"]
+
+    conteudos = con.execute(
+        "SELECT nome FROM conteudos WHERE materia_id=%s ORDER BY nome", (materia_id,)
+    ).fetchall()
+    assert [c["nome"] for c in conteudos] == ["Hardware", "Redes"]
+
+    linhas = con.execute(
+        "SELECT q.id_qc, c.nome FROM questoes q JOIN conteudos c ON c.id = q.conteudo_id"
+        " WHERE q.id_qc IN ('QINF1', 'QINF2', 'QINF3') ORDER BY q.id_qc"
+    ).fetchall()
+    assert [(r["id_qc"], r["nome"]) for r in linhas] == [
+        ("QINF1", "Hardware"),
+        ("QINF2", "Hardware"),
+        ("QINF3", "Redes"),
+    ]
+
+
+def test_migration_004_e_idempotente():
+    """Rodar duas vezes não duplica materias nem conteudos."""
+    import migrations.migration_004 as m4
+
+    con = db.conectar()
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QIDEMP",
+            enunciado="Questão idempotência?",
+            materia="Atualidades",
+            categoria="Geopolítica",
+        ),
+    )
+
+    assert m4.aplicar(con) is True
+    assert m4.aplicar(con) is True
+
+    total = con.execute(
+        "SELECT COUNT(*) c FROM conteudos WHERE nome='Geopolítica'"
+    ).fetchone()["c"]
+    assert total == 1
+
+
+def test_migration_004_nao_sobrescreve_conteudo_id_ja_preenchido():
+    """O backfill só toca `conteudo_id IS NULL` -- não pisa em quem já foi
+    resolvido por outro caminho (ex.: mapear_conteudo_edital.py no futuro)."""
+    import migrations.migration_004 as m4
+
+    con = db.conectar()
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QPRESET",
+            enunciado="Questão com conteudo_id manual?",
+            materia="Atualidades",
+            categoria="Geopolítica",
+        ),
+    )
+    assert m4.aplicar(con) is True
+
+    conteudo_id_original = con.execute(
+        "SELECT conteudo_id FROM questoes WHERE id_qc='QPRESET'"
+    ).fetchone()["conteudo_id"]
+    assert conteudo_id_original is not None
+
+    cur = con.execute(
+        "INSERT INTO conteudos (materia_id, nome)"
+        " SELECT materia_id, 'Outro Assunto Qualquer' FROM conteudos"
+        " WHERE id=%s"
+        " ON CONFLICT (materia_id, nome) DO UPDATE SET nome = EXCLUDED.nome"
+        " RETURNING id",
+        (conteudo_id_original,),
+    )
+    outro_conteudo = cur.fetchone()["id"]
+    con.execute(
+        "UPDATE questoes SET conteudo_id=%s WHERE id_qc='QPRESET'", (outro_conteudo,)
+    )
+    con.commit()
+
+    assert m4.aplicar(con) is True
+
+    conteudo_id_final = con.execute(
+        "SELECT conteudo_id FROM questoes WHERE id_qc='QPRESET'"
+    ).fetchone()["conteudo_id"]
+    assert conteudo_id_final == outro_conteudo
