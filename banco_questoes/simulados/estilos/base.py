@@ -10,11 +10,11 @@ Classes:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import yaml
 from reportlab.lib import colors
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfgen import canvas
 
 
@@ -87,9 +87,42 @@ class BaseBancaStyle(ABC):
         self.caracteristicas_prova = config.get("caracteristicas_prova", {})
         self.estrutura_disciplinas = config.get("estrutura_disciplinas_padrao", [])
 
+    def desenhar_divisor_materia(
+        self,
+        canvas_obj: canvas.Canvas,
+        materia: str,
+        x: float,
+        y: float,
+        largura: float,
+    ) -> float:
+        """Draw subject section divider in bold uppercase."""
+        if not materia:
+            return 0.0
+        from . import alternativas
+
+        fonte = "Helvetica-Bold"
+        if "Times" in self.estilo_visual.get("fonte_corpo", ""):
+            fonte = "Times-Bold"
+        return alternativas.desenhar_divisor_materia(
+            canvas_obj, materia, x, y, largura, fonte=fonte
+        )
+
+    def altura_divisor_materia(self, materia: str = "") -> float:
+        """Height occupied by subject section divider."""
+        if not materia:
+            return 0.0
+        from . import alternativas
+
+        return alternativas.ALTURA_DIVISOR_MATERIA_PT
+
     @abstractmethod
     def desenhar_cabecalho(
-        self, canvas_obj: canvas.Canvas, pagina_numero: int, largura: float, altura: float
+        self,
+        canvas_obj: canvas.Canvas,
+        pagina_numero: int,
+        largura: float,
+        altura: float,
+        info_concurso: Optional[Dict[str, Any]] = None,
     ) -> float:
         """
         Draw the document header on the current page.
@@ -99,6 +132,7 @@ class BaseBancaStyle(ABC):
             pagina_numero (int): Current page number (1-indexed).
             largura (float): Page width in points.
             altura (float): Page height in points.
+            info_concurso (Optional[Dict[str, Any]]): Contest, organ and role info.
 
         Returns:
             float: Height occupied by the header in points.
@@ -188,9 +222,6 @@ class BaseBancaStyle(ABC):
             >>> estilos = base.obter_estilos_paragraph()
             >>> titulo_style = estilos['titulo']
         """
-        # Get sample styles as a base
-        sample_styles = getSampleStyleSheet()
-
         # Extract font configuration from estilo_visual
         fonte_titulo = self.estilo_visual.get("fonte_titulo", "Helvetica 12pt")
         fonte_corpo = self.estilo_visual.get("fonte_corpo", "Times-Roman 10pt")

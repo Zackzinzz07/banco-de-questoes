@@ -31,21 +31,46 @@ PASTA_SAIDA = Path(__file__).resolve().parent
 
 W, H = A4
 
-# Espaço vertical entre questões consecutivas na mesma coluna.
-ESPACO_ENTRE_QUESTOES_PT = 8
+# Espaço vertical entre questões consecutivas na mesma coluna (compacto).
+ESPACO_ENTRE_QUESTOES_PT = 5.0
 
-# Largura da calha (gutter) entre colunas.
-CALHA_CM = 0.4
+# Largura da calha (gutter) entre colunas: 6mm.
+CALHA_CM = 0.6
 
 
-# Registro central das 4 bancas suportadas: arquivo YAML (Task 1), módulo e
-# classe de estilo (Task 2 = base; Tasks 3/4 = implementações concretas).
-# Nota: Quadrix não está implementado aqui — SEDES usa gerar_simulado.py.
+# Mapeamento universal: tudo agora é Múltipla Escolha ou Certo e Errado.
+MAPA_FORMATOS_LEGADO: Dict[str, str] = {
+    "cebraspe": "certo_errado",
+    "cespe": "certo_errado",
+    "certo_errado": "certo_errado",
+    "certo-errado": "certo_errado",
+    "julgar": "certo_errado",
+    "fgv": "multipla_escolha",
+    "aocp": "multipla_escolha",
+    "iades": "multipla_escolha",
+    "quadrix": "multipla_escolha",
+    "multipla_escolha": "multipla_escolha",
+    "multipla-escolha": "multipla_escolha",
+    "multipla": "multipla_escolha",
+}
+
+# Registro central unificado com suporte a formatos universais e compatibilidade legada
 BANCAS: Dict[str, Dict[str, str]] = {
+    "multipla_escolha": {
+        "yaml": "aocp.yaml",
+        "modulo": "universal",
+        "classe": "EstiloMultiplaEscolha",
+    },
+    "certo_errado": {
+        "yaml": "cebraspe.yaml",
+        "modulo": "universal",
+        "classe": "EstiloCertoErrado",
+    },
     "cebraspe": {"yaml": "cebraspe.yaml", "modulo": "cebraspe", "classe": "EstiloCebraspe"},
     "iades": {"yaml": "iades.yaml", "modulo": "iades", "classe": "EstiloIADES"},
     "fgv": {"yaml": "fgv.yaml", "modulo": "fgv", "classe": "EstiloFGV"},
     "aocp": {"yaml": "aocp.yaml", "modulo": "aocp", "classe": "EstiloAOCP"},
+    "quadrix": {"yaml": "aocp.yaml", "modulo": "universal", "classe": "EstiloMultiplaEscolha"},
 }
 
 
@@ -63,6 +88,9 @@ class GeradorSimuladoMultiBanca:
         con=None,
         banca_concurso: Optional[str] = None,
         orgao: Optional[str] = None,
+        cargo: Optional[str] = None,
+        concurso: Optional[str] = None,
+        concurso_nome: Optional[str] = None,
     ) -> None:
         """
         Args:
@@ -74,23 +102,75 @@ class GeradorSimuladoMultiBanca:
                 Se None, usa questões de qualquer banca.
             orgao: Órgão/concurso para filtro (ex: "SEDES/DF").
                 Se None, usa questões de qualquer órgão.
+            cargo: Cargo para filtro/cabeçalho (ex: "Soldado Policial Militar").
+            concurso: Slug do edital/concurso (ex: "pmdf", "prf").
+            concurso_nome: Nome formatado para o cabeçalho (ex: "POLÍCIA MILITAR DO DF").
 
         Raises:
             ValueError: Se banca_nome não estiver em BANCAS.
         """
-        if banca_nome not in BANCAS:
+        chave = banca_nome.lower().strip()
+        if chave not in BANCAS and chave not in MAPA_FORMATOS_LEGADO:
             disponiveis = ", ".join(sorted(BANCAS))
             raise ValueError(
                 f"Banca '{banca_nome}' desconhecida. Bancas disponíveis: {disponiveis}"
             )
 
-        self.banca_nome = banca_nome
+        self.formato_alvo = MAPA_FORMATOS_LEGADO.get(chave, "multipla_escolha")
+        self.banca_nome = chave if chave in BANCAS else self.formato_alvo
         self.con = con
         self.banca_concurso = banca_concurso
         self.orgao = orgao
+        self.cargo = cargo
+        self.concurso = concurso
+        self.concurso_nome = concurso_nome
 
         self.config = self._carregar_config()
         self.estilo = self._carregar_estilo()
+
+    def _dados_do_concurso(self, questoes: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+        """Extrai dados limpos do concurso e cargo para exibição no cabeçalho."""
+        concurso_nome = self.concurso_nome
+        cargo = self.cargo
+        orgao = self.orgao
+
+        if self.concurso and (not concurso_nome or not cargo):
+            try:
+                import edital_loader
+
+                dados = edital_loader.carregar_edital(self.concurso)
+                if dados:
+                    orgao = dados.get("orgao") or orgao
+                    if not concurso_nome:
+                        if orgao:
+                            concurso_nome = f"{str(orgao).upper()} — {self.concurso.upper()}"
+                        else:
+                            concurso_nome = dados.get("nome")
+                    if not cargo and dados.get("cargos"):
+                        cargo = list(dados["cargos"].keys())[0]
+            except Exception:
+                pass
+
+        if not concurso_nome and questoes:
+            orgaos = [
+                q.get("orgao")
+                for q in questoes
+                if q.get("orgao") and q.get("orgao") != "Não informado"
+            ]
+            if orgaos:
+                from collections import Counter
+
+                orgao = Counter(orgaos).most_common(1)[0][0]
+                concurso_nome = orgao
+
+        if not concurso_nome:
+            concurso_nome = orgao or "SIMULADO DE TREINO"
+
+        return {
+            "concurso_nome": concurso_nome,
+            "orgao": orgao or concurso_nome,
+            "cargo": cargo or "",
+        }
 
     # ------------------------------------------------------------------
     # Carregamento de configuração e estilo
@@ -220,20 +300,37 @@ class GeradorSimuladoMultiBanca:
     def _preparar_questao_data(self, numero: int, q: Dict[str, Any]) -> Dict[str, Any]:
         """Converte uma linha de `questoes` (formato do banco) no dicionário
         `questao_data` esperado pela interface de `BaseBancaStyle`
-        (numero, enunciado, opcoes, tipo).
+        (numero, enunciado, opcoes, tipo, banca, orgao, cargo, ano, materia).
         """
-        alternativas = q.get("alternativas") or {}
+        formato = (
+            q.get("formato")
+            or getattr(self.estilo, "tipo_formato", None)
+            or getattr(self, "formato_alvo", "multipla_escolha")
+        )
+        e_certo_errado = formato == "certo_errado"
+        alternativas = {} if e_certo_errado else (q.get("alternativas") or {})
         opcoes = [{"letra": letra, "texto": texto} for letra, texto in sorted(alternativas.items())]
-        tipo = self.config.get("caracteristicas_prova", {}).get(
-            "tipo_predominante", "Múltipla Escolha"
+        tipo = (
+            "Certo/Errado"
+            if e_certo_errado
+            else self.config.get("caracteristicas_prova", {}).get(
+                "tipo_predominante", "Múltipla Escolha"
+            )
         )
         return {
             "numero": numero,
             "enunciado": q.get("enunciado", ""),
             "opcoes": opcoes,
             "tipo": tipo,
+            "formato": formato,
             "gabarito": q.get("gabarito"),
             "comentario": q.get("comentario"),
+            "banca": q.get("banca"),
+            "orgao": q.get("orgao"),
+            "cargo": q.get("cargo"),
+            "ano": q.get("ano"),
+            "prova": q.get("prova"),
+            "materia": q.get("materia"),
         }
 
     # ------------------------------------------------------------------
@@ -241,26 +338,26 @@ class GeradorSimuladoMultiBanca:
     # ------------------------------------------------------------------
 
     def _layout_pagina(
-        self, canvas_obj, pagina_numero: int
+        self, canvas_obj, pagina_numero: int, info_concurso: Optional[Dict[str, Any]] = None
     ) -> Tuple[float, float, float, List[float]]:
-        """Desenha cabeçalho e rodapé da página atual e calcula a geometria
-        de colunas disponível para as questões.
-
-        Returns:
-            Tuple(y_topo, y_fundo, largura_coluna, x_colunas): posições em
-            pontos ReportLab prontas para o preenchimento das questões.
-        """
+        """Desenha cabeçalho (apenas p1) e rodapé, calculando colunas compactas."""
         margens = self.estilo.obter_margens_pontos()
-        altura_cabecalho = self.estilo.desenhar_cabecalho(canvas_obj, pagina_numero, W, H)
-        altura_rodape = self.estilo.desenhar_rodape(canvas_obj, pagina_numero, W, H)
+        altura_cabecalho = self.estilo.desenhar_cabecalho(
+            canvas_obj, pagina_numero, W, H, info_concurso=info_concurso
+        )
+        self.estilo.desenhar_rodape(canvas_obj, pagina_numero, W, H)
 
-        y_topo = H - margens["superior"] - altura_cabecalho
-        y_fundo = margens["inferior"] + altura_rodape
+        # Cabeçalho EXCLUSIVO na Página 1. Nas páginas 2+, questões iniciam direto no topo útil
+        if pagina_numero == 1:
+            y_topo = H - margens["superior"] - altura_cabecalho
+        else:
+            y_topo = H - margens["superior"]
+
+        y_fundo = margens["inferior"]
         largura_util = W - margens["esquerda"] - margens["direita"]
 
-        colunas = int(self.estilo.estilo_visual.get("layout_colunas", 2)) or 1
-        colunas = max(1, colunas)
-        calha_pt = self.estilo.cm_para_pontos(CALHA_CM) if colunas > 1 else 0.0
+        colunas = 2
+        calha_pt = self.estilo.cm_para_pontos(CALHA_CM)
         largura_coluna = (largura_util - calha_pt * (colunas - 1)) / colunas
         x_colunas = [margens["esquerda"] + i * (largura_coluna + calha_pt) for i in range(colunas)]
 
@@ -280,29 +377,42 @@ class GeradorSimuladoMultiBanca:
         if not questoes:
             return 1
 
+        info_concurso = self._dados_do_concurso(questoes)
         buffer_descartavel = io.BytesIO()
         canvas_medicao = reportlab_canvas.Canvas(buffer_descartavel, pagesize=A4)
 
         pagina_numero = 1
         y_topo, y_fundo, largura_coluna, x_colunas = self._layout_pagina(
-            canvas_medicao, pagina_numero
+            canvas_medicao, pagina_numero, info_concurso=info_concurso
         )
         colunas = len(x_colunas)
         col_idx = 0
         y_cursor = y_topo
+        materia_atual = None
 
         for numero, q in enumerate(questoes, 1):
             questao_data = self._preparar_questao_data(numero, q)
-            altura_necessaria = self.estilo.calcular_altura_questao(questao_data, largura_coluna)
+            materia_q = q.get("materia") or questao_data.get("materia") or ""
+            mudou_materia = bool(materia_q and materia_q != materia_atual)
 
-            if y_cursor - altura_necessaria < y_fundo:
-                col_idx += 1
-                if col_idx >= colunas:
-                    pagina_numero += 1
-                    col_idx = 0
-                y_cursor = y_topo
+            altura_questao = self.estilo.calcular_altura_questao(questao_data, largura_coluna)
+            altura_divisor = self.estilo.altura_divisor_materia(materia_q) if mudou_materia else 0.0
+            altura_bloco = altura_divisor + altura_questao
+            espaco_necessario = altura_bloco if mudou_materia else altura_questao
 
-            y_cursor -= altura_necessaria + ESPACO_ENTRE_QUESTOES_PT
+            if y_cursor - espaco_necessario < y_fundo:
+                if y_cursor < y_topo - 1:
+                    col_idx += 1
+                    if col_idx >= colunas:
+                        pagina_numero += 1
+                        col_idx = 0
+                    y_cursor = y_topo
+
+            if mudou_materia:
+                y_cursor -= altura_divisor
+                materia_atual = materia_q
+
+            y_cursor -= altura_questao + ESPACO_ENTRE_QUESTOES_PT
 
         return pagina_numero
 
@@ -326,26 +436,44 @@ class GeradorSimuladoMultiBanca:
         c = reportlab_canvas.Canvas(str(caminho_saida), pagesize=A4)
         c.setTitle(f"Simulado {self.estilo.nome_oficial}")
 
+        info_concurso = self._dados_do_concurso(questoes)
         pagina_numero = 1
-        y_topo, y_fundo, largura_coluna, x_colunas = self._layout_pagina(c, pagina_numero)
+        y_topo, y_fundo, largura_coluna, x_colunas = self._layout_pagina(
+            c, pagina_numero, info_concurso=info_concurso
+        )
         colunas = len(x_colunas)
         col_idx = 0
         y_cursor = y_topo
+        materia_atual = None
 
         for numero, q in enumerate(questoes, 1):
             questao_data = self._preparar_questao_data(numero, q)
-            altura_necessaria = self.estilo.calcular_altura_questao(questao_data, largura_coluna)
+            materia_q = q.get("materia") or questao_data.get("materia") or ""
+            mudou_materia = bool(materia_q and materia_q != materia_atual)
 
-            if y_cursor - altura_necessaria < y_fundo:
-                col_idx += 1
-                if col_idx >= colunas:
-                    c.showPage()
-                    pagina_numero += 1
-                    y_topo, y_fundo, largura_coluna, x_colunas = self._layout_pagina(
-                        c, pagina_numero
-                    )
-                    col_idx = 0
-                y_cursor = y_topo
+            altura_questao = self.estilo.calcular_altura_questao(questao_data, largura_coluna)
+            altura_divisor = self.estilo.altura_divisor_materia(materia_q) if mudou_materia else 0.0
+            altura_bloco = altura_divisor + altura_questao
+            espaco_necessario = altura_bloco if mudou_materia else altura_questao
+
+            if y_cursor - espaco_necessario < y_fundo:
+                if y_cursor < y_topo - 1:
+                    col_idx += 1
+                    if col_idx >= colunas:
+                        c.showPage()
+                        pagina_numero += 1
+                        y_topo, y_fundo, largura_coluna, x_colunas = self._layout_pagina(
+                            c, pagina_numero, info_concurso=info_concurso
+                        )
+                        col_idx = 0
+                    y_cursor = y_topo
+
+            if mudou_materia:
+                altura_div_usada = self.estilo.desenhar_divisor_materia(
+                    c, materia_q, x_colunas[col_idx], y_cursor, largura_coluna
+                )
+                y_cursor -= altura_div_usada
+                materia_atual = materia_q
 
             altura_usada = self.estilo.desenhar_questao(
                 c, questao_data, x_colunas[col_idx], y_cursor, largura_coluna
@@ -359,7 +487,12 @@ class GeradorSimuladoMultiBanca:
     # API pública
     # ------------------------------------------------------------------
 
-    def gerar(self, quantidade: int, simulado_nome: str) -> str:
+    def gerar(
+        self,
+        quantidade: int,
+        simulado_nome: str,
+        questoes: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
         """Gera um simulado em PDF no estilo desta banca.
 
         Args:
@@ -368,6 +501,7 @@ class GeradorSimuladoMultiBanca:
                 caminho completo (se contiver ".pdf" ou separador de path,
                 é usado como está; caso contrário, o PDF é salvo em
                 `simulados/<simulado_nome>.pdf`).
+            questoes: Lista opcional de questões pré-selecionadas (ex: por edital).
 
         Returns:
             str: caminho absoluto do PDF gerado.
@@ -383,7 +517,8 @@ class GeradorSimuladoMultiBanca:
         con = self.con if self.con is not None else db.conectar()
 
         try:
-            questoes = self._buscar_questoes(con, quantidade)
+            if questoes is None:
+                questoes = self._buscar_questoes(con, quantidade)
             if not questoes:
                 raise RuntimeError(
                     "Nenhuma questão disponível no banco para gerar o simulado "

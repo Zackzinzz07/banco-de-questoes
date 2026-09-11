@@ -105,13 +105,22 @@ def test_altura_reservada_cobre_a_altura_desenhada(classe):
     """
     LARGURA = 250.0
     estilo = classe(CONFIG)
-    questao = dict(QUESTAO, opcoes=[
-        {"letra": "A", "texto": "acompanhar o site do fabricante do software, "
-                                "onde serão fornecidas informações a respeito."},
-        {"letra": "B", "texto": "desativar por completo a opção de busca por "
-                                "malwares em tempo real durante o expediente."},
-        {"letra": "C", "texto": "manter atualização contínua da solução de antivírus."},
-    ])
+    questao = dict(
+        QUESTAO,
+        opcoes=[
+            {
+                "letra": "A",
+                "texto": "acompanhar o site do fabricante do software, "
+                "onde serão fornecidas informações a respeito.",
+            },
+            {
+                "letra": "B",
+                "texto": "desativar por completo a opção de busca por "
+                "malwares em tempo real durante o expediente.",
+            },
+            {"letra": "C", "texto": "manter atualização contínua da solução de antivírus."},
+        ],
+    )
 
     reservada = estilo.calcular_altura_questao(questao, LARGURA)
     desenhada = estilo.desenhar_questao(_CanvasGravador(), questao, 50.0, 700.0, LARGURA)
@@ -119,3 +128,31 @@ def test_altura_reservada_cobre_a_altura_desenhada(classe):
     assert reservada >= desenhada, (
         f"{classe.__name__} reserva {reservada:.0f}pt e desenha {desenhada:.0f}pt"
     )
+
+
+def test_cebraspe_certo_errado_nunca_desenha_alternativa_a_e():
+    """Bug relatado: simulado do PMDF saiu com opção de múltipla escolha num
+    layout Cebraspe C/E, porque a questão sorteada trazia `opcoes` mesmo sendo
+    C/E de verdade. `formato` é o que decide agora, não a presença de `opcoes`."""
+    estilo = EstiloCebraspe(CONFIG)
+    tela = _CanvasGravador()
+    questao_ce = dict(QUESTAO, formato="certo_errado")
+
+    estilo.desenhar_questao(tela, questao_ce, 50.0, 700.0, 250.0)
+
+    for opcao in QUESTAO["opcoes"]:
+        # Texto completo, não só a 1a palavra: "manter" (opção C) também
+        # aparece no enunciado ("Para manter o bom funcionamento..."), o que
+        # daria falso positivo checando só a primeira palavra.
+        assert opcao["texto"] not in tela.escrito, (
+            f"desenhou a alternativa {opcao['letra']} num C/E"
+        )
+    assert "( ) Certo    ( ) Errado" in tela.escrito
+
+
+def test_cebraspe_certo_errado_altura_reservada_cobre_a_altura_desenhada():
+    questao_ce = dict(QUESTAO, formato="certo_errado")
+    estilo = EstiloCebraspe(CONFIG)
+    reservada = estilo.calcular_altura_questao(questao_ce, 250.0)
+    desenhada = estilo.desenhar_questao(_CanvasGravador(), questao_ce, 50.0, 700.0, 250.0)
+    assert reservada >= desenhada

@@ -1,128 +1,58 @@
-"""CLI interface para geração de simulados multi-banca usando Click.
+"""CLI interface para geração de simulados multi-banca e por edital.
 
-Módulo que fornece interface de linha de comando para gerar documentos de prova
-(simulados) no estilo de várias bancas examinadoras brasileiras.
-
-Uso:
-    # Simulado básico
-    python -m banco_questoes.simulados.cli_multibanca \
-      --banca cebraspe \
-      --quantidade 60 \
-      --nome simulado.pdf
-
-    # Com filtro de banca/órgão específicos (imersivo)
-    python -m banco_questoes.simulados.cli_multibanca \
-      --banca quadrix \
-      --quantidade 50 \
-      --banca-concurso "Instituto Quadrix" \
-      --orgao "SEDES/DF"
+Atende às regras do CLAUDE.md: orquestrador com menos de 60 linhas e
+gestão segura de conexão via try/finally.
 """
 
 import sys
-from pathlib import Path
-from typing import Optional
 
 import click
 
-# Add parent to path for imports
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
+import db
+import edital_loader
+from simulados import por_edital
 from simulados.gerador_multibanca import GeradorSimuladoMultiBanca
 
 
 @click.command()
-@click.option(
-    "--banca",
-    type=click.Choice(["cebraspe", "iades", "fgv", "aocp"], case_sensitive=False),
-    required=True,
-    help="Código da banca (cebraspe, iades, fgv, aocp)",
-)
-@click.option(
-    "--quantidade", type=int, default=60, help="Número de questões no simulado (padrão: 60)"
-)
-@click.option(
-    "--nome",
-    type=str,
-    default=None,
-    help="Nome do arquivo de saída (padrão: simulado_{banca}_{quantidade}q.pdf)",
-)
-@click.option(
-    "--banca-concurso",
-    type=str,
-    default=None,
-    help='Nome da banca examinadora para filtro (ex: "Instituto Quadrix"). '
-    "Se fornecido, prioriza questões dessa banca.",
-)
-@click.option(
-    "--orgao",
-    type=str,
-    default=None,
-    help='Órgão/concurso para filtro (ex: "SEDES/DF"). '
-    "Se fornecido, prioriza questões desse órgão.",
-)
-def gerar_simulado(
-    banca: str,
-    quantidade: int,
-    nome: Optional[str],
-    banca_concurso: Optional[str],
-    orgao: Optional[str],
-):
-    """Gera um documento de prova multi-banca (simulado).
-
-    Cria um PDF de prova no estilo de uma banca examinadora brasileira específica.
-
-    Exemplos:
-
-        \b
-        # Cebraspe com 30 questões
-        python -m banco_questoes.simulados.cli_multibanca --banca cebraspe --quantidade 30
-
-        \b
-        # Quadrix com filtro de banca/órgão específicos
-        python -m banco_questoes.simulados.cli_multibanca \\
-          --banca quadrix \\
-          --quantidade 50 \\
-          --banca-concurso "Instituto Quadrix" \\
-          --orgao "SEDES/DF"
-    """
+@click.option("--banca", "--estilo", "banca", default="cebraspe", help="Estilo visual da banca")
+@click.option("--concurso", default=None, help="Slug do edital (ex: pmdf, prf, inss)")
+@click.option("--cargo", default=None, help="Nome do cargo no edital")
+@click.option("--quantidade", type=int, default=60, help="Número de questões")
+@click.option("--nome", default=None, help="Nome do arquivo de saída")
+def main(banca: str, concurso: str | None, cargo: str | None, quantidade: int, nome: str | None):
+    """Gera simulados por edital ou por banca no estilo visual escolhido."""
+    banca = banca.lower()
+    con = db.conectar()
     try:
-        # Normaliza código da banca
-        banca = banca.lower()
+        questoes = None
+        if concurso:
+            cargos = edital_loader.listar_cargos(concurso)
+            if not cargos:
+                click.echo(f"Erro: concurso '{concurso}' não encontrado.", err=True)
+                sys.exit(1)
+            cargo = cargo or cargos[0]
+            edital = edital_loader.carregar_edital(concurso) or {}
+            pesos = edital_loader.obter_pesos(concurso, cargo)
+            click.echo(f"Simulado {concurso.upper()} ({cargo}) | Estilo: {banca.upper()}")
+            sim = por_edital.montar(
+                con, pesos, quantidade, formato=edital.get("formato"), banca=edital.get("banca")
+            )
+            for mat, falta in sim.lacunas.items():
+                click.echo(f"  [LACUNA] {mat}: faltam {falta} questões no acervo", err=True)
+            questoes = sim.questoes
+            nome = nome or f"simulado_{concurso}_{banca}_{quantidade}q.pdf"
 
-        # Mensagem inicial
-        click.echo(f"Gerando simulado para {banca.upper()}...", err=False)
-        if banca_concurso:
-            click.echo(f"  Filtro de banca: {banca_concurso}", err=False)
-        if orgao:
-            click.echo(f"  Filtro de órgão: {orgao}", err=False)
-
-        # Cria gerador e gera PDF
-        gerador = GeradorSimuladoMultiBanca(banca, banca_concurso=banca_concurso, orgao=orgao)
-        output_path = gerador.gerar(
-            quantidade, nome or f"Simulado_{banca.capitalize()}_{quantidade}q"
-        )
-
-        # Mensagem de sucesso
-        click.echo(f"[OK] Simulado gerado com sucesso: {output_path}", err=False)
-        click.echo(f"  Banca: {banca.upper()}", err=False)
-        click.echo(f"  Questões: {quantidade}", err=False)
-
-    except ValueError as e:
+        gerador = GeradorSimuladoMultiBanca(banca, con=con, concurso=concurso, cargo=cargo)
+        alvo = nome or f"simulado_{banca}_{quantidade}q.pdf"
+        saida = gerador.gerar(quantidade, alvo, questoes=questoes)
+        click.echo(f"[OK] Simulado gerado com sucesso: {saida}")
+    except Exception as e:
         click.echo(f"Erro: {e}", err=True)
         sys.exit(1)
-    except FileNotFoundError as e:
-        click.echo(f"Erro de Configuração: {e}", err=True)
-        sys.exit(1)
-    except NotImplementedError as e:
-        click.echo(f"Ainda não implementado: {e}", err=True)
-        sys.exit(1)
-    except RuntimeError as e:
-        click.echo(f"Erro de Execução: {e}", err=True)
-        sys.exit(1)
-    except Exception as e:
-        click.echo(f"Erro inesperado: {e}", err=True)
-        sys.exit(1)
+    finally:
+        con.close()
 
 
 if __name__ == "__main__":
-    gerar_simulado()
+    main()

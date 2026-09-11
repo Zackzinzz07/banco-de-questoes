@@ -100,3 +100,89 @@ def test_nao_repete_questao_no_mesmo_simulado(banco_com_questoes):
     montado = por_edital.montar(banco_com_questoes, {"Matemática": 30}, quantidade=30)
     ids = [q["id"] for q in montado.questoes]
     assert len(ids) == len(set(ids))
+
+
+def _questao_certo_errado(n, materia):
+    return {
+        "id_qc": f"QCE{n}",
+        "enunciado": f"Certo ou errado, questão {n} de {materia}?",
+        "alternativas": {"C": "Certo", "E": "Errado"},
+        "gabarito": "C",
+        "materia": materia,
+        "fonte": "pci",
+    }
+
+
+def test_normalizar_formato_aceita_o_valor_do_yaml_do_edital():
+    assert por_edital._normalizar_formato("Certo_Errado") == "certo_errado"
+    assert por_edital._normalizar_formato("Multipla_Escolha") == "multipla_escolha"
+
+
+def test_normalizar_formato_desconhecido_vira_none():
+    """Filtrar por lixo esvaziaria o sorteio inteiro — melhor não filtrar."""
+    assert por_edital._normalizar_formato("pdf") is None
+    assert por_edital._normalizar_formato(None) is None
+
+
+def test_formato_filtra_e_declara_lacuna_sem_completar_com_outro_formato(banco_com_questoes):
+    """Regra de ouro: sem C/E suficiente, vira lacuna — nunca é completado com ME."""
+    con = banco_com_questoes
+    for n in range(3):
+        db.salvar_questao(con, _questao_certo_errado(n, "Língua Portuguesa"))
+
+    montado = por_edital.montar(con, {"Língua Portuguesa": 5}, quantidade=5, formato="Certo_Errado")
+
+    assert len(montado.questoes) == 3
+    assert all(q["formato"] == "certo_errado" for q in montado.questoes)
+    assert montado.lacunas == {"Língua Portuguesa": 2}
+
+
+def test_formato_multipla_escolha_nao_pega_questao_certo_errado(banco_com_questoes):
+    con = banco_com_questoes
+    db.salvar_questao(con, _questao_certo_errado(99, "Matemática"))
+
+    montado = por_edital.montar(con, {"Matemática": 5}, quantidade=5, formato="Multipla_Escolha")
+    assert all(q["formato"] == "multipla_escolha" for q in montado.questoes)
+
+
+def _questao_portugues_categoria(n, categoria):
+    return {
+        "id_qc": f"QPT{n}",
+        "enunciado": f"Questão {n} de {categoria}?",
+        "alternativas": {"A": "a", "B": "b", "C": "c", "D": "d"},
+        "gabarito": "A",
+        "materia": "Língua Portuguesa",
+        "categoria": categoria,
+        "fonte": "pci",
+    }
+
+
+def test_ordena_portugues_pela_precedencia_pedagogica(banco_com_questoes):
+    """A prova real começa por interpretação, não por gramática (achado do
+    relatório de bug do simulado do PMDF)."""
+    con = banco_com_questoes
+    con.execute("DELETE FROM questoes WHERE materia='Língua Portuguesa'")
+    db.salvar_questao(con, _questao_portugues_categoria(1, "Sintaxe"))
+    db.salvar_questao(con, _questao_portugues_categoria(2, "Interpretação de Textos"))
+    db.salvar_questao(con, _questao_portugues_categoria(3, "Morfologia"))
+
+    montado = por_edital.montar(con, {"Língua Portuguesa": 3}, quantidade=3)
+    categorias = [q["categoria"] for q in montado.questoes]
+    assert categorias == ["Interpretação de Textos", "Morfologia", "Sintaxe"]
+
+
+def test_agrupa_texto_associado_no_simulado_final(banco_com_questoes):
+    con = banco_com_questoes
+    con.execute("DELETE FROM questoes WHERE materia='Língua Portuguesa'")
+    q1 = _questao_portugues_categoria(1, "Interpretação de Textos")
+    q1["texto_associado"] = "Texto Base"
+    q2 = _questao_portugues_categoria(2, "Interpretação de Textos")
+    q3 = _questao_portugues_categoria(3, "Interpretação de Textos")
+    q3["texto_associado"] = "Texto Base"
+    for q in (q1, q2, q3):
+        db.salvar_questao(con, q)
+
+    montado = por_edital.montar(con, {"Língua Portuguesa": 3}, quantidade=3)
+    textos = [q["texto_associado"] for q in montado.questoes]
+    idx_base = [i for i, t in enumerate(textos) if t == "Texto Base"]
+    assert idx_base == [idx_base[0], idx_base[0] + 1], "as duas do mesmo texto não ficaram juntas"

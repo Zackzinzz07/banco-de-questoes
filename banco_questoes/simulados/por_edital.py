@@ -45,15 +45,42 @@ def _dividir(quantidade: int, partes: int) -> list[int]:
     return [base + (1 if i < resto else 0) for i in range(partes)]
 
 
-def montar(con, pesos: dict[str, int], quantidade: int | None = None) -> Simulado:
+_FORMATOS_CANONICOS = {"certo_errado", "multipla_escolha"}
+
+
+def _normalizar_formato(formato: str | None) -> str | None:
+    """ "Certo_Errado"/"Multipla_Escolha" (como o YAML do edital grava) vira o
+    valor canônico do banco (ver migrations/migration_003.py). Sem
+    correspondência, devolve None — filtrar por lixo esvaziaria o sorteio
+    inteiro em silêncio, o que é pior que não filtrar."""
+    if not formato:
+        return None
+    chave = formato.strip().lower().replace("-", "_")
+    return chave if chave in _FORMATOS_CANONICOS else None
+
+
+def montar(
+    con,
+    pesos: dict[str, int],
+    quantidade: int | None = None,
+    formato: str | None = None,
+    banca: str | None = None,
+) -> Simulado:
     """Monta o simulado a partir do quadro de matérias do edital.
 
     `pesos` é `{nome no edital: quantas questões}` — o que sai direto do YAML em
-    `configuracoes_editais/`. A conexão vem aberta (CLAUDE.md 2).
+    `configuracoes_editais/`. A conexão vem aberta (CLAUDE.md 2). A ordem das
+    matérias no simulado final é a ordem de `pesos` (a do edital).
 
     `quantidade` existe só para simulados menores que a prova inteira; a
     proporção entre matérias é preservada.
+
+    `formato`/`banca`: filtros repassados a `db.sortear_questoes` (ex.: prova
+    Cebraspe C/E não pode sair com alternativa A-E). Regra de ouro: se faltar
+    questão no formato exigido, a lacuna é declarada — nunca completada com
+    outro formato em silêncio.
     """
+    formato = _normalizar_formato(formato)
     total_edital = sum(pesos.values()) or 1
     escala = (quantidade / total_edital) if quantidade else 1.0
 
@@ -78,10 +105,17 @@ def montar(con, pesos: dict[str, int], quantidade: int | None = None) -> Simulad
 
         colhidas: list[dict[str, Any]] = []
         for nome, cota in zip(equivalentes, _dividir(alvo, len(equivalentes))):
-            for questao in db.sortear_questoes(con, nome, cota):
+            sorteadas = db.sortear_questoes(con, nome, cota, banca=banca, formato=formato)
+            if len(sorteadas) < cota and banca:
+                extras = db.sortear_questoes(con, nome, cota - len(sorteadas), formato=formato)
+                sorteadas.extend(extras)
+            for questao in sorteadas:
                 if questao["id"] not in vistos:
                     vistos.add(questao["id"])
                     colhidas.append(questao)
+
+        colhidas = taxonomia.ordenar_questoes(colhidas, materia_do_edital)
+        colhidas = taxonomia.agrupar_por_texto_associado(colhidas)
 
         simulado.questoes.extend(colhidas)
         if len(colhidas) < alvo:

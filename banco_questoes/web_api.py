@@ -53,6 +53,16 @@ class PedidoCargoSimulado(BaseModel):
     banca: str = None  # Optional banca filter
 
 
+class PedidoSimuladoV2(BaseModel):
+    modo: str = "edital"  # "edital" ou "materia"
+    concurso: str | None = None
+    cargo: str | None = None
+    materia: str | None = None
+    banca_estilo: str | None = None  # Compatibilidade legada
+    formato: str = "certo_errado"  # "certo_errado" ou "multipla_escolha"
+    quantidade: int = 60
+
+
 @app.get("/api/stats")
 def stats():
     con = db.conectar()
@@ -193,6 +203,150 @@ def materias():
     return edital.nomes_materias()
 
 
+@app.get("/api/materias/todas")
+def materias_todas():
+    """Retorna todas as matérias distintas existentes no acervo."""
+    con = db.conectar()
+    try:
+        cur = con.execute(
+            "SELECT DISTINCT materia FROM questoes WHERE materia IS NOT NULL ORDER BY materia"
+        )
+        return [r["materia"] for r in cur.fetchall()]
+    finally:
+        con.close()
+
+
+@app.post("/api/v2/simulado/gerar")
+def gerar_simulado_v2(pedido: PedidoSimuladoV2):
+    """Endpoint unificado para geração de simulados em formato universal
+    (Certo/Errado ou Múltipla Escolha).
+    """
+    # Mapeamento estrito para os 2 formatos universais
+    raw_formato = (pedido.formato or pedido.banca_estilo or "certo_errado").lower().strip()
+    if raw_formato in ["cebraspe", "cespe", "julgar", "certo_errado", "certo-errado"]:
+        formato = "certo_errado"
+    else:
+        formato = "multipla_escolha"
+
+    con = db.conectar()
+    try:
+        if pedido.modo == "edital":
+            if not pedido.concurso:
+                raise HTTPException(
+                    status_code=400, detail="Campo 'concurso' é obrigatório no modo edital"
+                )
+            cargos = edital_loader.listar_cargos(pedido.concurso)
+            if not cargos:
+                raise HTTPException(
+                    status_code=404, detail=f"Concurso '{pedido.concurso}' não encontrado"
+                )
+            cargo_alvo = pedido.cargo or cargos[0]
+            pesos = edital_loader.obter_pesos(pedido.concurso, cargo_alvo)
+            if not pesos:
+                raise HTTPException(
+                    status_code=404, detail=f"Pesos não encontrados para o cargo '{cargo_alvo}'"
+                )
+
+            from simulados import por_edital
+            from simulados.gerador_multibanca import GeradorSimuladoMultiBanca
+
+            dados_edital = edital_loader.carregar_edital(pedido.concurso) or {}
+            formato_alvo = pedido.formato or dados_edital.get("formato") or formato
+            banca_edital = dados_edital.get("banca")
+
+            sim = por_edital.montar(
+                con,
+                pesos,
+                pedido.quantidade,
+                formato=formato_alvo,
+                banca=banca_edital,
+            )
+            if not sim.questoes:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Nenhuma questão encontrada com o formato '{formato_alvo}' "
+                        f"para o concurso '{pedido.concurso}'. "
+                        "Execute a importação das questões no banco de dados."
+                    ),
+                )
+            gerador = GeradorSimuladoMultiBanca(
+                formato,
+                con=con,
+                concurso=pedido.concurso,
+                cargo=cargo_alvo,
+            )
+            nome_arquivo = f"simulado_{pedido.concurso}_{formato}_{pedido.quantidade}q.pdf"
+            subpasta = PASTA_SIMULADOS / pedido.concurso
+            subpasta.mkdir(parents=True, exist_ok=True)
+            saida = subpasta / nome_arquivo
+            gerador.gerar(pedido.quantidade, saida, questoes=sim.questoes)
+
+            return {
+                "sucesso": True,
+                "arquivo": nome_arquivo,
+                "url_download": f"/api/simulados/download/{nome_arquivo}",
+                "questoes_geradas": len(sim.questoes),
+                "lacunas": sim.lacunas,
+            }
+
+        elif pedido.modo == "materia":
+            if not pedido.materia:
+                raise HTTPException(
+                    status_code=400, detail="Campo 'materia' é obrigatório no modo matéria"
+                )
+
+            from simulados.gerador_multibanca import GeradorSimuladoMultiBanca
+
+            questoes = db.sortear_questoes(
+                con, pedido.materia, pedido.quantidade, formato=formato
+            )
+            if not questoes:
+                questoes = db.sortear_questoes(
+                    con, pedido.materia, pedido.quantidade
+                )
+            if not questoes:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Nenhuma questão encontrada para a matéria '{pedido.materia}'",
+                )
+
+            gerador = GeradorSimuladoMultiBanca(
+                formato,
+                con=con,
+                concurso_nome=f"SIMULADO — {pedido.materia.upper()}",
+            )
+            materia_slug = (
+                pedido.materia.lower()
+                .replace(" ", "_")
+                .replace(",", "")
+                .replace("/", "_")
+                .replace("(", "")
+                .replace(")", "")[:20]
+            )
+            nome_arquivo = f"treino_{materia_slug}_{formato}_{pedido.quantidade}q.pdf"
+            subpasta = PASTA_SIMULADOS / "_por_materia" / materia_slug
+            subpasta.mkdir(parents=True, exist_ok=True)
+            saida = subpasta / nome_arquivo
+            gerador.gerar(pedido.quantidade, saida, questoes=questoes)
+
+            lacunas = {}
+            if len(questoes) < pedido.quantidade:
+                lacunas[pedido.materia] = pedido.quantidade - len(questoes)
+
+            return {
+                "sucesso": True,
+                "arquivo": nome_arquivo,
+                "url_download": f"/api/simulados/download/{nome_arquivo}",
+                "questoes_geradas": len(questoes),
+                "lacunas": lacunas,
+            }
+        else:
+            raise HTTPException(status_code=400, detail=f"Modo '{pedido.modo}' inválido")
+    finally:
+        con.close()
+
+
 @app.post("/api/simulado/materia")
 def simulado_materia(pedido: PedidoMateria):
     from datetime import date
@@ -226,15 +380,54 @@ def simulado_completo(pedido: PedidoCompleto):
     return {"arquivo": arquivo.name}
 
 
-@app.get("/api/simulados/download/{nome}")
-def download_simulado(nome: str):
+@app.api_route("/api/simulados/download/{nome}", methods=["GET", "HEAD"])
+def download_simulado(nome: str, inline: bool = False):
     nome_seguro = Path(nome).name
     if nome_seguro != nome or nome_seguro.startswith("."):
         raise HTTPException(status_code=400, detail="Nome inválido")
-    caminho = next(PASTA_SIMULADOS.rglob(nome_seguro), None) if PASTA_SIMULADOS.exists() else None
+    caminho = None
+    if PASTA_SIMULADOS.exists():
+        caminho = next(PASTA_SIMULADOS.rglob(nome_seguro), None)
+    if caminho is None and (PASTA / nome_seguro).exists():
+        caminho = PASTA / nome_seguro
     if caminho is None:
         raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+    if inline:
+        headers = {"Content-Disposition": f'inline; filename="{nome_seguro}"'}
+        return FileResponse(caminho, media_type="application/pdf", headers=headers)
     return FileResponse(caminho, media_type="application/pdf", filename=nome_seguro)
+
+
+@app.get("/api/simulados/recentes")
+def simulados_recentes():
+    """Lista simulados recentes para abertura rápida no tablet."""
+    arquivos = []
+    pastas_busca = [PASTA_SIMULADOS]
+    if PASTA.exists():
+        pastas_busca.append(PASTA)
+    nomes_vistos = set()
+    for pasta in pastas_busca:
+        if not pasta.exists():
+            continue
+        padrao = "*.pdf" if pasta == PASTA_SIMULADOS else "simulado_*.pdf"
+        for pdf in pasta.glob(padrao) if pasta == PASTA else pasta.rglob("*.pdf"):
+            if pdf.name in nomes_vistos:
+                continue
+            nomes_vistos.add(pdf.name)
+            try:
+                st = pdf.stat()
+                arquivos.append(
+                    {
+                        "nome": pdf.name,
+                        "tamanho_kb": round(st.st_size / 1024, 1),
+                        "data": st.st_mtime,
+                    }
+                )
+            except OSError:
+                continue
+    arquivos.sort(key=lambda x: x["data"], reverse=True)
+    return arquivos[:15]
+
 
 
 @app.post("/api/simulados/zerar")
@@ -283,12 +476,15 @@ def listar_materias_por_cargo(orgao: str, cargo: str):
         if materias is None or pesos is None:
             raise ValueError("Cargo não encontrado")
 
+        dados_edital = edital_loader.carregar_edital(orgao) or {}
         return {
             "orgao": orgao,
             "cargo": cargo,
             "materias": list(materias.keys()),
             "pesos": pesos,
             "total_questoes": sum(pesos.values()),
+            "formato": dados_edital.get("formato", "Multipla_Escolha"),
+            "banca": dados_edital.get("banca", "Cebraspe"),
         }
     except (FileNotFoundError, ValueError) as erro:
         raise HTTPException(status_code=404, detail=f"Cargo não encontrado: {cargo}") from erro
@@ -521,10 +717,10 @@ def stats_pci_categoria(categoria: str):
 
 @app.get("/")
 def home():
-    """Redireciona pra dashboard educacional"""
+    """Redireciona para o gerador de simulados."""
     from fastapi.responses import RedirectResponse
 
-    return RedirectResponse(url="/dashboard_educacional.html")
+    return RedirectResponse(url="/index.html")
 
 
 pasta_web = PASTA / "web"
