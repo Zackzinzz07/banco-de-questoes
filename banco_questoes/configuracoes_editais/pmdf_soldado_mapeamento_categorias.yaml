@@ -1,0 +1,761 @@
+edital: PMDF - Soldado Policial Militar
+fonte_edital: EDITAL Nº 04/2023-DGP/PMDF, DE 23 DE JANEIRO DE 2023
+materias:
+  Língua Portuguesa:
+    materias_banco:
+    - Língua Portuguesa
+    topicos:
+    - topico_edital: Compreensão e intelecção de textos.
+      categorias_banco:
+      - Interpretação de Textos
+      status: MATCH
+    - topico_edital: Tipologia textual.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Ortografia.
+      categorias_banco:
+      - Ortografia
+      status: MATCH
+    - topico_edital: Acentuação gráfica.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Emprego do sinal indicativo de crase.
+      categorias_banco:
+      - Crase
+      status: MATCH
+    - topico_edital: Formação, classe e emprego de palavras.
+      categorias_banco:
+      - Morfologia
+      status: MATCH
+    - topico_edital: Sintaxe da oração e do período.
+      categorias_banco:
+      - Sintaxe
+      status: MATCH
+    - topico_edital: Pontuação.
+      categorias_banco:
+      - Pontuação
+      status: MATCH
+    - topico_edital: Concordância nominal e verbal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - sem categoria especifica)
+    - topico_edital: Colocação pronominal.
+      categorias_banco:
+      - Morfologia - Pronomes
+      status: MATCH
+    - topico_edital: Regência nominal e verbal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - sem categoria especifica)
+    - topico_edital: Equivalência e transformação de estruturas.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Paralelismo sintático.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Relações de sinonímia e antonímia.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Correspondência oficial (conforme Manual da Presidência da República
+        e respectivas atualizações).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+  Língua Inglesa:
+    materias_banco:
+    - Inglês
+    nota: O acervo possui 379 questões sob a categoria genérica 'ingles', sem nenhuma
+      subcategoria granular.
+    topicos:
+    - topico_edital: Compreensão de textos escritos em língua inglesa.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Itens gramaticais relevantes para compreensão dos conteúdos semânticos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Pronomes pessoais, oblíquos, demonstrativos, possessivos e reflexivos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Artigos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Substantivos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Adjetivos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Advérbios.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Verbos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: 'Tempos e Aspectos verbais: Present Simple, Present Continuous,
+        Present Perfect Simple, Present Perfect Continuous, Past Simple, Past Continuous,
+        Past Perfect Simple, Past Perfect Continuous, Future Simple, Future Continuous,
+        Future Perfect Simple, Future Perfect Continuous - Formas afirmativas, negativas
+        e interrogativas.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: 'Verbos modais: can, could, should, may, might, must, have to,
+        would, need, had better - Formas afirmativas, negativas e interrogativas.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Preposições.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Prefixos e sufixos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Voz passiva.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Orações subordinadas e conjunções.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Orações subordinadas relativas (relative clauses).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Discursos direto e indireto.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: 'Verbos no modo condicional: zero conditional, first conditional,
+        second conditional, third conditional e mixed conditionals.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Phrasal verbs.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Verb patterns (verb + ing or infinitive).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Question tags.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+  Matemática e Raciocínio Lógico:
+    materias_banco:
+    - Matemática
+    - Raciocínio Lógico
+    topicos:
+    - topico_edital: 'Estruturas lógicas: Proposições Simples e Compostas; Conectivos;
+        Equivalências Lógicas; Implicações Lógicas; Estrutura lógica de relações arbitrárias
+        entre pessoas, lugares, objetos ou eventos fictícios.'
+      categorias_banco:
+      - Fundamentos de Lógica
+      - Equivalência Lógica e Negação de Proposições
+      - Proposições Categóricas
+      - Relacionamentos e Associações
+      status: MATCH
+    - topico_edital: 'Lógica de argumentação: Analogias; Inferências; Deduções; Conclusões;
+        Compreensão do processo lógico que, a partir de um conjunto de hipóteses,
+        conduz, de forma válida, a conclusões determinadas.'
+      categorias_banco:
+      - Lógica de Argumentação - Diagramas e Operadores Lógicos
+      - Problemas Lógicos
+      - Raciocínio Analítico
+      status: MATCH
+    - topico_edital: Diagramas lógicos.
+      categorias_banco:
+      - Diagramas de Venn (Conjuntos)
+      status: MATCH
+    - topico_edital: 'Problemas de contagem: Princípio Fundamental da Contagem; Permutação
+        Simples; Permutação com Elementos Repetidos; Arranjo Simples; Combinação Simples.'
+      categorias_banco:
+      - Análise Combinatória em Raciocínio Lógico
+      - Análise Combinatória em Matemática
+      status: MATCH
+    - topico_edital: 'Probabilidades: Probabilidade da ocorrência de um evento; Problemas
+        envolvendo Probabilidades.'
+      categorias_banco:
+      - Probabilidade
+      status: MATCH
+    - topico_edital: 'Razão e Proporção e Regra de Três: Grandezas Diretamente Proporcionais;
+        Grandezas Inversamente Proporcionais; Regra de Três Simples; Regra de Três
+        compostas; Porcentagem; Resolução de Problemas.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização - Matemática só tem
+        categoria genérica 'matematica')
+    - topico_edital: 'Sistemas de Medidas: Medidas de Comprimento; Medidas de Área/Superfície;
+        Medidas de Volume/Capacidade.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Áreas.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - 'Geometria Básica' tem apenas 1 questão
+        e não cobre o tópico)
+    - topico_edital: Volumes.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+  Atualidades:
+    materias_banco:
+    - Atualidades
+    nota: O acervo possui 1.161 questões sob a categoria genérica 'atualidades', sem
+      nenhuma subcategoria sobre RIDE ou DF.
+    topicos:
+    - topico_edital: Realidade étnica, social, histórica, geográfica, cultural, política
+        e econômica do Distrito Federal e da Região Integrada de Desenvolvimento do
+        Distrito Federal – RIDE.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categorização)
+    - topico_edital: Sua conexão com o Brasil.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+  Legislação Aplicável a Polícia Militar do Distrito Federal:
+    materias_banco: []
+    nota: Matéria ausente no banco de dados.
+    topicos:
+    - topico_edital: Lei Orgânica do Distrito Federal (Constitui a Lei Fundamental
+        do Distrito Federal).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Lei nº 6.450/1977 (Dispõe sobre a organização básica da Polícia
+        Militar do Distrito Federal, e dá outras providências).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Lei nº 7.289/1984 (Dispõe sobre o Estatuto dos Policiais-Militares
+        da Polícia Militar do Distrito Federal e dá outras providências).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Lei nº 12.086/2009 (Dispõe sobre os militares da Polícia Militar
+        do Distrito Federal e do Corpo de Bombeiros Militar do Distrito Federal...).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Decreto nº 88.777/1983 (Aprova o regulamento para as polícias
+        militares e corpos de bombeiros militares).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Decreto nº 10.443/2020 (Dispõe sobre a organização básica da
+        Polícia Militar do Distrito Federal).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Decreto nº 41.167/2020 (Regulamenta a aplicação do inciso II,
+        do artigo 48, da Lei nº 6.450, de 14 de outubro de 1977...).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+  Noções de Direito Constitucional e de Direitos Humanos:
+    materias_banco:
+    - Direito Constitucional
+    topicos:
+    - topico_edital: Constituição (conceito, estrutura, elementos e classificação).
+      categorias_banco:
+      - Teoria da Constituição
+      - Classificação das Constituições
+      status: MATCH
+    - topico_edital: Poder Constituinte.
+      categorias_banco:
+      - Poder Constituinte Originário, Derivado e Decorrente - Reforma (Emendas e
+        Revisão) e Mutação da Constituição
+      status: MATCH
+    - topico_edital: Princípios fundamentais da República Federativa do Brasil.
+      categorias_banco:
+      - Princípios Fundamentais da República
+      - Preâmbulo da Constituição da República Federativa do Brasil - 1988
+      status: MATCH
+    - topico_edital: 'Direitos e garantias fundamentais: Direitos e deveres individuais
+        e coletivos; Direitos sociais; Nacionalidade; Direitos políticos e partidos
+        políticos; Ações e remédios constitucionais: habeas corpus, mandado de segurança,
+        mandado de injunção; habeas data; ação popular.'
+      categorias_banco:
+      - Teoria dos Direitos Fundamentais
+      - Direitos Individuais
+      - Direitos Sociais
+      - Direitos da Nacionalidade
+      - Direitos Políticos
+      - Partidos Políticos
+      - Remédios e Garantias Constitucionais
+      - Direitos Individuais - Remédios Constitucionais e Garantias Processuais
+      status: MATCH
+    - topico_edital: 'Organização do Estado: Organização político-administrativa;
+        União, Estados, Distrito Federal, Municípios e Territórios; Repartição de
+        competências; Intervenção; Administração Pública: disposições gerais; servidores
+        públicos e militares.'
+      categorias_banco:
+      - Organização Político-Administrativa do Estado
+      - Organização do Estado - União
+      - Organização do Estado – Estados
+      - Organização do Estado – Municípios
+      - Intervenção Federal e Estadual
+      - Administração Pública – Disposições Gerais e Servidores Públicos
+      status: MATCH
+    - topico_edital: 'Organização dos Poderes: Poder Legislativo; Poder Executivo;
+        Poder Judiciário; Funções essenciais à Justiça.'
+      categorias_banco:
+      - Organização dos Poderes
+      - Poder Legislativo
+      - Processo Legislativo
+      - Poder Executivo
+      - Presidente da República, Vice-Presidente da República e Ministros de Estado.
+      - Poder Judiciário
+      - Organização do Poder Judiciário
+      - Disposições Gerais no Poder Judiciário
+      - Supremo Tribunal Federal
+      - Superior Tribunal de Justiça
+      - Tribunais Regionais Federais e Juízes Federais
+      - Tribunais e Juízes dos Estados
+      - Conselho Nacional de Justiça
+      - Funções Essenciais à Justiça
+      status: MATCH
+    - topico_edital: Defesa do Estado e das instituições democráticas.
+      categorias_banco:
+      - Defesa do Estado e das Instituições Democráticas
+      - Estado de Defesa
+      status: MATCH
+    - topico_edital: 'Teoria geral dos Direitos Humanos: conceito; terminologia; estrutura
+        normativa; fundamento; classificação; especificidades.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - Direitos Humanos não tem cobertura
+        no acervo)
+    - topico_edital: Evolução histórica e gerações de direitos humanos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Direitos e garantias processuais dos Direitos Humanos, interpretação
+        e aplicação dos Tratados Internacionais de Proteção aos Direitos Humanos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: A natureza jurídica da incorporação de normas internacionais
+        sobre Direitos Humanos ao direito interno brasileiro.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Declaração Universal dos Direitos Humanos (ONU 1948).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Convenção contra a Tortura e outros Tratamentos ou Penas Cruéis,
+        Desumanas ou Degradantes (1984).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Convenção americana sobre direitos humanos (Pacto de São José
+        da Costa Rica e Decreto nº 678/1992).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Bloco de constitucionalidade e controle de convencionalidade.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Conselho Nacional dos Direitos Humanos – CNDH (Lei nº 12.986/2014).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei nº 13.060/2014.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Código de Conduta para os Funcionários Responsáveis pela Aplicação
+        da Lei (Resolução da ONU nº 34/169 de 1979).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Sistema Interamericano de Direitos Humanos.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+  Noções de Direito Administrativo:
+    materias_banco:
+    - Direito Administrativo
+    topicos:
+    - topico_edital: Regime jurídico-administrativo e princípios de direito administrativo.
+      categorias_banco:
+      - Regime jurídico administrativo
+      - Princípios da Administração Pública
+      status: MATCH
+    - topico_edital: 'Poderes e deveres da Administração pública: poder regulamentar
+        (normativo); poder hierárquico; poder disciplinar; poder de polícia; uso e
+        abuso de poder; discricionariedade e vinculação.'
+      categorias_banco:
+      - Poderes da Administração
+      status: MATCH
+    - topico_edital: 'Organização administrativa: princípios; centralização e descentralização;
+        concentração e desconcentração; Administração direta e indireta.'
+      categorias_banco:
+      - Organização da Administração Pública
+      - Entidades Paraestatais ou Terceiro Setor
+      status: MATCH
+    - topico_edital: 'Atos administrativos: conceito; requisitos; atributos; classificações;
+        espécies; extinção e convalidação.'
+      categorias_banco:
+      - Atos administrativos
+      status: MATCH
+    - topico_edital: Responsabilidade civil do Estado.
+      categorias_banco:
+      - Responsabilidade civil do estado
+      status: MATCH
+    - topico_edital: Improbidade administrativa (Lei nº 8.429/1992).
+      categorias_banco:
+      - Improbidade administrativa - Lei nº 8.429 de 1992 e Lei nº 14.230 de 2021
+      status: MATCH
+    - topico_edital: Processo administrativo (Lei nº 9.784/1999).
+      categorias_banco:
+      - Processo Administrativo - Lei nº 9.784 de 1999 e Lei nº 14.210 de 2021
+      status: MATCH
+    - topico_edital: Licitações e contratos administrativos (Lei nº 14.133/2021).
+      categorias_banco:
+      - Licitações e Lei nº 14.133 de 2021
+      - Contratos Administrativos – Lei nº 14.133 de 2021
+      status: MATCH
+    - topico_edital: 'Serviços públicos: conceito; princípios; classificação; formas
+        de prestação do serviço público; delegação contratual de serviços; concessão,
+        permissão e autorização; parceria público-privada.'
+      categorias_banco:
+      - Serviços Públicos
+      - Parcerias público-privadas
+      status: MATCH
+    - topico_edital: 'Agentes públicos: espécies e classificação; disposições constitucionais
+        aplicáveis aos agentes públicos; cargo, emprego e função; concurso público;
+        sistema remuneratório; direito de greve e de livre associação sindical; acumulação
+        de cargos públicos.'
+      categorias_banco:
+      - Agentes públicos e Lei 8.112 de 1990
+      - Lei nº 8.112-1990 - Regime jurídico dos servidores públicos federais
+      status: MATCH
+    - topico_edital: 'Controle da Administração Pública: controle administrativo;
+        controle judicial; controle legislativo.'
+      categorias_banco:
+      - Controle da administração pública
+      status: MATCH
+    - topico_edital: Bens Públicos.
+      categorias_banco:
+      - Bens Públicos na Administração Pública
+      status: MATCH
+    - topico_edital: Lei de Acesso à Informação (Lei nº 12.527/2011).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - sem categoria de LAI no banco)
+  Noções de Direito Penal:
+    materias_banco:
+    - Direito Penal
+    topicos:
+    - topico_edital: Princípios aplicáveis ao Direito Penal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - sem categoria específica)
+    - topico_edital: 'Lei penal: classificação; características; interpretação; analogia;
+        vigência e aplicação: Lei penal em branco; Lei penal no tempo e no espaço;
+        Conflito aparente de leis penais; Tempo e lugar do crime; Territorialidade
+        e extraterritorialidade; Lei penal excepcional e temporária.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - sem categoria específica para aplicação
+        da lei penal)
+    - topico_edital: 'Teoria geral do crime: conceito; objeto e sujeitos do crime:
+        Classificação dos crimes; Fato típico: conduta; resultado; relação de causalidade
+        e tipicidade; Teoria do tipo; Crime doloso, culposo e preterdoloso; Erro de
+        tipo, erro de proibição, erro determinado por terceiro, descriminantes putativas,
+        crime putativo e crimes aberrantes; Iter criminis; Consumação e tentativa;
+        Desistência voluntária, arrependimento eficaz, arrependimento posterior e
+        crime impossível; Ilicitude; Causas legais e supralegais de exclusão da ilicitude;
+        Excesso; Culpabilidade; Imputabilidade, potencial consciência da ilicitude
+        e exigibilidade de conduta diversa; Concurso de pessoas; Crime e contravenção
+        penal.'
+      categorias_banco:
+      - Teoria Geral do Delito
+      - Classificação dos crimes
+      - Tipicidade
+      - Resultado
+      - Antijuridicidade
+      - Culpabilidade
+      - Concurso de Pessoas
+      status: MATCH
+    - topico_edital: 'Das penas: Pena privativa de liberdade; Penas restritivas de
+        direitos; Pena de multa; Aplicação e limite das penas; Concurso de crimes;
+        Suspensão condicional da pena; Livramento condicional; Efeitos da condenação;
+        Reabilitação e medidas de segurança.'
+      categorias_banco:
+      - Sanções penais
+      - Penas privativas de liberdade
+      - Diferenças entre reclusão e detenção
+      - Modalidades das Penas Restritivas de Direito
+      - Pena de multa
+      - Concurso de crimes
+      - Livramento condicional
+      - Efeitos da condenação
+      - Medida de segurança
+      status: MATCH
+    - topico_edital: Extinção da punibilidade.
+      categorias_banco:
+      - Causas de extinção da punibilidade
+      status: MATCH
+    - topico_edital: 'Crimes previstos na parte especial do Código Penal: Crimes contra
+        a pessoa; Crimes contra o patrimônio; Crimes contra a dignidade sexual; Crimes
+        contra a incolumidade pública; Crimes contra a paz pública; Crimes contra
+        a fé pública; Crimes contra a administração pública; Crimes contra o Estado
+        Democrático de Direito.'
+      categorias_banco:
+      - Crimes contra a vida
+      - Lesões corporais
+      - Periclitação da vida e da saúde
+      - Crimes contra a honra
+      - Crimes contra a liberdade pessoal
+      - Crimes contra o patrimônio
+      - Crimes contra a dignidade sexual
+      - Crimes contra a família
+      - Crimes contra a incolumidade pública
+      - Crimes contra a fé pública
+      - Crimes contra a administração pública
+      - Crimes contra o sentimento religioso
+      - Crimes contra o respeito aos mortos
+      - Crimes contra a organização do trabalho
+      status: MATCH
+    - topico_edital: Lei n. 13.869/2019 (Lei do Abuso de Autoridade).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei n. 7.716/1989 (Lei dos Crimes resultantes de Preconceito
+        de Raça ou de Cor).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: 'Lei n. 8.069/1990 (Estatuto da criança e do adolescente: da
+        prática de ato infracional; da apuração de ato infracional atribuído a adolescente;
+        da infiltração de agentes de polícia para a investigação de crimes contra
+        a dignidade sexual de criança e de adolescente; dos crimes em espécie).'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei n. 8.072/1990 (Lei dos Crimes Hediondos).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei n. 9.503/1997 (Crimes de Trânsito).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - sem categoria específica em Penal)
+    - topico_edital: Lei n. 9.455/1997 (Lei de Tortura).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei n. 9.605/1998 (Lei dos Crimes Ambientais).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei n. 10.826/2003 (Estatuto do Desarmamento).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei n. 11.343/2006 (Lei de Drogas).
+      categorias_banco:
+      - Lei de Tóxicos – Lei nº 11.343 de 2006
+      status: MATCH
+  Noções de Direito Processual Penal:
+    materias_banco:
+    - Direito Processual Penal
+    topicos:
+    - topico_edital: 'Noções introdutórias: princípios; sistemas processuais; lei
+        processual penal no tempo, no espaço e em relação às pessoas; fontes; interpretação
+        e integração da lei processual.'
+      categorias_banco:
+      - Princípios fundamentais do direito processual penal
+      - Aplicação da Lei Penal Processual Penal
+      - 'Direito processual penal: fundamentos e aspectos essenciais'
+      status: MATCH
+    - topico_edital: 'Investigação preliminar: Inquérito policial; Termo circunstanciado
+        de ocorrência; Demais investigações preliminares; Acordo de não persecução
+        penal; Controle externo da atividade policial.'
+      categorias_banco:
+      - Inquérito Policial
+      - Procedimentos Alternativos de Investigação Criminal
+      - Controle da Atividade Policial
+      - Noções Gerais sobre o Controle da Atividade Policial
+      - Sistemas de Investigação
+      status: MATCH
+    - topico_edital: Ação penal e ação civil ex delicto.
+      categorias_banco:
+      - Ação Penal
+      - Da Ação Civil
+      status: MATCH
+    - topico_edital: Jurisdição e competência criminal.
+      categorias_banco:
+      - Competência no Processo Penal
+      status: MATCH
+    - topico_edital: 'Provas: Teoria geral das provas; Meios de prova e meios de obtenção
+        de prova em espécie.'
+      categorias_banco:
+      - Das Provas
+      status: MATCH
+    - topico_edital: 'Medidas cautelares de natureza pessoal: aspectos gerais; prisões
+        e medidas cautelares diversas da prisão.'
+      categorias_banco:
+      - Da Prisão e da Liberdade Provisória
+      status: MATCH
+    - topico_edital: Liberdade provisória.
+      categorias_banco:
+      - Da Prisão e da Liberdade Provisória
+      status: MATCH
+    - topico_edital: Medidas cautelares de natureza real (medidas assecuratórias).
+      categorias_banco:
+      - Sequestro de Bens imóveis
+      status: MATCH
+    - topico_edital: 'Procedimento comum: ordinário, sumário e sumaríssimo.'
+      categorias_banco:
+      - Procedimento Penal
+      - Procedimento comum sumaríssimo - Lei nº 9.099 de 1995 - Lei dos Juizados Especiais
+        Criminais - JECRIM
+      status: MATCH
+    - topico_edital: Nulidades.
+      categorias_banco:
+      - Nulidades no Processo Penal
+      status: MATCH
+    - topico_edital: Lei n. 7.960/1989 (Lei de Prisão Temporária).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Lei n. 9.099/1995 (Lei dos Juizados Especiais Criminais).
+      categorias_banco:
+      - Procedimento comum sumaríssimo - Lei nº 9.099 de 1995 - Lei dos Juizados Especiais
+        Criminais - JECRIM
+      status: MATCH
+    - topico_edital: Lei n. 9.296/1996 (Lei da Interceptação de Comunicações Telefônicas).
+      categorias_banco:
+      - Lei da Interceptação Telefônica - Lei nº 9.296 de 1996
+      status: MATCH
+    - topico_edital: Lei n. 11.340/2006 (Lei Maria da Penha).
+      categorias_banco:
+      - Lei Maria da Penha - Lei nº 11.340 de 2006
+      status: MATCH
+    - topico_edital: Lei n. 12.850/2013 (Lei das Organizações Criminosas).
+      categorias_banco:
+      - Lei de Organização Criminosa – Lei nº 12.850 de 2013
+      status: MATCH
+    - topico_edital: Lei n. 12.037/2009 (Identificação Criminal do civilmente identificado).
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+  Noções de Direito Penal Militar:
+    materias_banco:
+    - Direito Penal Militar
+    topicos:
+    - topico_edital: Aplicação da lei penal militar.
+      categorias_banco:
+      - Noções Fundamentais de Direito Penal Militar
+      status: MATCH
+    - topico_edital: Crime.
+      categorias_banco:
+      - Crime Militar
+      status: MATCH
+    - topico_edital: Imputabilidade penal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Concurso de agentes.
+      categorias_banco:
+      - Concurso de Agentes
+      status: MATCH
+    - topico_edital: Penas principais.
+      categorias_banco:
+      - Teoria da Pena
+      status: MATCH
+    - topico_edital: Aplicação da pena.
+      categorias_banco:
+      - Teoria da Pena
+      status: MATCH
+    - topico_edital: Suspensão condicional da pena.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Livramento condicional.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Penas acessórias.
+      categorias_banco:
+      - Teoria da Pena
+      status: MATCH
+    - topico_edital: Efeitos da condenação.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Medidas de segurança.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Ação penal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real)
+    - topico_edital: Extinção da punibilidade.
+      categorias_banco:
+      - Extinção da Punibilidade
+      status: MATCH
+    - topico_edital: Crimes militares em tempo de paz.
+      categorias_banco:
+      - Espécies de Crimes militares
+      status: MATCH
+    - topico_edital: Crimes propriamente militares.
+      categorias_banco:
+      - Espécies de Crimes militares
+      - Crime Militar
+      status: MATCH
+    - topico_edital: Crimes impropriamente militares.
+      categorias_banco:
+      - Espécies de Crimes militares
+      - Crime Militar
+      status: MATCH
+  Noções de Direito Processual Penal Militar:
+    materias_banco:
+    - Direito Processual Penal Militar
+    topicos:
+    - topico_edital: Lei de Processo Penal Militar e sua aplicação.
+      categorias_banco:
+      - Processo Penal Militar e sua Aplicação
+      status: MATCH
+    - topico_edital: Polícia judiciária militar.
+      categorias_banco:
+      - Polícia Judiciária Militar
+      status: MATCH
+    - topico_edital: Inquérito policial militar.
+      categorias_banco:
+      - Inquérito Policial Militar - IPM
+      status: MATCH
+    - topico_edital: Ação penal militar e seu exercício.
+      categorias_banco:
+      - Ação Penal Militar
+      status: MATCH
+    - topico_edital: Processo.
+      categorias_banco:
+      - Processo Penal Militar
+      - Juiz, Auxiliares e Partes no Processo Penal Militar
+      - Citação, Intimação e Notificação
+      status: MATCH
+    - topico_edital: Denúncia.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real de categoria autônoma)
+    - topico_edital: Jurisdição e competência.
+      categorias_banco:
+      - Competência da Justiça Militar
+      - Organização da Justiça Militar
+      status: MATCH
+    - topico_edital: Questões prejudiciais e incidentes.
+      categorias_banco:
+      - Questões Prejudiciais
+      status: MATCH
+    - topico_edital: Medidas preventivas e assecuratórias.
+      categorias_banco:
+      - Medidas Assecuratórias e Preventivas
+      - Prisão
+      - Menagem
+      - Liberdade Provisória
+      status: MATCH
+    - topico_edital: Atos probatórios.
+      categorias_banco:
+      - Atos Probatórios
+      status: MATCH
+    - topico_edital: Processo ordinário.
+      categorias_banco:
+      - Procedimentos
+      status: MATCH
+    - topico_edital: Processos especiais.
+      categorias_banco:
+      - Procedimentos
+      status: MATCH
+    - topico_edital: Nulidades e recursos.
+      categorias_banco:
+      - Nulidades no Processo Penal Militar
+      - Recursos
+      - Habeas Corpus no Processo Penal Militar
+      status: MATCH
+  Criminologia:
+    materias_banco: []
+    nota: Matéria ausente no banco de dados.
+    topicos:
+    - topico_edital: 'Criminologia: Conceito e características; Objeto; Método e finalidade;
+        Funções; Classificação.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: 'História da criminologia: Escola Clássica; Escola Positiva;
+        Escola de Política Criminal; Terza Scuola.'
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Estatística criminal, cifra negra, cifra dourada e prognóstico
+        criminal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Sociologia criminal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Vitimologia.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Prevenção criminal.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Fatores sociais de criminalidade.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Instâncias de controle.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
+    - topico_edital: Crimes do colarinho branco.
+      categorias_banco: []
+      status: SEM CORRESPONDENCIA (buraco real - matéria ausente no acervo)
