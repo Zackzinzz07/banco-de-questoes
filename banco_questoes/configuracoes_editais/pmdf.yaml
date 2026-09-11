@@ -23,17 +23,30 @@ pmdf:
         "Direito Processual Penal e Processual Penal Militar": 25
         "Criminologia Aplicada": 15
 
+    # Fonte real: EDITAL Nº 04/2023-DGP/PMDF, DE 23 DE JANEIRO DE 2023 (o
+    # último concurso de Soldado que de fato aconteceu — o próximo, com a
+    # Cebraspe, ainda não tinha edital publicado na última checagem, em
+    # 2026). Conteúdo programático completo em
+    # pmdf_soldado_conteudo_programatico.yaml.
+    #
+    # Conhecimentos Básicos (40 questões) têm peso individual confirmado no
+    # edital. Conhecimentos Específicos (40 questões) o edital só dá o total
+    # do grupo, não a quebra por matéria — os pesos abaixo são uma divisão
+    # igualitária (padrão _dividir do próprio projeto) até alguém confirmar
+    # o quadro oficial de distribuição. CONFERIR antes de usar pra valer.
     "Soldado Policial Militar":
       nivel: "médio"
       vagas: 2100
       materias:
-        "Língua Portuguesa": 15
-        "Matemática e Raciocínio Lógico": 8
-        "Língua Inglesa": 5
-        "Noções de Informática Operacional": 6
-        "Legislação Específica da PMDF e RIDE": 16
-        "Noções de Direito Constitucional": 14
-        "Noções de Direito Administrativo": 12
-        "Direito Penal e Processual Penal": 20
-        "Noções de Direito Penal Militar": 14
-        "Direitos Humanos e Criminologia": 10
+        "Língua Portuguesa": 10
+        "Língua Inglesa": 4
+        "Matemática e Raciocínio Lógico": 9
+        "Atualidades": 7
+        "Legislação Aplicável a Polícia Militar do Distrito Federal": 10
+        "Noções de Direito Constitucional e de Direitos Humanos": 6  # CONFERIR
+        "Noções de Direito Administrativo": 6  # CONFERIR
+        "Noções de Direito Penal": 6  # CONFERIR
+        "Noções de Direito Processual Penal": 6  # CONFERIR
+        "Noções de Direito Penal Militar": 6  # CONFERIR
+        "Noções de Direito Processual Penal Militar": 5  # CONFERIR
+        "Criminologia": 5  # CONFERIR

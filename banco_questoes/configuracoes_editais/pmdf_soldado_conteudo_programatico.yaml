@@ -1,0 +1,211 @@
+cargo: "Soldado Policial Militar"
+fonte_edital: "EDITAL Nº 04/2023-DGP/PMDF, DE 23 DE JANEIRO DE 2023"
+
+# ATENÇÃO: os pesos das 7 matérias do grupo "Conhecimentos Específicos"
+# abaixo NÃO estão confirmados individualmente — o edital (conforme extraído)
+# só dá o total do grupo (40 questões), não a quebra por matéria. Ver
+# pmdf.yaml para os pesos realmente em uso no gerador; este arquivo aqui é
+# só o conteúdo programático (tópicos), fonte de verdade para isso.
+
+materias:
+  "Língua Portuguesa":
+    peso: 10
+    conteudos:
+      - "Compreensão e intelecção de textos."
+      - "Tipologia textual."
+      - "Ortografia."
+      - "Acentuação gráfica."
+      - "Emprego do sinal indicativo de crase."
+      - "Formação, classe e emprego de palavras."
+      - "Sintaxe da oração e do período."
+      - "Pontuação."
+      - "Concordância nominal e verbal."
+      - "Colocação pronominal."
+      - "Regência nominal e verbal."
+      - "Equivalência e transformação de estruturas."
+      - "Paralelismo sintático."
+      - "Relações de sinonímia e antonímia."
+      - "Correspondência oficial (conforme Manual da Presidência da República e respectivas atualizações)."
+
+  "Língua Inglesa":
+    peso: 4
+    conteudos:
+      - "Compreensão de textos escritos em língua inglesa."
+      - "Itens gramaticais relevantes para compreensão dos conteúdos semânticos."
+      - "Pronomes pessoais, oblíquos, demonstrativos, possessivos e reflexivos."
+      - "Artigos."
+      - "Substantivos."
+      - "Adjetivos."
+      - "Advérbios."
+      - "Verbos."
+      - "Tempos e Aspectos verbais: Present Simple, Present Continuous, Present Perfect Simple, Present Perfect Continuous, Past Simple, Past Continuous, Past Perfect Simple, Past Perfect Continuous, Future Simple, Future Continuous, Future Perfect Simple, Future Perfect Continuous - Formas afirmativas, negativas e interrogativas."
+      - "Verbos modais: can, could, should, may, might, must, have to, would, need, had better - Formas afirmativas, negativas e interrogativas."
+      - "Preposições."
+      - "Prefixos e sufixos."
+      - "Voz passiva."
+      - "Orações subordinadas e conjunções."
+      - "Orações subordinadas relativas (relative clauses)."
+      - "Discursos direto e indireto."
+      - "Verbos no modo condicional: zero conditional, first conditional, second conditional, third conditional e mixed conditionals."
+      - "Phrasal verbs."
+      - "Verb patterns (verb + ing or infinitive)."
+      - "Question tags."
+
+  "Matemática e Raciocínio Lógico":
+    peso: 9
+    conteudos:
+      - "Estruturas lógicas: Proposições Simples e Compostas; Conectivos; Equivalências Lógicas; Implicações Lógicas; Estrutura lógica de relações arbitrárias entre pessoas, lugares, objetos ou eventos fictícios."
+      - "Lógica de argumentação: Analogias; Inferências; Deduções; Conclusões; Compreensão do processo lógico que, a partir de um conjunto de hipóteses, conduz, de forma válida, a conclusões determinadas."
+      - "Diagramas lógicos."
+      - "Problemas de contagem: Princípio Fundamental da Contagem; Permutação Simples; Permutação com Elementos Repetidos; Arranjo Simples; Combinação Simples."
+      - "Probabilidades: Probabilidade da ocorrência de um evento; Problemas envolvendo Probabilidades."
+      - "Razão e Proporção e Regra de Três: Grandezas Diretamente Proporcionais; Grandezas Inversamente Proporcionais; Regra de Três Simples; Regra de Três compostas; Porcentagem; Resolução de Problemas."
+      - "Sistemas de Medidas: Medidas de Comprimento; Medidas de Área/Superfície; Medidas de Volume/Capacidade."
+      - "Áreas."
+      - "Volumes."
+
+  "Atualidades":
+    peso: 7
+    conteudos:
+      - "Realidade étnica, social, histórica, geográfica, cultural, política e econômica do Distrito Federal e da Região Integrada de Desenvolvimento do Distrito Federal – RIDE."
+      - "Sua conexão com o Brasil."
+
+  "Legislação Aplicável a Polícia Militar do Distrito Federal":
+    peso: 10
+    conteudos:
+      - "Lei Orgânica do Distrito Federal (Constitui a Lei Fundamental do Distrito Federal)."
+      - "Lei nº 6.450/1977 (Dispõe sobre a organização básica da Polícia Militar do Distrito Federal, e dá outras providências)."
+      - "Lei nº 7.289/1984 (Dispõe sobre o Estatuto dos Policiais-Militares da Polícia Militar do Distrito Federal e dá outras providências)."
+      - "Lei nº 12.086/2009 (Dispõe sobre os militares da Polícia Militar do Distrito Federal e do Corpo de Bombeiros Militar do Distrito Federal; altera as Leis nos 6.450, de 14 de outubro de 1977, 7.289, de 18 de dezembro de 1984, 7.479, de 2 de junho de 1986, 8.255, de 20 de novembro de 1991, e 10.486, de 4 de julho de 2002; revoga as Leis nos 6.302, de 15 de dezembro de 1975, 6.645, de 14 de maio de 1979, 7.491, de 13 de junho de 1986, 7.687, de 13 de dezembro de 1988, 7.851, de 23 de outubro de 1989, 8.204, de 8 de julho de 1991, 8.258, de 6 de dezembro de 1991, 9.054, de 29 de maio de 1995, e 9.237, de 22 de dezembro de 1995; revoga dispositivos das Leis nos 7.457, de 9 de abril de 1986, 9.713, de 25 de novembro de 1998, e 11.134, de 15 de julho de 2005; e dá outras providências)."
+      - "Decreto nº 88.777/1983 (Aprova o regulamento para as polícias militares e corpos de bombeiros militares)."
+      - "Decreto nº 10.443/2020 (Dispõe sobre a organização básica da Polícia Militar do Distrito Federal)."
+      - "Decreto nº 41.167/2020 (Regulamenta a aplicação do inciso II, do artigo 48, da Lei nº 6.450, de 14 de outubro de 1977, que dispõe sobre a Organização Básica da Polícia Militar do Distrito Federal)."
+
+  "Noções de Direito Constitucional e de Direitos Humanos":
+    peso_grupo_conhecimentos_especificos: 40  # CONFERIR: total do grupo, quebra por matéria não confirmada
+    conteudos:
+      - "Constituição (conceito, estrutura, elementos e classificação)."
+      - "Poder Constituinte."
+      - "Princípios fundamentais da República Federativa do Brasil."
+      - "Direitos e garantias fundamentais: Direitos e deveres individuais e coletivos; Direitos sociais; Nacionalidade; Direitos políticos e partidos políticos; Ações e remédios constitucionais: habeas corpus, mandado de segurança, mandado de injunção; habeas data; ação popular."
+      - "Organização do Estado: Organização político-administrativa; União, Estados, Distrito Federal, Municípios e Territórios; Repartição de competências; Intervenção; Administração Pública: disposições gerais; servidores públicos e militares."
+      - "Organização dos Poderes: Poder Legislativo; Poder Executivo; Poder Judiciário; Funções essenciais à Justiça."
+      - "Defesa do Estado e das instituições democráticas."
+      - "Teoria geral dos Direitos Humanos: conceito; terminologia; estrutura normativa; fundamento; classificação; especificidades."
+      - "Evolução histórica e gerações de direitos humanos."
+      - "Direitos e garantias processuais dos Direitos Humanos, interpretação e aplicação dos Tratados Internacionais de Proteção aos Direitos Humanos."
+      - "A natureza jurídica da incorporação de normas internacionais sobre Direitos Humanos ao direito interno brasileiro."
+      - "Declaração Universal dos Direitos Humanos (ONU 1948)."
+      - "Convenção contra a Tortura e outros Tratamentos ou Penas Cruéis, Desumanas ou Degradantes (1984)."
+      - "Convenção americana sobre direitos humanos (Pacto de São José da Costa Rica e Decreto nº 678/1992)."
+      - "Bloco de constitucionalidade e controle de convencionalidade."
+      - "Conselho Nacional dos Direitos Humanos – CNDH (Lei nº 12.986/2014)."
+      - "Lei nº 13.060/2014."
+      - "Código de Conduta para os Funcionários Responsáveis pela Aplicação da Lei (Resolução da ONU nº 34/169 de 1979)."
+      - "Sistema Interamericano de Direitos Humanos."
+
+  "Noções de Direito Administrativo":
+    peso_grupo_conhecimentos_especificos: 40  # CONFERIR: total do grupo, quebra por matéria não confirmada
+    conteudos:
+      - "Regime jurídico-administrativo e princípios de direito administrativo."
+      - "Poderes e deveres da Administração pública: poder regulamentar (normativo); poder hierárquico; poder disciplinar; poder de polícia; uso e abuso de poder; discricionariedade e vinculação."
+      - "Organização administrativa: princípios; centralização e descentralização; concentração e desconcentração; Administração direta e indireta."
+      - "Atos administrativos: conceito; requisitos; atributos; classificações; espécies; extinção e convalidação."
+      - "Responsabilidade civil do Estado."
+      - "Improbidade administrativa (Lei nº 8.429/1992)."
+      - "Processo administrativo (Lei nº 9.784/1999)."
+      - "Licitações e contratos administrativos (Lei nº 14.133/2021)."
+      - "Serviços públicos: conceito; princípios; classificação; formas de prestação do serviço público; delegação contratual de serviços; concessão, permissão e autorização; parceria público-privada."
+      - "Agentes públicos: espécies e classificação; disposições constitucionais aplicáveis aos agentes públicos; cargo, emprego e função; concurso público; sistema remuneratório; direito de greve e de livre associação sindical; acumulação de cargos públicos."
+      - "Controle da Administração Pública: controle administrativo; controle judicial; controle legislativo."
+      - "Bens Públicos."
+      - "Lei de Acesso à Informação (Lei nº 12.527/2011)."
+
+  "Noções de Direito Penal":
+    peso_grupo_conhecimentos_especificos: 40  # CONFERIR: total do grupo, quebra por matéria não confirmada
+    conteudos:
+      - "Princípios aplicáveis ao Direito Penal."
+      - "Lei penal: classificação; características; interpretação; analogia; vigência e aplicação: Lei penal em branco; Lei penal no tempo e no espaço; Conflito aparente de leis penais; Tempo e lugar do crime; Territorialidade e extraterritorialidade; Lei penal excepcional e temporária."
+      - "Teoria geral do crime: conceito; objeto e sujeitos do crime: Classificação dos crimes; Fato típico: conduta; resultado; relação de causalidade e tipicidade; Teoria do tipo; Crime doloso, culposo e preterdoloso; Erro de tipo, erro de proibição, erro determinado por terceiro, descriminantes putativas, crime putativo e crimes aberrantes; Iter criminis; Consumação e tentativa; Desistência voluntária, arrependimento eficaz, arrependimento posterior e crime impossível; Ilicitude; Causas legais e supralegais de exclusão da ilicitude; Excesso; Culpabilidade; Imputabilidade, potencial consciência da ilicitude e exigibilidade de conduta diversa; Concurso de pessoas; Crime e contravenção penal."
+      - "Das penas: Pena privativa de liberdade; Penas restritivas de direitos; Pena de multa; Aplicação e limite das penas; Concurso de crimes; Suspensão condicional da pena; Livramento condicional; Efeitos da condenação; Reabilitação e medidas de segurança."
+      - "Extinção da punibilidade."
+      - "Crimes previstos na parte especial do Código Penal: Crimes contra a pessoa; Crimes contra o patrimônio; Crimes contra a dignidade sexual; Crimes contra a incolumidade pública; Crimes contra a paz pública; Crimes contra a fé pública; Crimes contra a administração pública; Crimes contra o Estado Democrático de Direito."
+      - "Lei n. 13.869/2019 (Lei do Abuso de Autoridade)."
+      - "Lei n. 7.716/1989 (Lei dos Crimes resultantes de Preconceito de Raça ou de Cor)."
+      - "Lei n. 8.069/1990 (Estatuto da criança e do adolescente: da prática de ato infracional; da apuração de ato infracional atribuído a adolescente; da infiltração de agentes de polícia para a investigação de crimes contra a dignidade sexual de criança e de adolescente; dos crimes em espécie)."
+      - "Lei n. 8.072/1990 (Lei dos Crimes Hediondos)."
+      - "Lei n. 9.503/1997 (Crimes de Trânsito)."
+      - "Lei n. 9.455/1997 (Lei de Tortura)."
+      - "Lei n. 9.605/1998 (Lei dos Crimes Ambientais)."
+      - "Lei n. 10.826/2003 (Estatuto do Desarmamento)."
+      - "Lei n. 11.343/2006 (Lei de Drogas)."
+
+  "Noções de Direito Processual Penal":
+    peso_grupo_conhecimentos_especificos: 40  # CONFERIR: total do grupo, quebra por matéria não confirmada
+    conteudos:
+      - "Noções introdutórias: princípios; sistemas processuais; lei processual penal no tempo, no espaço e em relação às pessoas; fontes; interpretação e integração da lei processual."
+      - "Investigação preliminar: Inquérito policial; Termo circunstanciado de ocorrência; Demais investigações preliminares; Acordo de não persecução penal; Controle externo da atividade policial."
+      - "Ação penal e ação civil ex delicto."
+      - "Jurisdição e competência criminal."
+      - "Provas: Teoria geral das provas; Meios de prova e meios de obtenção de prova em espécie."
+      - "Medidas cautelares de natureza pessoal: aspectos gerais; prisões e medidas cautelares diversas da prisão."
+      - "Liberdade provisória."
+      - "Medidas cautelares de natureza real (medidas assecuratórias)."
+      - "Procedimento comum: ordinário, sumário e sumaríssimo."
+      - "Nulidades."
+      - "Lei n. 7.960/1989 (Lei de Prisão Temporária)."
+      - "Lei n. 9.099/1995 (Lei dos Juizados Especiais Criminais)."
+      - "Lei n. 9.296/1996 (Lei da Interceptação de Comunicações Telefônicas)."
+      - "Lei n. 11.340/2006 (Lei Maria da Penha)."
+      - "Lei n. 12.850/2013 (Lei das Organizações Criminosas)."
+      - "Lei n. 12.037/2009 (Identificação Criminal do civilmente identificado)."
+
+  "Noções de Direito Penal Militar":
+    peso_grupo_conhecimentos_especificos: 40  # CONFERIR: total do grupo, quebra por matéria não confirmada
+    conteudos:
+      - "Aplicação da lei penal militar."
+      - "Crime."
+      - "Imputabilidade penal."
+      - "Concurso de agentes."
+      - "Penas principais."
+      - "Aplicação da pena."
+      - "Suspensão condicional da pena."
+      - "Livramento condicional."
+      - "Penas acessórias."
+      - "Efeitos da condenação."
+      - "Medidas de segurança."
+      - "Ação penal."
+      - "Extinção da punibilidade."
+      - "Crimes militares em tempo de paz."
+      - "Crimes propriamente militares."
+      - "Crimes impropriamente militares."
+
+  "Noções de Direito Processual Penal Militar":
+    peso_grupo_conhecimentos_especificos: 40  # CONFERIR: total do grupo, quebra por matéria não confirmada
+    conteudos:
+      - "Lei de Processo Penal Militar e sua aplicação."
+      - "Polícia judiciária militar."
+      - "Inquérito policial militar."
+      - "Ação penal militar e seu exercício."
+      - "Processo."
+      - "Denúncia."
+      - "Jurisdição e competência."
+      - "Questões prejudiciais e incidentes."
+      - "Medidas preventivas e assecuratórias."
+      - "Atos probatórios."
+      - "Processo ordinário."
+      - "Processos especiais."
+      - "Nulidades e recursos."
+
+  "Criminologia":
+    peso_grupo_conhecimentos_especificos: 40  # CONFERIR: total do grupo, quebra por matéria não confirmada
+    conteudos:
+      - "Criminologia: Conceito e características; Objeto; Método e finalidade; Funções; Classificação."
+      - "História da criminologia: Escola Clássica; Escola Positiva; Escola de Política Criminal; Terza Scuola."
+      - "Estatística criminal, cifra negra, cifra dourada e prognóstico criminal."
+      - "Sociologia criminal."
+      - "Vitimologia."
+      - "Prevenção criminal."
+      - "Fatores sociais de criminalidade."
+      - "Instâncias de controle."
+      - "Crimes do colarinho branco."
