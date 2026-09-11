@@ -60,6 +60,31 @@ _GUARDRAILS = (
     "publica",
 )
 
+# Sinônimos e variações de gênero/grau que a normalização por regex não
+# resolve — palavra diferente da do banco, ou adjetivo no lugar do
+# substantivo por concordância com outra matéria da mesma lista ("Raciocínio
+# Lógico e Matemático" concorda no masculino com "Raciocínio", mas o banco
+# guarda o substantivo "Matemática"). Achado real no edital do PMDF: sem
+# isso, "Língua Inglesa" virava lacuna e "Matemático" sumia sem aviso porque
+# a cota inteira ia para "Raciocínio Lógico".
+_SINONIMOS = {
+    "lingua inglesa": "ingles",
+    "lingua espanhola": "espanhol",
+    "matematico": "matematica",
+    "portugues": "lingua portuguesa",
+    # Frase inteira do edital do PRF (2026): "CTB" e "CONTRAN" são as siglas
+    # da mesma "Legislação de Trânsito" que o banco guarda — sem isso, 30 das
+    # 120 questões do PRF (25% da prova) viravam lacuna.
+    "legislacao especial de transito ctb e contran": "legislacao de transito",
+    # PRF pede "Inglês ou Espanhol"; o acervo só tem "Inglês" catalogado —
+    # mapeia para o que existe em vez de zerar os dois.
+    "lingua estrangeira ingles ou espanhol": "ingles",
+}
+
+
+def _canonico(normalizado: str) -> str:
+    return _SINONIMOS.get(normalizado, normalizado)
+
 
 def normalizar(nome: str) -> str:
     """Reduz um nome de matéria à sua forma comparável.
@@ -76,7 +101,7 @@ def normalizar(nome: str) -> str:
 
 def _compativel(pedido: str, disponivel: str) -> bool:
     """Diz se dois nomes já normalizados podem ser a mesma matéria."""
-    if pedido != disponivel:
+    if _canonico(pedido) != _canonico(disponivel):
         return False
     return all((termo in pedido) == (termo in disponivel) for termo in _GUARDRAILS)
 
@@ -128,3 +153,64 @@ def resolver(materia_do_edital: str, disponiveis: list[str]) -> list[str]:
             if _compativel(parte, chave):
                 achadas.extend(nomes)
     return sorted(dict.fromkeys(achadas))
+
+
+# Ordem pedagógica dentro de Língua Portuguesa (chave = `categoria` como as
+# fontes gravam, já normalizada). Medido no relatório de bug do simulado do
+# PMDF: a prova real começa por interpretação de texto, nunca por gramática.
+# Só Português tem matriz por ora — outra matéria sem entrada aqui mantém a
+# ordem original em vez de arriscar um palpite (mesmo princípio do guardrail
+# de `resolver`: na dúvida, não inventa).
+_ORDEM_PORTUGUES = {
+    "interpretacao de textos": 0,
+    "interpretacao de texto": 0,
+    "compreensao de texto": 0,
+    "compreensao de textos": 0,
+    "tipologia textual": 0,
+    "ortografia": 1,
+    "acentuacao": 1,
+    "fonologia": 1,
+    "vocabulario": 1,
+    "morfologia": 2,
+    "classes de palavras": 2,
+    "sintaxe": 3,
+    "pontuacao": 3,
+    "regencia": 3,
+    "concordancia": 3,
+    "crase": 3,
+}
+
+
+def ordenar_questoes(questoes: list[dict], materia: str) -> list[dict]:
+    """Reordena pela precedência pedagógica real de uma prova, quando conhecida.
+
+    `questoes` vem no formato de `db.sortear_questoes` (cada uma com
+    `categoria`). Questão sem `categoria` reconhecida, ou matéria sem matriz
+    definida, mantém sua posição relativa original (sort estável) — nunca
+    inventa uma ordem sem dado por trás.
+    """
+    if "portugues" not in normalizar(materia):
+        return list(questoes)
+
+    def posicao(questao: dict) -> int:
+        return _ORDEM_PORTUGUES.get(normalizar(questao.get("categoria") or ""), 99)
+
+    return sorted(questoes, key=posicao)
+
+
+def agrupar_por_texto_associado(questoes: list[dict]) -> list[dict]:
+    """Reordena para que questões do mesmo texto-base fiquem contíguas.
+
+    Preserva a ordem de primeira aparição de cada grupo. Questão sem texto
+    associado (a maioria) vira grupo de uma questão só e mantém sua posição
+    relativa — nunca é misturada com outra questão sem texto.
+    """
+    grupos: dict[str, list[dict]] = {}
+    ordem: list[str] = []
+    for i, questao in enumerate(questoes):
+        chave = questao.get("texto_associado") or f"__solo_{i}__"
+        if chave not in grupos:
+            grupos[chave] = []
+            ordem.append(chave)
+        grupos[chave].append(questao)
+    return [questao for chave in ordem for questao in grupos[chave]]

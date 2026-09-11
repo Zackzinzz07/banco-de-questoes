@@ -94,7 +94,106 @@ def test_sem_correspondencia_devolve_vazio():
     assert taxonomia.resolver("Criminologia Aplicada", ["Língua Portuguesa"]) == []
 
 
+def test_resolve_sinonimo_lingua_inglesa():
+    """O edital do PMDF pede "Língua Inglesa"; o banco guarda "Inglês" — mesma
+    matéria, palavras diferentes. Achado real: virava lacuna de 5 questões."""
+    assert taxonomia.resolver("Língua Inglesa", ["Inglês"]) == ["Inglês"]
+
+
+def test_resolve_sinonimo_portugues_sem_lingua():
+    """Banco do Brasil, Correios, INSS e Receita Federal escrevem só
+    "Português" no edital; o banco guarda "Língua Portuguesa". Achado real:
+    zerava a matéria de maior peso em 4 dos 9 editais cadastrados."""
+    assert taxonomia.resolver("Português", ["Língua Portuguesa"]) == ["Língua Portuguesa"]
+
+
+def test_resolve_sigla_de_transito_do_edital_prf():
+    """O edital do PRF nomeia a matéria pelas siglas da legislação (CTB,
+    CONTRAN) em vez do nome que o banco guarda. Achado real: 30 das 120
+    questões do PRF (25% da prova) viravam lacuna."""
+    materia = "Legislação Especial de Trânsito - CTB e CONTRAN (Bloco II)"
+    assert taxonomia.resolver(materia, ["Legislação de Trânsito"]) == ["Legislação de Trânsito"]
+
+
+def test_resolve_lingua_estrangeira_ingles_ou_espanhol():
+    """PRF pede "Inglês ou Espanhol"; o acervo só cataloga "Inglês"."""
+    materia = "Língua Estrangeira - Inglês ou Espanhol (Bloco I)"
+    assert taxonomia.resolver(materia, ["Inglês"]) == ["Inglês"]
+
+
+def test_decompoe_com_adjetivo_no_lugar_do_substantivo():
+    """ "Raciocínio Lógico e Matemático" concorda no masculino com
+    "Raciocínio"; o banco guarda o substantivo "Matemática". Sem a
+    equivalência, a cota inteira ia parar em Raciocínio Lógico e a
+    Matemática nunca era sorteada (achado real do edital do PMDF)."""
+    disponiveis = ["Raciocínio Lógico", "Matemática"]
+    assert taxonomia.resolver("Raciocínio Lógico e Matemático", disponiveis) == [
+        "Matemática",
+        "Raciocínio Lógico",
+    ]
+
+
 def test_nao_casa_por_conter_a_palavra():
     """ "Direito" não pode arrastar todas as matérias que começam com Direito."""
     disponiveis = ["Direito Administrativo", "Direito Penal", "Direito Constitucional"]
     assert taxonomia.resolver("Direito", disponiveis) == []
+
+
+def _questao(id_, categoria=None, texto_associado=None):
+    return {"id": id_, "categoria": categoria, "texto_associado": texto_associado}
+
+
+def test_ordenar_questoes_portugues_segue_precedencia_pedagogica():
+    """A prova real começa por interpretação, não por gramática (achado do
+    relatório de bug do simulado do PMDF)."""
+    embaralhadas = [
+        _questao(1, categoria="Sintaxe"),
+        _questao(2, categoria="Interpretação de Textos"),
+        _questao(3, categoria="Morfologia"),
+        _questao(4, categoria="Ortografia"),
+    ]
+    ordenadas = taxonomia.ordenar_questoes(embaralhadas, "Língua Portuguesa")
+    assert [q["id"] for q in ordenadas] == [2, 4, 3, 1]
+
+
+def test_ordenar_questoes_aceita_portugues_sem_lingua():
+    """Alguns editais chamam a matéria só de "Português" (ex.: Banco do Brasil)."""
+    embaralhadas = [_questao(1, categoria="Sintaxe"), _questao(2, categoria="Ortografia")]
+    ordenadas = taxonomia.ordenar_questoes(embaralhadas, "Português")
+    assert [q["id"] for q in ordenadas] == [2, 1]
+
+
+def test_ordenar_questoes_categoria_desconhecida_vai_pro_fim_mas_nao_quebra():
+    """Sem categoria reconhecida, não inventa posição — só não atrapalha as
+    que têm dado real (mesmo princípio do guardrail de `resolver`)."""
+    embaralhadas = [
+        _questao(1, categoria="Sintaxe"),
+        _questao(2, categoria=None),
+        _questao(3, categoria="Interpretação de Textos"),
+    ]
+    ordenadas = taxonomia.ordenar_questoes(embaralhadas, "Língua Portuguesa")
+    assert [q["id"] for q in ordenadas] == [3, 1, 2]
+
+
+def test_ordenar_questoes_materia_sem_matriz_mantem_ordem_original():
+    """Só Português tem matriz por ora; outra matéria não arrisca palpite."""
+    embaralhadas = [_questao(1, categoria="Z"), _questao(2, categoria="A")]
+    assert taxonomia.ordenar_questoes(embaralhadas, "Direito Administrativo") == embaralhadas
+
+
+def test_agrupar_por_texto_associado_junta_questoes_espalhadas():
+    """Duas questões do mesmo texto-base, com uma questão solta no meio."""
+    questoes = [
+        _questao(1, texto_associado="Texto A"),
+        _questao(2, texto_associado=None),
+        _questao(3, texto_associado="Texto A"),
+        _questao(4, texto_associado="Texto B"),
+        _questao(5, texto_associado=None),
+    ]
+    agrupadas = taxonomia.agrupar_por_texto_associado(questoes)
+    assert [q["id"] for q in agrupadas] == [1, 3, 2, 4, 5]
+
+
+def test_agrupar_por_texto_associado_sem_nenhum_texto_mantem_ordem():
+    questoes = [_questao(1), _questao(2), _questao(3)]
+    assert taxonomia.agrupar_por_texto_associado(questoes) == questoes
