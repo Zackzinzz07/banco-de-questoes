@@ -358,6 +358,96 @@ def test_salvar_questao_com_byte_nul_no_enunciado_nao_quebra():
     con.close()
 
 
+def test_migration_003_adiciona_coluna_formato_com_default():
+    """Cobre a migration em si, não a inferência de db.salvar_questao: insert
+    cru, sem passar por formato nenhum, tem que cair no default da coluna."""
+    con = db.conectar()
+    con.execute(
+        "INSERT INTO questoes (enunciado, hash_enunciado, content_hash, alternativas,"
+        " materia, fonte) VALUES ('Q formato default?', 'h_fmt_default', 'c_fmt_default',"
+        " '{}', 'Direito Administrativo', 'pci')"
+    )
+    linha = con.execute(
+        "SELECT formato FROM questoes WHERE hash_enunciado='h_fmt_default'"
+    ).fetchone()
+    assert linha["formato"] == "multipla_escolha"
+    con.close()
+
+
+def test_salvar_questao_infere_formato_multipla_escolha_com_alternativas_a_e():
+    con = db.conectar()
+    db.salvar_questao(con, questao_exemplo(id_qc="QFMT1", enunciado="Múltipla escolha?"))
+    linha = con.execute("SELECT formato FROM questoes WHERE id_qc='QFMT1'").fetchone()
+    assert linha["formato"] == "multipla_escolha"
+
+
+def test_salvar_questao_infere_formato_certo_errado_sem_alternativa_d():
+    con = db.conectar()
+    q = questao_exemplo(
+        id_qc="QFMT2",
+        enunciado="Certo ou errado?",
+        alternativas={"C": "Certo", "E": "Errado"},
+        gabarito="C",
+    )
+    db.salvar_questao(con, q)
+    linha = con.execute("SELECT formato FROM questoes WHERE id_qc='QFMT2'").fetchone()
+    assert linha["formato"] == "certo_errado"
+
+
+def test_salvar_questao_respeita_formato_explicito():
+    """formato informado vence a inferência — cobre reimportação/correção manual."""
+    con = db.conectar()
+    q = questao_exemplo(id_qc="QFMT3", enunciado="Formato explícito?", formato="certo_errado")
+    db.salvar_questao(con, q)
+    linha = con.execute("SELECT formato FROM questoes WHERE id_qc='QFMT3'").fetchone()
+    assert linha["formato"] == "certo_errado"
+
+
+def test_sortear_questoes_filtra_por_formato():
+    con = db.conectar()
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QFMTME",
+            enunciado="Questão múltipla escolha de Direito",
+            materia="Direito Constitucional",
+        ),
+    )
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QFMTCE",
+            enunciado="Questão certo errado de Direito",
+            materia="Direito Constitucional",
+            alternativas={"C": "Certo", "E": "Errado"},
+            gabarito="E",
+        ),
+    )
+
+    so_ce = db.sortear_questoes(con, "Direito Constitucional", 5, formato="certo_errado")
+    assert [q["id_qc"] for q in so_ce] == ["QFMTCE"]
+
+    so_me = db.sortear_questoes(con, "Direito Constitucional", 5, formato="multipla_escolha")
+    assert [q["id_qc"] for q in so_me] == ["QFMTME"]
+
+
+def test_sortear_questoes_sem_formato_devolve_os_dois_tipos():
+    con = db.conectar()
+    db.salvar_questao(con, questao_exemplo(id_qc="QFMTAMBOS1", enunciado="Uma", materia="Ética"))
+    db.salvar_questao(
+        con,
+        questao_exemplo(
+            id_qc="QFMTAMBOS2",
+            enunciado="Outra",
+            materia="Ética",
+            alternativas={"C": "Certo", "E": "Errado"},
+            gabarito="C",
+        ),
+    )
+    resultado = db.sortear_questoes(con, "Ética", 5)
+    assert {q["id_qc"] for q in resultado} == {"QFMTAMBOS1", "QFMTAMBOS2"}
+
+
 def test_sortear_questoes_nao_devolve_sempre_as_mesmas():
     """O RANDOM() do sorteio era código morto.
 

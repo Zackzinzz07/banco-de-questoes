@@ -17,7 +17,7 @@ except ImportError:
 
 DATABASE_URL = config.DATABASE_URL
 
-FONTES_VALIDAS = {"qconcursos", "quadrix_pdf", "pci"}
+FONTES_VALIDAS = {"qconcursos", "quadrix_pdf", "pci", "cebraspe"}
 
 # As migrations usam ALTER TABLE, que pede AccessExclusiveLock na tabela
 # inteira mesmo com IF NOT EXISTS. Reaplicar isso a cada conectar() enfileira
@@ -112,10 +112,11 @@ def conectar(caminho=None):
 
     if not _MIGRACOES_APLICADAS:
         try:
-            from migrations import migration_001, migration_002
+            from migrations import migration_001, migration_002, migration_003
 
             migration_001.aplicar(con)
             migration_002.aplicar(con)
+            migration_003.aplicar(con)
             _MIGRACOES_APLICADAS = True
         except ImportError:
             pass  # Migrations not available (should not happen in normal use)
@@ -141,6 +142,13 @@ def content_hash(enunciado, alternativas):
     return hashlib.md5(content.encode("utf-8")).hexdigest()
 
 
+def _inferir_formato(alternativas):
+    """Sem a chave "D", não é múltipla escolha: C/E não passa de C e E."""
+    if not alternativas or "D" not in alternativas:
+        return "certo_errado"
+    return "multipla_escolha"
+
+
 def salvar_questao(con, q):
     """Insere a questão; retorna True se inseriu, False se já existia (dedupe por content_hash)."""
     fonte = q.get("fonte")
@@ -163,13 +171,15 @@ def salvar_questao(con, q):
     if existente:
         return False  # Questão duplicada, ignora
 
+    formato = q.get("formato") or _inferir_formato(q["alternativas"])
+
     try:
         con.execute(
             "INSERT INTO questoes (id_qc, enunciado, hash_enunciado, content_hash, alternativas,"
             " gabarito, comentario, materia, assunto, ano, prova, fonte,"
             " texto_associado, imagens, categoria, tema, imagens_urls,"
-            " banca, orgao, cargo)"
-            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " banca, orgao, cargo, formato)"
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 q.get("id_qc"),
                 q["enunciado"],
@@ -191,6 +201,7 @@ def salvar_questao(con, q):
                 q.get("banca"),
                 q.get("orgao"),
                 q.get("cargo"),
+                formato,
             ),
         )
         con.commit()
@@ -207,25 +218,30 @@ _SQL_SORTEIO = (
     "SELECT * FROM ("
     "  SELECT DISTINCT ON (content_hash) * FROM questoes WHERE {onde}"
     "   ORDER BY content_hash,"
-    "     CASE fonte WHEN 'qconcursos' THEN 1 WHEN 'pci' THEN 2 ELSE 3 END"
+    "     CASE fonte WHEN 'cebraspe' THEN 1 WHEN 'qconcursos' THEN 2 WHEN 'pci' THEN 3 ELSE 4 END"
     ") AS unicas ORDER BY RANDOM() LIMIT %s"
 )
 
 
-def _sortear(con, materia, quantidade, usadas, banca, orgao, cargo):
+def _sortear(con, materia, quantidade, usadas, banca, orgao, cargo, formato):
     """Sorteia `quantidade` questões distintas por conteúdo, em ordem aleatória."""
     onde = ["materia=%s", "usada_em_simulado=%s", "content_hash IS NOT NULL"]
     params = [materia, usadas]
-    for coluna, valor in (("banca", banca), ("orgao", orgao), ("cargo", cargo)):
+    filtros = (("banca", banca), ("orgao", orgao), ("cargo", cargo), ("formato", formato))
+    for coluna, valor in filtros:
         if valor:
-            onde.append(f"{coluna}=%s")
-            params.append(valor)
+            if coluna in ("banca", "orgao", "cargo"):
+                onde.append(f"{coluna} ILIKE %s")
+                params.append(f"%{valor}%")
+            else:
+                onde.append(f"{coluna}=%s")
+                params.append(valor)
     params.append(quantidade)
     sql = _SQL_SORTEIO.format(onde=" AND ".join(onde))
     return [dict(linha) for linha in con.execute(sql, tuple(params)).fetchall()]
 
 
-def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=None):
+def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=None, formato=None):
     """Sorteia questões inéditas, deduplicadas por conteúdo.
 
     Se não houver inéditas suficientes, avisa e completa com repetidas.
@@ -237,12 +253,13 @@ def sortear_questoes(con, materia, quantidade, banca=None, orgao=None, cargo=Non
         banca: Nome da banca examinadora (opcional, ex: "Instituto Quadrix")
         orgao: Órgão/concurso (opcional, ex: "SEDES/DF")
         cargo: Cargo (opcional, ex: "Policial Rodoviário Federal")
+        formato: "certo_errado" ou "multipla_escolha" (opcional)
     """
-    questoes = _sortear(con, materia, quantidade, 0, banca, orgao, cargo)
+    questoes = _sortear(con, materia, quantidade, 0, banca, orgao, cargo, formato)
 
     faltam = quantidade - len(questoes)
     if faltam > 0:
-        repetidas = _sortear(con, materia, faltam, 1, banca, orgao, cargo)
+        repetidas = _sortear(con, materia, faltam, 1, banca, orgao, cargo, formato)
         if repetidas:
             print(
                 f"Aviso: só {len(questoes)} questões inéditas de {materia};"
